@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "typecheck": "tsc --noEmit",
+    "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json",
+    "test": "tsx --test tests/lead.test.ts",
     "build": "tsc",
     "start": "node dist/server.js"
   },
