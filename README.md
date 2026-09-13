@@ -1,6 +1,6 @@
 # Rick & GO Sales Agent
 
-A local sales-agent project for Rick & GO, a moving business. The project contains the frontend/backend scaffold, a health endpoint, the core Lead State domain model, and a deterministic requirements engine.
+A local sales-agent project for Rick & GO, a moving business. The project contains the frontend/backend scaffold, a health endpoint, structured lead state, requirements evaluation, and deterministic message extraction and lead updates.
 
 ## Requirements
 
@@ -62,7 +62,7 @@ The client builds to client/dist and the server to server/dist. npm start runs t
 
 A local conversation simulator for refrigerator moves and deterministic demo pricing. Future move/item models should support additional item types. The workflow must preserve provided information, ask only relevant missing questions, and require human approval for every v0.1 quote. An LLM must never determine final prices.
 
-Extraction, pricing, OpenAI, MongoDB, WhatsApp, authentication, and domain API/frontend integration are intentionally not implemented in this milestone.
+Pricing, OpenAI, MongoDB, WhatsApp, authentication, and domain API/frontend integration are intentionally not implemented in this milestone.
 
 ## Domain Conventions
 
@@ -99,3 +99,43 @@ Wardrobe and bed profiles demonstrate size and assembly conditions, and washing_
 MoveItem.photoStatus is REQUIRED, RECEIVED, or NOT_APPLICABLE. The item factory defaults refrigerators to REQUIRED and other/unknown types to NOT_APPLICABLE; callers changing an item's type should also reassess its photo policy. REQUIRED means the photo is still pending. RECEIVED is a caller assertion of receipt, not an uploaded file or an assessment of image quality. No uploads, storage references, or image analysis are implemented.
 
 Photos are review requirements and do not block initial pricing readiness. READY_FOR_PRICING requires every applicable PRICING requirement to be satisfied. It is not quote approval: all v0.1 quotes still require human approval. updateLeadReadiness returns a lead with a changed status/timestamp only when moving between COLLECTING_INFORMATION and READY_FOR_PRICING; it can revert readiness after information is removed, and preserves all later lifecycle statuses. It does not send messages or quotes.
+
+## Deterministic Extraction (Milestone 4)
+
+This is deliberately limited pattern matching, not general Hebrew NLP. It proves extraction, safe state updates, history, requirements, and question selection before replacing the understanding layer with an LLM. No agent framework or external service is used.
+
+- extraction/types.ts defines partial patches. Missing properties mean no update; extracted values never use null. The patch contains no Lead status, history, or timestamps.
+- extraction/patterns.ts centralizes demo cities, item names, refrigerator sizes, and floor words.
+- extraction/extractMessage.ts extracts supported facts without accessing or changing a Lead.
+- extraction/mergeExtraction.ts applies only explicit fields, merges nested locations, and retains unrelated values including false and 0. It returns a new Lead and unappliedItems for ambiguous item matches. It does not update history or timestamps.
+- conversation/processCustomerMessage.ts orchestrates extraction, merge, appending one CUSTOMER message with its original text/UUID/UTC timestamp, readiness updates, and requirements evaluation. It returns lead, extraction, unappliedItems, requirements, and nextQuestion. Optional RequirementContext is passed through consistently. Generated questions are not appended to history.
+
+These modules live under server/src/domain/. Tests live in server/tests/extraction.test.ts, mergeExtraction.test.ts, and conversation.test.ts. The explicit test-file list in server/package.json is compatible with Node 20 on Windows; add future test files there.
+
+### Supported Patterns
+
+| Input | Extracted update |
+| --- | --- |
+| צריך להעביר מקרר מרמת גן לתל אביב | refrigerator; pickup Ramat Gan; dropoff Tel Aviv |
+| איסוף קומה 2 בלי מעלית | pickup floor 2, elevator false |
+| פריקה קומה 3 עם מעלית | dropoff floor 3, elevator true |
+| המקרר גדול | existing refrigerator sizeCategory LARGE |
+| יש גם ארגזים | box item, no quantity update |
+| יש 20 ארגזים | box quantity 20 |
+| בתאריך 2026-10-01 | requestedDate 2026-10-01 |
+
+Item names: מקרר, ארגז/ארגזים, מכונת כביסה, ארון, מיטה. Recognition does not expand pricing support: wardrobe, bed, and washing_machine still have the existing unsupported-policy requirement.
+
+Cities: תל אביב, רמת גן, גבעתיים, בת ים, חולון. Unlabelled מ-city / ל-city phrases indicate pickup/dropoff. Explicit איסוף / פריקה labels take precedence for their side and accept city names with or without a prefix. Floors and elevators require these explicit labels within the same punctuation-delimited clause. Bare floor/elevator answers are not assigned using previous questions. Separate labels can appear in the same clause; punctuation ends their context.
+
+Floors: integer digits, קומה ראשונה, קומה שנייה/שניה, קומה שלישית, קומת קרקע, and קומה 0. Elevator phrases: עם/יש מעלית and בלי/אין מעלית. Box quantities: positive integer digits immediately before the item, including יש 10 ארגזים and בערך 15 ארגזים. Invalid, fractional, or conflicting counts do not update a known quantity.
+
+Refrigerator size must immediately follow the item name: קטן -> SMALL, רגיל -> REGULAR, גדול -> LARGE, 4 דלתות / ארבע דלתות -> FOUR_DOOR. These are demo classifications, not pricing rules. Dates support only validated YYYY-MM-DD calendar dates. No missing year is inferred; DD/MM, DD.MM, relative dates, and date ranges are unsupported.
+
+### Merge and Limits
+
+The extractor emits at most one update per supported item type per message. Merging updates the sole existing matching type or appends a new item using createMoveItem defaults. Repeated mentions do not create duplicates or reset unknown/known fields. A new explicit quantity or size replaces the old value; the merge never adds counts together. Additive counts (such as עוד 5 ארגזים), bounds, and numbers with separators do not supply a quantity update. If multiple existing items share that type, the update appears in unappliedItems and none is chosen. Unknown-type placeholders are preserved rather than identified by guessing.
+
+Conflicting candidates for one field in a message omit that field. Common uncertainty, alternative, negation, and question markers cause a clause to be skipped. This is a conservative guard, not comprehensive negation or intent understanding. Unsupported wording can be missed, and recognition of a substring is not proof of general comprehension. Use explicit short statements in this simulator.
+
+Addresses, dimensions, service needs, photos, requested times, item removal, additive quantities, pronouns, arbitrary Hebrew number words, and conversation-context answers are not extracted. Keep unlabelled routes separate from labeled location clauses; mixed routes within a single label are not fully supported, and opposite-direction prefixes cannot assign a city to the wrong side. LocationPatch supports address updates supplied by a caller, but no address parser exists. A full readiness demo must start with addresses supplied structurally. Unsupported messages still enter history with no invented field updates. No API routes or frontend chat have been added.
