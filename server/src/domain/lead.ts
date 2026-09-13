@@ -17,6 +17,10 @@ export interface Dimensions {
 
 export interface MoveItem {
   type: string | null;
+  quantity: number | null;
+  // A structured, accepted size classification; free-text description is not assessed here.
+  sizeCategory: string | null;
+  photoStatus: 'REQUIRED' | 'RECEIVED' | 'NOT_APPLICABLE';
   description: string | null;
   dimensions: Dimensions;
   requiresDisassembly: boolean | null;

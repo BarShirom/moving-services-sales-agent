@@ -53,6 +53,9 @@ test('unknown booleans, confirmed false, and confirmed true survive JSON seriali
     const lead = createLead();
     const item: MoveItem = {
       type: 'refrigerator',
+      quantity: null,
+      sizeCategory: null,
+      photoStatus: 'REQUIRED',
       description: null,
       dimensions: { width: null, height: 180, depth: null },
       requiresDisassembly: value,
