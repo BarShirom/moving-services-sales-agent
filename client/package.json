@@ -7,7 +7,8 @@
     "dev": "vite --host 127.0.0.1",
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build",
-    "preview": "vite preview --host 127.0.0.1"
+    "preview": "vite preview --host 127.0.0.1",
+    "test": "tsx --test tests/response.test.tsx"
   },
   "dependencies": {
     "react": "^19.0.0",
@@ -18,6 +19,8 @@
     "@types/react-dom": "^19.0.0",
     "@vitejs/plugin-react": "^4.4.1",
     "typescript": "~5.8.3",
-    "vite": "^6.3.5"
+    "vite": "^6.3.5",
+    "tsx": "^4.19.3",
+    "@types/node": "^20.17.0"
   }
 }
