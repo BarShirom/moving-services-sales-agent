@@ -6,12 +6,15 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json",
-    "test": "tsx --test tests/lead.test.ts tests/requirements.test.ts tests/extraction.test.ts tests/mergeExtraction.test.ts tests/conversation.test.ts",
+    "test": "tsx --test tests/lead.test.ts tests/requirements.test.ts tests/extraction.test.ts tests/mergeExtraction.test.ts tests/conversation.test.ts tests/aiExtraction.test.ts tests/demo.test.ts tests/conversationReplies.test.ts",
     "build": "tsc",
-    "start": "node dist/server.js"
+    "start": "node dist/server.js",
+    "demo:ai": "tsx src/scripts/demoAIExtraction.ts"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "openai": "^6.49.0",
+    "zod": "^4.6.5"
   },
   "devDependencies": {
     "@types/express": "^5.0.1",

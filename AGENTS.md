@@ -1,7 +1,7 @@
-# Rick & GO Sales Agent
+# Moving Services Sales Agent
 
 ## Purpose
-Build a real-world AI engineering portfolio project for Rick & GO, a moving business. Eventually support lead intake, information collection, deterministic quote pricing, human approval, and conversion of won leads into operations records.
+Build Moving Services Sales Agent, a real-world AI engineering portfolio project with Rick & GO, a moving business, as the current pilot. Eventually support lead intake, information collection, deterministic quote pricing, human approval, and conversion of won leads into operations records.
 
 ## Scope
 The current milestone is only a React/Vite/TypeScript client and Node.js/Express/TypeScript server with GET /api/health. Do not implement lead models, extraction, pricing, or authentication in this milestone. WhatsApp, MongoDB, and OpenAI are not part of the current milestone.

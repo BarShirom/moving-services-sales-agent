@@ -18,13 +18,19 @@ export function mergeExtraction(lead: Lead, extraction: ExtractionResult): Merge
   for (const update of patch?.items ?? []) {
     const matches = items.filter(item => item.type === update.type);
     if (matches.length > 1) {
-      unappliedItems.push({ ...update });
+      unappliedItems.push({ ...update, ...(update.dimensions ? { dimensions: { ...update.dimensions } } : {}) });
       continue;
     }
     const item = matches[0] ?? createMoveItem(update.type);
     if (matches.length === 0) items.push(item);
     if (update.quantity !== undefined) item.quantity = update.quantity;
     if (update.sizeCategory !== undefined) item.sizeCategory = update.sizeCategory;
+    for (const axis of ['width', 'height', 'depth'] as const) {
+      const value = update.dimensions?.[axis];
+      if (value !== undefined) item.dimensions[axis] = value;
+    }
+    if (update.requiresDisassembly !== undefined) item.requiresDisassembly = update.requiresDisassembly;
+    if (update.requiresAssembly !== undefined) item.requiresAssembly = update.requiresAssembly;
   }
   return {
     lead: {
@@ -36,6 +42,8 @@ export function mergeExtraction(lead: Lead, extraction: ExtractionResult): Merge
         dropoff: mergeLocation(lead.moveDetails.dropoff, patch?.dropoff),
         items,
         ...(patch?.requestedDate === undefined ? {} : { requestedDate: patch.requestedDate }),
+        ...(patch?.requestedTime === undefined ? {} : { requestedTime: patch.requestedTime }),
+        ...(patch?.specialAccessNotes === undefined ? {} : { specialAccessNotes: patch.specialAccessNotes }),
       },
     },
     unappliedItems,

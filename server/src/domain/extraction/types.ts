@@ -15,6 +15,9 @@ export interface ItemPatch {
   type: SupportedItemType;
   quantity?: number;
   sizeCategory?: RefrigeratorSize;
+  dimensions?: { width?: number; height?: number; depth?: number };
+  requiresDisassembly?: boolean;
+  requiresAssembly?: boolean;
 }
 
 export interface ExtractionResult {
@@ -23,6 +26,8 @@ export interface ExtractionResult {
     pickup?: LocationPatch;
     dropoff?: LocationPatch;
     requestedDate?: string;
+    requestedTime?: string;
+    specialAccessNotes?: string;
   };
 }
 

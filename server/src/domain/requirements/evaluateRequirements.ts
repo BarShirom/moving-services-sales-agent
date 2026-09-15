@@ -68,7 +68,8 @@ export function evaluateRequirements(lead: Lead, context: RequirementContext = {
       { ...options, applicable: hints.disassemblyRelevant ?? profile?.assembly ?? false });
     add('item.assembly', item.requiresAssembly !== null, `האם נדרשת הרכבה של ${label} ביעד?`,
       { ...options, applicable: hints.assemblyRelevant ?? profile?.assembly ?? false });
-    add('item.photo', item.photoStatus === 'RECEIVED', `אפשר לצרף תמונה של ${label} לבדיקה?`,
+    // Unavailable photos still need human review, but must not be requested again automatically.
+    add('item.photo', item.photoStatus === 'RECEIVED', item.photoStatus === 'NOT_AVAILABLE' ? null : `אפשר לצרף תמונה של ${label} לבדיקה?`,
       { ...options, stage: 'REVIEW', applicable: item.photoStatus !== 'NOT_APPLICABLE' });
   });
   add('specialAccessNotes', hasText(move.specialAccessNotes), 'מה חשוב לדעת על קשיי הגישה במקום?',

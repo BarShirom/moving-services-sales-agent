@@ -20,7 +20,7 @@ export interface MoveItem {
   quantity: number | null;
   // A structured, accepted size classification; free-text description is not assessed here.
   sizeCategory: string | null;
-  photoStatus: 'REQUIRED' | 'RECEIVED' | 'NOT_APPLICABLE';
+  photoStatus: 'REQUIRED' | 'RECEIVED' | 'NOT_APPLICABLE' | 'NOT_AVAILABLE';
   description: string | null;
   dimensions: Dimensions;
   requiresDisassembly: boolean | null;
