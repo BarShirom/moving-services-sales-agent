@@ -20,7 +20,7 @@ const pricing = {
 };
 
 test('the reusable loader parses both datasets and preserves the supplied closed-job facts', () => {
-  assert.equal(fixtures.conversationCases.length, 15);
+  assert.equal(fixtures.conversationCases.length, 25);
   assert.equal(fixtures.pricingCases.length, 3);
   assert.deepEqual(fixtures.pricingCases.map(entry => ({
     quote: entry.quotedPrice, close: entry.closedPrice, workers: entry.workers, vehicles: entry.vehicles,

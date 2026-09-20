@@ -7,7 +7,7 @@ prove the agent passes the behavioral cases or that a pricing model is accurate.
 
 ## Files and privacy boundary
 
-- conversation-cases.json: 15 synthetic Hebrew conversation cases.
+- conversation-cases.json: 25 synthetic Hebrew conversation cases.
 - pricing-cases.json: three user-supplied, anonymized closed-job examples.
 - ../private/: local source material only; the entire data/private/ directory is Git-ignored.
   Git does not retain empty directories. Create it locally if needed after a fresh clone.
@@ -73,9 +73,18 @@ difficulty, multiple facts, early information, and non-linear/off-script behavio
 preservation of known facts and asking only for missing facts. A dimensions offer is not a
 numeric measurement; actual measurements use centimeters.
 
-conv-011 (old-fridge removal) is explicitly a future capability target. The current domain does
+conv-011 and conv-025 (old-fridge removal) are explicitly future capability targets. The current domain does
 not model an additional-service workflow. Its intent expectations preserve the desired behavior
 without inventing production fields or claiming the service can already be fulfilled.
+
+The expansion conv-016 through conv-025 adds ten intent/state cases: extra facts in an address
+reply, an early date with complete dropoff details, an address-only grouped answer, pickup
+correction during photo collection, a photo decline with offered dimensions, a photo decline
+with actual dimensions, simultaneous measurements and a floor correction, stair carry despite
+an existing elevator, unknown floor information pending a customer check, and a removal request.
+The access case retains elevator=true while recording that the refrigerator cannot fit.
+The unknown-floor case requires acknowledgement without inventing a value or satisfying the
+missing requirement. Existing conv-001 through conv-015 remain unchanged.
 
 ## Pricing format and evidence quality
 
