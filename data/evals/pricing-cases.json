@@ -133,5 +133,153 @@
     "quotedPrice": 2990,
     "closedPrice": 2990,
     "notes": "User-supplied anonymized closed-job example. No additional difficulty, disassembly or assembly details were supplied."
+  },
+  {
+    "id": "pricing-004",
+    "sourceQuality": "historical_estimate",
+    "currency": "ILS",
+    "outcome": "UNKNOWN",
+    "quotedPrice": null,
+    "closedPrice": null,
+    "requestedDate": null,
+    "workers": null,
+    "vehicles": null,
+    "disassemblyAssembly": null,
+    "items": [
+      {
+        "type": "refrigerator",
+        "sizeCategory": "SMALL",
+        "quantity": 1
+      },
+      {
+        "type": "washing_machine",
+        "quantity": 1
+      }
+    ],
+    "boxCount": null,
+    "pickup": {
+      "floor": 3,
+      "elevator": false
+    },
+    "dropoff": {
+      "floor": 1,
+      "elevator": null
+    },
+    "specialDifficulty": null,
+    "estimatedPrice": 750,
+    "evidenceNote": "User-provided historical example C describes an approximately 750 ILS quoted/recommended amount. Available project/context evidence does not establish that a quote was sent or the job closed.",
+    "notes": "Approximately 750 ILS is retained as an internal recommendation only. Dropoff elevator, date, staffing, vehicle and box counts are unknown. Singular listed appliances are represented as one each."
+  },
+  {
+    "id": "pricing-005",
+    "sourceQuality": "historical_estimate",
+    "currency": "ILS",
+    "outcome": "UNKNOWN",
+    "quotedPrice": null,
+    "closedPrice": null,
+    "requestedDate": null,
+    "workers": null,
+    "vehicles": null,
+    "disassemblyAssembly": null,
+    "items": [
+      {
+        "type": "furniture",
+        "quantity": null
+      },
+      {
+        "type": "washing_machine",
+        "quantity": 1
+      },
+      {
+        "type": "television",
+        "quantity": null
+      },
+      {
+        "type": "weights",
+        "quantity": null
+      },
+      {
+        "type": "bed",
+        "quantity": 1
+      }
+    ],
+    "boxCount": 30,
+    "pickup": {
+      "floor": null,
+      "elevator": null
+    },
+    "dropoff": {
+      "floor": null,
+      "elevator": null
+    },
+    "specialDifficulty": [
+      "Meaningful stair/access difficulty at pickup; exact conditions unknown.",
+      "Meaningful stair/access difficulty at dropoff; exact conditions unknown."
+    ],
+    "estimatedPrice": 2200,
+    "priceRange": {
+      "min": 1900,
+      "max": 2400
+    },
+    "evidenceNote": "User-provided historical example D supports an internal discussion range and an approximately 2200 ILS recommendation. No corroborating evidence confirms a sent quote or an approximately 2000 ILS close; neither is recorded as an actual transaction.",
+    "notes": "Box count is approximately 30. Furniture, television and weight counts are unknown; the furniture description may overlap other listed items and must not be treated as a separate exact inventory count. Exact floors, elevators, staffing and outcome remain unknown."
+  },
+  {
+    "id": "pricing-006",
+    "sourceQuality": "historical_estimate",
+    "currency": "ILS",
+    "outcome": "UNKNOWN",
+    "quotedPrice": null,
+    "closedPrice": null,
+    "requestedDate": null,
+    "workers": null,
+    "vehicles": null,
+    "disassemblyAssembly": null,
+    "items": [
+      {
+        "type": "wardrobe",
+        "quantity": null
+      },
+      {
+        "type": "bed",
+        "quantity": null
+      },
+      {
+        "type": "dishwasher",
+        "quantity": 1
+      },
+      {
+        "type": "chaise_or_sofa",
+        "quantity": null
+      },
+      {
+        "type": "electric_piano",
+        "quantity": 1
+      },
+      {
+        "type": "plant",
+        "quantity": 44
+      },
+      {
+        "type": "suitcase",
+        "quantity": 5
+      }
+    ],
+    "boxCount": 25,
+    "pickup": {
+      "floor": null,
+      "elevator": null
+    },
+    "dropoff": {
+      "floor": null,
+      "elevator": null
+    },
+    "specialDifficulty": [
+      "Multiple points, floors and access complexity were reported; exact route and access details are unknown."
+    ],
+    "estimatedPrice": 4500,
+    "humanApprovalRequired": true,
+    "evidenceNote": "User-provided historical example E describes an approximately 4500 ILS discussion/proposal requiring human approval. Available evidence does not establish that it was approved, sent as a quote, or closed.",
+    "notes": "Approximately 44 plants, 25 boxes and 5 suitcases. Wardrobe and bed counts are unspecified; chaise/sofa type and quantity remain unresolved. Human approval was required because of complexity. No disassembly or assembly service is inferred from the item list."
   }
 ]

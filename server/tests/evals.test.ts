@@ -21,8 +21,10 @@ const pricing = {
 
 test('the reusable loader parses both datasets and preserves the supplied closed-job facts', () => {
   assert.equal(fixtures.conversationCases.length, 25);
-  assert.equal(fixtures.pricingCases.length, 3);
-  assert.deepEqual(fixtures.pricingCases.map(entry => ({
+  assert.equal(fixtures.pricingCases.length, 6);
+  const closedJobs = fixtures.pricingCases.filter(entry => entry.sourceQuality === 'closed_job');
+  assert.equal(closedJobs.length, 3);
+  assert.deepEqual(closedJobs.map(entry => ({
     quote: entry.quotedPrice, close: entry.closedPrice, workers: entry.workers, vehicles: entry.vehicles,
     boxes: entry.boxCount, source: entry.sourceQuality, currency: entry.currency, outcome: entry.outcome,
   })), [
@@ -37,7 +39,7 @@ test('the reusable loader parses both datasets and preserves the supplied closed
   ]);
   assert.deepEqual(fixtures.pricingCases[2].items.map(item => item.type),
     ['bed', 'television', 'washing_machine', 'dryer', 'cabinet', 'armchair', 'electric_piano']);
-  assert.deepEqual(fixtures.pricingCases.map(entry => [entry.pickup, entry.dropoff]), [
+  assert.deepEqual(closedJobs.map(entry => [entry.pickup, entry.dropoff]), [
     [{ floor: 3, elevator: true }, { floor: 1, elevator: false }],
     [{ floor: 2, elevator: false }, { floor: 0, elevator: true }],
     [{ floor: 3, elevator: false }, { floor: 2, elevator: false }],
@@ -115,7 +117,7 @@ test('quoted-only and historical estimates cannot masquerade as closed-job evide
 });
 
 test('invalid numeric values and calendar dates are rejected while unknowns stay unknown', () => {
-  for (const value of [-1, Infinity, NaN, '450']) {
+  for (const value of [0, -1, Infinity, NaN, '450']) {
     assert.throws(() => parsePricingCases([{ ...pricing, closedPrice: value }]));
   }
   for (const workers of [0, -2, 1.5]) assert.throws(() => parsePricingCases([{ ...pricing, workers }]));
@@ -195,4 +197,107 @@ test('loader rejects malformed JSON and scans documentation from a supplied dire
   await writeFile(join(folder, names[0]), JSON.stringify([conversation]), 'utf8');
   await writeFile(join(folder, names[2]), 'contact: synthetic@example.test', 'utf8');
   await assert.rejects(loadEvalCases(url), /email address/);
+});
+
+test('historical job additions retain evidence limits instead of inventing quotes or outcomes', () => {
+  const historical = fixtures.pricingCases.filter(entry => entry.sourceQuality === 'historical_estimate');
+  assert.deepEqual(historical.map(entry => entry.id), ['pricing-004', 'pricing-005', 'pricing-006']);
+  assert.equal(fixtures.pricingCases.filter(entry => entry.sourceQuality === 'quoted_only').length, 0);
+  assert.deepEqual(historical.map(entry => entry.estimatedPrice), [750, 2200, 4500]);
+  for (const entry of historical) {
+    assert.equal(entry.outcome, 'UNKNOWN');
+    assert.equal(entry.quotedPrice, null);
+    assert.equal(entry.closedPrice, null);
+    assert.equal(entry.workers, null);
+    assert.equal(entry.vehicles, null);
+    assert.equal(entry.requestedDate, null);
+    assert.ok(entry.evidenceNote);
+    assert.equal(entry.pickup?.address, undefined);
+    assert.equal(entry.dropoff?.address, undefined);
+  }
+  assert.deepEqual(historical[0].items, [
+    { type: 'refrigerator', sizeCategory: 'SMALL', quantity: 1 },
+    { type: 'washing_machine', quantity: 1 },
+  ]);
+  assert.deepEqual(historical[0].pickup, { floor: 3, elevator: false });
+  assert.deepEqual(historical[0].dropoff, { floor: 1, elevator: null });
+  assert.deepEqual(historical[1].priceRange, { min: 1900, max: 2400 });
+  assert.equal(historical[1].boxCount, 30);
+  assert.equal(historical[1].items.find(item => item.type === 'television')?.quantity, null);
+  assert.match(historical[1].notes!, /approximately 30/);
+  assert.equal(historical[2].humanApprovalRequired, true);
+  assert.equal(historical[2].items.find(item => item.type === 'wardrobe')?.quantity, null);
+  assert.equal(historical[2].items.find(item => item.type === 'plant')?.quantity, 44);
+  assert.equal(historical[2].items.find(item => item.type === 'suitcase')?.quantity, 5);
+  assert.equal(historical[2].boxCount, 25);
+  for (const entry of historical.slice(1)) {
+    assert.deepEqual(entry.pickup, { floor: null, elevator: null });
+    assert.deepEqual(entry.dropoff, { floor: null, elevator: null });
+  }
+});
+
+test('optional historical price ranges preserve bounds without requiring an invented point estimate', () => {
+  const rangeOnly = {
+    ...pricing, sourceQuality: 'historical_estimate', closedPrice: null,
+    outcome: 'UNKNOWN', priceRange: { min: 1900, max: 2400 },
+  };
+  const [result] = parsePricingCases([rangeOnly]);
+  assert.equal(result.estimatedPrice, undefined);
+  assert.equal(result.pickup, undefined);
+  assert.equal(result.dropoff, undefined);
+  assert.deepEqual(result.priceRange, { min: 1900, max: 2400 });
+  assert.equal(parsePricingCases([{ ...rangeOnly, estimatedPrice: 2200 }])[0].estimatedPrice, 2200);
+  assert.deepEqual(parsePricingCases([{ ...rangeOnly, priceRange: { min: 750, max: 750 } }])[0].priceRange,
+    { min: 750, max: 750 });
+  for (const priceRange of [
+    { min: 2400, max: 1900 }, { min: 0, max: 2400 }, { min: -1, max: 2400 },
+    { min: 1900, max: 0 }, { min: 1900, max: Infinity }, { min: '1900', max: 2400 },
+    { min: 1900 }, { max: 2400 },
+  ]) assert.throws(() => parsePricingCases([{ ...rangeOnly, priceRange }]));
+  for (const estimatedPrice of [1800, 2500]) {
+    assert.throws(() => parsePricingCases([{ ...rangeOnly, estimatedPrice }]), /within its supplied range/);
+  }
+  assert.throws(() => parsePricingCases([{ ...rangeOnly, priceRange: undefined }]), /estimated price or range/);
+});
+
+test('reference ranges cannot substitute for actual quoted or closed prices', () => {
+  const priceRange = { min: 400, max: 450 };
+  assert.throws(() => parsePricingCases([{ ...pricing, priceRange }]), /only to historical_estimate/);
+  assert.throws(() => parsePricingCases([{
+    ...pricing, sourceQuality: 'quoted_only', quotedPrice: 450, closedPrice: null, priceRange,
+  }]), /only to historical_estimate/);
+  assert.throws(() => parsePricingCases([{ ...pricing, closedPrice: undefined, priceRange }]), /actual closed price/);
+  assert.throws(() => parsePricingCases([{
+    ...pricing, sourceQuality: 'quoted_only', closedPrice: null, priceRange,
+  }]), /quote that was sent/);
+});
+
+test('all pricing amount fields are strictly positive and unknown quantities remain explicit', () => {
+  for (const value of [0, -1, NaN, Infinity]) {
+    assert.throws(() => parsePricingCases([{ ...pricing, quotedPrice: value }]));
+    assert.throws(() => parsePricingCases([{
+      ...pricing, sourceQuality: 'historical_estimate', closedPrice: null, outcome: 'UNKNOWN', estimatedPrice: value,
+    }]));
+  }
+  const unknownItem = { type: 'wardrobe', quantity: null };
+  const [result] = parsePricingCases([{ ...pricing, items: [unknownItem] }]);
+  assert.deepEqual(result.items, [unknownItem]);
+  for (const quantity of [0, -1, 1.5]) {
+    assert.throws(() => parsePricingCases([{ ...pricing, items: [{ ...unknownItem, quantity }] }]));
+  }
+  assert.throws(() => parsePricingCases([{ ...pricing, humanApprovalRequired: 'yes' }]));
+  assert.throws(() => parsePricingCases([{ ...pricing, evidenceNote: ' ' }]));
+});
+
+test('historical heuristic references stay in documentation rather than masquerading as closed jobs', async () => {
+  const readme = await readFile(new URL('README.md', directory), 'utf8');
+  for (const reference of [
+    'small refrigerator', 'regular refrigerator', 'large / four-door refrigerator', 'washing machine',
+    'additional pickup/dropoff point', 'floors without elevator', 'bed disassembly/assembly',
+    'wardrobe disassembly/assembly', 'waiting time', 'student discount',
+  ]) assert.ok(readme.includes(reference), reference);
+  const closed = fixtures.pricingCases.filter(entry => entry.sourceQuality === 'closed_job');
+  assert.deepEqual(closed.map(entry => entry.id), ['pricing-001', 'pricing-002', 'pricing-003']);
+  assert.deepEqual(closed.map(entry => entry.closedPrice), [450, 1200, 2990]);
+  assert.ok(!fixtures.pricingCases.some(entry => entry.closedPrice === 2000 || entry.quotedPrice === 2200));
 });

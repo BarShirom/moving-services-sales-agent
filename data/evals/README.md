@@ -8,7 +8,7 @@ prove the agent passes the behavioral cases or that a pricing model is accurate.
 ## Files and privacy boundary
 
 - conversation-cases.json: 25 synthetic Hebrew conversation cases.
-- pricing-cases.json: three user-supplied, anonymized closed-job examples.
+- pricing-cases.json: six job-level examples: three closed jobs and three historical estimates; no confirmed quoted-only cases.
 - ../private/: local source material only; the entire data/private/ directory is Git-ignored.
   Git does not retain empty directories. Create it locally if needed after a fresh clone.
 
@@ -95,19 +95,19 @@ currency and outcome. Optional business fields may be omitted or null when unkno
 | --- | --- | --- |
 | closed_job | Strongest evidence: an actual closed price is known. | closedPrice must be present. |
 | quoted_only | A quote was sent; the final close price is unknown. | quotedPrice required; closedPrice absent/null. |
-| historical_estimate | Internal or assistant estimate only; never ground truth. | estimatedPrice required; quotedPrice and closedPrice absent/null. |
+| historical_estimate | Internal or assistant estimate only; never ground truth. | estimatedPrice or priceRange required; quotedPrice and closedPrice absent/null. |
 
 Do not mix categories when selecting reference data or reporting future evaluation results.
 Historical estimates belong in their own cases. estimatedPrice is an optional extension for
 that category so estimates are never mislabeled as quotes or actual closed prices.
 Keep quotedPrice and closedPrice separate even when equal; negotiated jobs may have different
 values. These fixtures are user-provided evidence, not independently audited financial records.
-Three examples do not establish a general pricing formula.
+These examples do not establish a general pricing formula.
 
 Other fields:
 
-- items: generic type strings with positive integer quantities; independent of the narrower
-  supported item types in today's conversation workflow.
+- items: generic type strings with positive integer quantities, or null for unknown counts; independent of the narrower
+  supported item types in today's conversation workflow. Optional sizeCategory retains known size information.
 - boxCount: a separate total; do not repeat boxes in items or count them twice.
 - pickup and dropoff: optional floor, elevator, city and address fields. Prefer omitting
   addresses from pricing evals. Floor 0 means ground floor; false elevator is a known fact.
@@ -117,18 +117,83 @@ Other fields:
   "no difficulty"; an empty array means explicitly no extra difficulty.
 - disassemblyAssembly: unknown, or an object with nullable disassembly/assembly booleans and
   optional notes. Do not infer these services merely from an item type.
-- prices: nonnegative numeric currency units, never formatted strings.
+- prices: strictly positive numeric currency units, never formatted strings. Unknown prices stay omitted/null.
 - currency: v1 explicitly supports ILS only. Extend the allowlist deliberately before adding
   a dataset in another currency; future comparisons must not silently mix currencies.
 - outcome: WON, LOST, OPEN or UNKNOWN.
-- notes: anonymized provenance, missing information or qualifications only.
+- notes: anonymized provenance, missing information or qualifications only. Approximate box/item
+  counts are explicitly qualified here; do not treat them as exact inventory measurements.
+- evidenceNote: optional sanitized explanation of the source and what it does or does not establish.
+- priceRange: optional historical-estimate range with positive min/max and min <= max. It can
+  stand alone without an invented midpoint. If estimatedPrice is also supplied, it must lie
+  within the range. Reference ranges cannot be attached to closed_job or quoted_only records.
+- humanApprovalRequired: optional evidence that approval was required, not proof it was granted.
 
-Seed assumptions: each singular listed non-box item has quantity 1; the second job has two
+Original seed assumptions: each singular listed non-box item has quantity 1; the second job has two
 televisions. Bed base and mattress are separate items. Box counts 8 and 25 are recorded
 separately. The first job's box count and vehicle count are unknown, not zero or one.
 Unspecified dates, extra difficulty and assembly/disassembly details remain null. The reported
-ground-floor elevator in the second job is retained without reinterpretation. All three
+ground-floor elevator in the second job is retained without reinterpretation. The original three
 examples are closed_job / WON with quoted and closed prices of 450, 1200 and 2990 ILS.
+
+## Job evidence versus historical pricing heuristics
+
+Job-level evidence concerns a specific move, its known inventory/access conditions, and an
+actual quote/close or an internal job estimate. A heuristic describes a reusable reference
+band or possible adjustment without documenting a specific transaction. They must not be
+mixed as equivalent evaluation targets.
+
+closed_job is the strongest evidence because an actual final price is known. quoted_only is
+weaker: a sent quote does not establish the final outcome or price. historical_estimate is
+not ground truth and must never be promoted based on a recommendation alone. Source-quality
+validation separates the categories; it cannot independently verify that a transaction occurred.
+
+The historical expansion was checked against available repository/context evidence:
+
+| Case | Dataset entry | Evidence retained |
+| --- | --- | --- |
+| C: small refrigerator and washing machine | pricing-004 | Approximately 750 ILS recommended; pickup floor 3 without elevator; dropoff floor 1, elevator unknown. |
+| D: larger move, approximately 30 boxes | pricing-005 | Internal range 1,900–2,400 ILS and recommendation around 2,200 ILS; access difficulty at both ends, exact conditions unknown. |
+| E: complex multi-item move | pricing-006 | Approximately 4,500 ILS discussed/proposed; human approval required for multiple points/floors/access complexity. |
+
+All three additions are historical_estimate with outcome UNKNOWN and null quotedPrice/closedPrice.
+The historical request is the source of these sanitized summaries. No available repository
+evidence confirms that the recommendations were sent as quotes. In particular, the conditional
+report of a roughly 2,000 ILS close for case D is not corroborated, so no closed price or WON
+outcome is recorded for it. Approval of case E is also unknown.
+
+Unspecified item counts are null, not fabricated quantities. The approximate counts for boxes,
+plants and suitcases are retained as supplied and qualified in notes. The generic furniture
+description in case D may overlap listed items; future evaluation must not double-count it.
+Unknown workers, vehicles, dates, floors and elevator conditions remain unknown. Existing
+pricing-001 through pricing-003 are unchanged.
+
+### Historical pricing heuristics
+
+These user-supplied Rick & GO references are historical, context-dependent design inputs,
+not confirmed closed jobs or automatically enabled current pricing rules. Cases A and B
+are documented here because they are item reference bands without a specific route/job;
+cases F–J are rule-level references. None is represented by a fabricated job in the dataset.
+
+| Reference | Historical amount/rule in ILS |
+| --- | --- |
+| A: small refrigerator | Around 300 |
+| A: regular refrigerator | Around 350 |
+| A: large / four-door refrigerator | Around 400–450 |
+| B: washing machine | Approximately 280–320 |
+| F: additional pickup/dropoff point | Around 200–300 |
+| G: floors without elevator | Approximately 100–150 per floor, depending on job context |
+| H: bed disassembly/assembly | Approximately 180–350 |
+| H: wardrobe disassembly/assembly | Approximately 350–600, depending on size/complexity |
+| I: waiting time | Approximately 150 per half-hour |
+| J: student discount | Reported historical rule of 10% |
+
+There are six defensible job-level cases, rather than a forced target of eight to twelve.
+The references above remain available for future Pricing Engine design without contaminating
+closed-job ground truth. A future Pricing Engine must not simply memorize examples or assume
+every adjustment stacks independently. It should use deterministic rules with explicit
+conditions and human approval for uncertain or complex jobs. This milestone implements no
+pricing calculations, discounts or approval automation.
 
 ## Loader and validation
 

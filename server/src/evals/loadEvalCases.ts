@@ -7,7 +7,7 @@ const jsonObject = z.record(text, z.json());
 const date = z.iso.date();
 const count = z.number().int().nonnegative();
 const positiveCount = z.number().int().positive();
-const money = z.number().finite().nonnegative();
+const money = z.number().finite().positive();
 
 // Expectations are partial semantic projections, not full production Lead objects.
 // Keep these extensible for future capabilities without expanding the production domain.
@@ -43,7 +43,12 @@ const location = z.object({
 export const pricingCaseSchema = z.object({
   id,
   sourceQuality: z.enum(['closed_job', 'quoted_only', 'historical_estimate']),
-  items: z.array(z.object({ type: text, quantity: positiveCount }).strict()).min(1),
+  items: z.array(z.object({
+    type: text,
+    // Unknown historical counts stay unknown rather than becoming fabricated quantities.
+    quantity: positiveCount.nullable(),
+    sizeCategory: text.optional(),
+  }).strict()).min(1),
   boxCount: count.nullable().optional(),
   pickup: location.optional(),
   dropoff: location.optional(),
@@ -60,6 +65,9 @@ export const pricingCaseSchema = z.object({
   closedPrice: money.nullable().optional(),
   // Internal estimates must not be mislabeled as a sent quote or a closed price.
   estimatedPrice: money.nullable().optional(),
+  priceRange: z.object({ min: money, max: money }).strict().optional(),
+  evidenceNote: text.optional(),
+  humanApprovalRequired: z.boolean().optional(),
   currency: z.enum(['ILS']),
   outcome: z.enum(['WON', 'LOST', 'OPEN', 'UNKNOWN']),
   notes: text.optional(),
@@ -75,10 +83,24 @@ export const pricingCaseSchema = z.object({
     issue('quotedPrice', 'quoted_only requires the quote that was sent.');
   }
   if (entry.sourceQuality === 'historical_estimate') {
-    if (entry.estimatedPrice == null) issue('estimatedPrice', 'A historical estimate requires an estimated price.');
+    if (entry.estimatedPrice == null && entry.priceRange === undefined) {
+      issue('estimatedPrice', 'A historical estimate requires an estimated price or range.');
+    }
     if (entry.quotedPrice != null) issue('quotedPrice', 'An estimate is not a sent quote.');
   } else if (entry.estimatedPrice != null) {
     issue('estimatedPrice', 'Keep historical estimates in separate historical_estimate cases.');
+  }
+  if (entry.priceRange !== undefined) {
+    if (entry.sourceQuality !== 'historical_estimate') {
+      issue('priceRange', 'Reference ranges belong only to historical_estimate cases.');
+    }
+    if (entry.priceRange.min > entry.priceRange.max) {
+      issue('priceRange', 'The minimum price must not exceed the maximum.');
+    }
+    if (entry.estimatedPrice != null &&
+      (entry.estimatedPrice < entry.priceRange.min || entry.estimatedPrice > entry.priceRange.max)) {
+      issue('estimatedPrice', 'The estimate must fall within its supplied range.');
+    }
   }
 });
 
