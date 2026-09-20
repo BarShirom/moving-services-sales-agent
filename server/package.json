@@ -6,10 +6,12 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json",
-    "test": "tsx --test tests/lead.test.ts tests/requirements.test.ts tests/extraction.test.ts tests/mergeExtraction.test.ts tests/conversation.test.ts tests/aiExtraction.test.ts tests/demo.test.ts tests/conversationReplies.test.ts tests/offScript.test.ts tests/evals.test.ts",
+    "test": "tsx --test tests/lead.test.ts tests/requirements.test.ts tests/extraction.test.ts tests/mergeExtraction.test.ts tests/conversation.test.ts tests/aiExtraction.test.ts tests/demo.test.ts tests/conversationReplies.test.ts tests/offScript.test.ts tests/evals.test.ts tests/evalRunner.test.ts",
     "build": "tsc",
     "start": "node dist/server.js",
-    "demo:ai": "tsx src/scripts/demoAIExtraction.ts"
+    "demo:ai": "tsx src/scripts/demoAIExtraction.ts",
+    "eval": "node --import tsx src/evals/runEvals.ts",
+    "eval:json": "node --import tsx src/evals/runEvals.ts --json"
   },
   "dependencies": {
     "express": "^5.1.0",

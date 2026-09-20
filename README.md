@@ -389,9 +389,15 @@ NOT_AVAILABLE. The shortcut accepts only an entire, unambiguous short reply (inc
 Compound replies always go through full extraction, including their photo and measurement facts.
 Existing RECEIVED and NOT_APPLICABLE meanings are preserved.
 
-`buildConversationResponse.ts` combines the photo acknowledgement with the next engine question,
+`buildConversationResponse.ts` combines acknowledgements with the next engine question,
 or a human-review/pricing next step when collection is complete. It also returns a reply for
 unsupported items needing review. It does not claim an external handoff has occurred.
+`conversationEvents.ts` derives applied corrections, extra supplied facts, access notes, and
+customer follow-up intent from the latest merged state and the question actually presented.
+Acknowledgements compose across simultaneous events. A narrow Hebrew will-check/unknown cue
+defers only still-missing requirements from that question for this response; their status and
+Lead readiness remain unchanged. Other askable requirements may continue, and an acknowledgement
+alone is returned when waiting is the only next step. Deferral is transient, not a Lead field.
 This is deterministic and needs no second model call. The demo persists the complete response
 as an AGENT message. React renders that text in both chat and the response card without deciding
 requirements, readiness, or wording. Photos remain pending review; no upload, quote approval,
@@ -443,3 +449,27 @@ measurements, partial measurement follow-ups, dimension units/orientation fixtur
 extra address details, partial answers, isolated corrections, compound corrections, unavailable
 photos outside the active question, ambiguity, atomic validation, and preservation of known state.
 These are offline structured-model fixtures and workflow tests, not a live-model language benchmark.
+
+## Offline evaluation runner
+
+Eval Runner v0.1 checks the conversation workflow against the public evaluation datasets
+and reports pricing evidence readiness. It uses explicit offline extraction fixtures and
+existing domain logic; it never calls live OpenAI or scores pricing accuracy.
+
+From the repository root:
+
+    npm run eval
+    npm run --silent eval:json
+
+The JSON command is suitable for CI consumption. Reports are printed, not persisted.
+Failed executable assertions or invalid evidence exit with code 1; unsupported/future cases
+are reported as NOT_RUN. PASS is limited to the supported checks, with remaining natural-language
+mustNot statements explicitly listed for manual review.
+
+The current baseline is 23 conversation cases passing, 0 failing, and 2 future removal-service
+cases not run. All 6 pricing records are ready for a future Pricing Engine evaluation.
+The eval command exits 0 for this baseline. Dataset expectations and execution fixtures remain
+unchanged; the workflow now acknowledges applied updates and defers will-check questions.
+
+See [the evaluation dataset and runner guide](data/evals/README.md) for fixtures, limitations,
+source-quality reporting and how to turn an anonymized manual bug into a permanent regression case.

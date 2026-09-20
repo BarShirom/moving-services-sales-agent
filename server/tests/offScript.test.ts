@@ -199,6 +199,8 @@ test('address reply captures extra floor and elevator facts and skips both quest
   const question: NextQuestion = { text: 'מה כתובת הפריקה?', requirements: [{ id: 'dropoff.address' }] };
   const result = await turn(lead, 'סלמה 67, קומה 5 ויש מעלית', data, question);
   assert.deepEqual(result.lead.moveDetails.dropoff, readyLead().moveDetails.dropoff);
+  assert.match(result.acknowledgement!, /קיבלתי/);
+  assert.doesNotMatch(result.responseText, /באיזו קומה|האם יש מעלית|מה הכתובת/);
   assert.deepEqual(result.nextQuestion?.requirements, photo.requirements);
 });
 
@@ -212,6 +214,8 @@ test('address and a date supplied early are retained and not asked again', async
   const result = await turn(lead, 'סלמה 67 קומה 5 עם מעלית, וזה ל-25/09', data, evaluateRequirements(lead).nextQuestion!);
   assert.equal(result.lead.moveDetails.requestedDate, '2026-09-25');
   assert.deepEqual(result.lead.moveDetails.dropoff, readyLead().moveDetails.dropoff);
+  assert.match(result.acknowledgement!, /קיבלתי/);
+  assert.doesNotMatch(result.responseText, /באיזו קומה|האם יש מעלית|מה הכתובת/);
   assert.deepEqual(result.nextQuestion?.requirements, photo.requirements);
 });
 
@@ -271,7 +275,8 @@ test('ambiguous same-type item availability updates remain unapplied while clear
   assert.equal(result.unappliedItems.length, 1);
   assert.deepEqual(result.lead.moveDetails.items, lead.moveDetails.items);
   assert.equal(result.lead.moveDetails.pickup.floor, 3);
-  assert.equal(result.acknowledgement, undefined);
+  assert.match(result.acknowledgement!, /עדכנתי.*קומת האיסוף.*3/);
+  assert.doesNotMatch(result.acknowledgement!, /מידות|תמונה/);
 });
 
 test('availability never erases received photos and invalid measurements reject the entire update', async () => {
@@ -288,4 +293,132 @@ test('availability never erases received photos and invalid measurements reject 
       (error: unknown) => error instanceof AIExtractionError && error.code === 'INVALID_EXTRACTION');
     assert.deepEqual(lead, before);
   }
+});
+
+test('a correction is acknowledged before the next missing date question', async () => {
+  const lead = readyLead();
+  lead.moveDetails.requestedDate = null;
+  const data = empty();
+  data.pickup.floor = correct(3);
+  const result = await turn(lead, 'טעיתי, האיסוף הוא מקומה 3', data, evaluateRequirements(lead).nextQuestion!);
+  assert.match(result.acknowledgement!, /עדכנתי.*קומת האיסוף.*3/);
+  assert.deepEqual(result.nextQuestion?.requirements, [{ id: 'requestedDate' }]);
+  assert.equal(result.responseText, `${result.acknowledgement} ${result.nextQuestion!.text}`);
+  assert.deepEqual(result.lead.moveDetails, { ...lead.moveDetails, pickup: { ...lead.moveDetails.pickup, floor: 3 } });
+});
+
+test('complete measurements and a floor correction both receive acknowledgement before review', async () => {
+  const lead = readyLead();
+  const data = empty();
+  data.dropoff.floor = correct(4);
+  data.items = [fridge({ photoStatus: set('NOT_AVAILABLE'),
+    dimensions: { width: set(70), height: set(180), depth: set(68) } })];
+  const result = await turn(lead, 'אין לי תמונה, גובה 180, רוחב 70 ועומק 68. טעיתי, הפריקה בקומה 4.', data, photo);
+  assert.match(result.acknowledgement!, /מידות.*התקבלו/);
+  assert.match(result.acknowledgement!, /עדכנתי.*קומת הפריקה.*4/);
+  assert.match(result.responseText, /בדיקה ותמחור.*צוות/);
+  assert.equal(result.nextQuestion, null);
+  assert.equal(result.lead.moveDetails.dropoff.floor, 4);
+  assert.deepEqual(result.lead.moveDetails.items[0].dimensions, { width: 70, height: 180, depth: 68 });
+  assert.deepEqual(result.lead.moveDetails.pickup, lead.moveDetails.pickup);
+  assert.deepEqual(result.lead.moveDetails.items[1], lead.moveDetails.items[1]);
+});
+
+test('a claimed correction with no applied change receives no correction acknowledgement', async () => {
+  const result = await turn(readyLead(), 'טעיתי בפרטים', empty(), photo);
+  assert.equal(result.acknowledgement, undefined);
+  assert.deepEqual(result.nextQuestion?.requirements, photo.requirements);
+});
+
+test('stair carry acknowledgement retains elevator availability and does not re-ask known access facts', async () => {
+  const lead = readyLead();
+  const data = empty();
+  data.dropoff.elevator = set(true);
+  data.specialAccessNotes = set('בפריקה יש מעלית אך המקרר לא נכנס בה ונדרשת נשיאה במדרגות');
+  const result = await turn(lead, 'יש מעלית אבל המקרר לא נכנס בה, צריך להעלות אותו במדרגות', data,
+    { text: 'האם יש קשיי גישה בפריקה?', requirements: [{ id: 'specialAccessNotes' }] });
+  assert.equal(result.lead.moveDetails.dropoff.elevator, true);
+  assert.match(result.acknowledgement!, /נשיאה במדרגות/);
+  assert.equal(result.responseText, `${result.acknowledgement} ${result.nextQuestion!.text}`);
+  assert.deepEqual(result.nextQuestion?.requirements, photo.requirements);
+  assert.deepEqual(result.lead.moveDetails, { ...lead.moveDetails,
+    specialAccessNotes: 'בפריקה יש מעלית אך המקרר לא נכנס בה ונדרשת נשיאה במדרגות' });
+  const repeated = await turn(result.lead, 'תודה', empty(), result.nextQuestion!);
+  assert.equal(repeated.acknowledgement, undefined, 'old access notes are not acknowledged on unrelated turns');
+});
+
+for (const text of ['אני לא יודע כרגע, אבדוק ואעדכן', 'אבדוק ואעדכן']) {
+  test('unknown floor stays missing without an immediate question loop: ' + text, async () => {
+    const lead = readyLead();
+    lead.moveDetails.dropoff.floor = null;
+    const question = evaluateRequirements(lead).nextQuestion!;
+    const result = await turn(lead, text, empty(), question);
+    assert.match(result.acknowledgement!, /כשתדע/);
+    assert.equal(result.responseText, result.acknowledgement);
+    assert.equal(result.nextQuestion, null);
+    assert.equal(result.requirements.readyForPricing, false);
+    assert.equal(result.lead.status, 'COLLECTING_INFORMATION');
+    assert.ok(result.requirements.missingRequired.some(ref => ref.id === 'dropoff.floor'));
+    assert.deepEqual(result.lead.moveDetails, lead.moveDetails);
+    assert.deepEqual(evaluateRequirements(result.lead).nextQuestion, question, 'deferral does not change persistent requirements');
+    const next = await turn(result.lead, 'אפשר להמשיך', empty());
+    assert.deepEqual(next.nextQuestion, question, 'the deferral lasts only one response');
+    const data = empty();
+    data.dropoff.floor = set(4);
+    const confirmed = await turn(result.lead, 'בדקתי, הפריקה בקומה 4', data);
+    assert.equal(confirmed.lead.moveDetails.dropoff.floor, 4);
+    assert.deepEqual(confirmed.nextQuestion?.requirements, photo.requirements);
+  });
+}
+
+test('will-check replies still merge extra facts and corrections before selecting another missing requirement', async () => {
+  const lead = readyLead();
+  lead.moveDetails.dropoff.floor = null;
+  lead.moveDetails.dropoff.address = null;
+  lead.moveDetails.requestedDate = null;
+  const data = empty();
+  data.dropoff.address = set('רחוב דוגמה ב 12');
+  data.pickup.floor = correct(3);
+  const result = await turn(lead, 'הכתובת רחוב דוגמה ב 12. את הקומה אבדוק ואעדכן. טעיתי, האיסוף קומה 3.',
+    data, evaluateRequirements(lead).nextQuestion!);
+  assert.equal(result.lead.moveDetails.dropoff.address, 'רחוב דוגמה ב 12');
+  assert.equal(result.lead.moveDetails.dropoff.floor, null);
+  assert.equal(result.lead.moveDetails.pickup.floor, 3);
+  assert.match(result.acknowledgement!, /עדכנתי.*קומת האיסוף.*3/);
+  assert.match(result.acknowledgement!, /כשתדע/);
+  assert.deepEqual(result.nextQuestion?.requirements, [{ id: 'requestedDate' }]);
+  assert.doesNotMatch(result.responseText, /באיזו קומה|מה הכתובת/);
+  assert.ok(result.requirements.missingRequired.some(ref => ref.id === 'dropoff.floor'));
+  assert.deepEqual(result.lead.moveDetails.items, lead.moveDetails.items);
+});
+
+test('deferral applies only to the asked item and leaves another item measurement askable', async () => {
+  const lead = readyLead();
+  lead.moveDetails.items[0].dimensionsAvailable = true;
+  lead.moveDetails.items[0].dimensions = { width: null, height: 180, depth: 68 };
+  lead.moveDetails.items[0].photoStatus = 'NOT_AVAILABLE';
+  const second = createMoveItem('refrigerator');
+  second.sizeCategory = 'LARGE';
+  second.dimensionsAvailable = true;
+  second.dimensions = { width: null, height: 170, depth: 60 };
+  second.photoStatus = 'NOT_AVAILABLE';
+  lead.moveDetails.items.push(second);
+  const question = evaluateRequirements(lead).nextQuestion!;
+  assert.deepEqual(question.requirements, [{ id: 'item.width', itemIndex: 0 }]);
+  const result = await turn(lead, 'אבדוק ואעדכן', empty(), question);
+  assert.deepEqual(result.nextQuestion?.requirements, [{ id: 'item.width', itemIndex: 2 }]);
+  assert.deepEqual(result.lead.moveDetails, lead.moveDetails);
+  assert.ok(result.requirements.pendingReview.some(ref => ref.id === 'item.width' && ref.itemIndex === 0));
+});
+
+test('an ordinary unanswered question and a will-check message without question context are not deferred', async () => {
+  const lead = readyLead();
+  lead.moveDetails.dropoff.floor = null;
+  const question = evaluateRequirements(lead).nextQuestion!;
+  const unanswered = await turn(lead, 'שלום', empty(), question);
+  assert.deepEqual(unanswered.nextQuestion, question);
+  assert.equal(unanswered.acknowledgement, undefined);
+  const noContext = await turn(lead, 'אבדוק ואעדכן', empty());
+  assert.deepEqual(noContext.nextQuestion, question);
+  assert.equal(noContext.acknowledgement, undefined);
 });

@@ -160,15 +160,27 @@ export function parsePricingCases(value: unknown): PricingEvalCase[] {
 
 // This relative path works from server/src/evals and compiled server/dist/evals,
 // independently of the process working directory. Keep data beside server when deploying.
-export async function loadEvalCases(directory = new URL('../../../data/evals/', import.meta.url)) {
+export async function loadEvalInputs(directory = new URL('../../../data/evals/', import.meta.url)) {
   const [conversationText, pricingText, readme] = await Promise.all([
     readFile(new URL('conversation-cases.json', directory), 'utf8'),
     readFile(new URL('pricing-cases.json', directory), 'utf8'),
     readFile(new URL('README.md', directory), 'utf8'),
   ]);
   for (const contents of [conversationText, pricingText, readme]) assertPublicEvalText(contents);
+  const conversationCases: unknown = JSON.parse(conversationText);
+  const pricingCases: unknown = JSON.parse(pricingText);
+  if (!Array.isArray(conversationCases) || !Array.isArray(pricingCases)) {
+    throw new Error('Both eval datasets must be JSON arrays.');
+  }
+  assertPublicJson(conversationCases);
+  assertPublicJson(pricingCases);
+  return { conversationCases: conversationCases as unknown[], pricingCases: pricingCases as unknown[] };
+}
+
+export async function loadEvalCases(directory?: URL) {
+  const inputs = await loadEvalInputs(directory);
   return {
-    conversationCases: parseConversationCases(JSON.parse(conversationText)),
-    pricingCases: parsePricingCases(JSON.parse(pricingText)),
+    conversationCases: parseConversationCases(inputs.conversationCases),
+    pricingCases: parsePricingCases(inputs.pricingCases),
   };
 }

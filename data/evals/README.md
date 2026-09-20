@@ -1,9 +1,10 @@
 # Moving Services Sales Agent evaluation datasets
 
 These public fixtures evaluate conversation behavior and, later, deterministic pricing.
-They are evaluation data, not model-training data. No eval runner, pricing engine, or model
-call is included. Passing validation proves the fixtures are structurally valid; it does not
-prove the agent passes the behavioral cases or that a pricing model is accurate.
+They are evaluation data, not model-training data. Eval Runner v0.1 executes offline workflow
+checks and reports pricing evidence readiness. No pricing engine or live model call is included.
+Passing dataset validation proves structural validity, not conversation behavior or pricing
+accuracy; the separate runner reports which supported behavioral assertions pass or fail.
 
 ## Files and privacy boundary
 
@@ -46,8 +47,9 @@ Optional fields:
   has an id and, for an item-specific question, an itemIndex. This is the actual question asked,
   not a question inferred from the missing fields.
 - currentLeadState: a partial structured Lead snapshot. The seeds contain moveDetails only.
-  A future adapter should create a fresh Lead and overlay this state, retaining normal defaults
+  The v0.1 adapter creates a fresh Lead and overlays moveDetails, retaining normal defaults
   for omitted fields. Omitted snapshots mean a fresh Lead; null means explicitly unknown.
+  Unsupported snapshot fields are reported as NOT_RUN rather than silently ignored.
   No fixture needs live IDs, timestamps or a real customer message history.
 - referenceDate: explicit YYYY-MM-DD for date interpretation; never substitute today's date
   or infer a year from model memory.
@@ -62,7 +64,8 @@ Optional fields:
 - mustNot: forbidden behaviors, interpreted semantically.
 
 Free-text notes such as specialAccessNotes are meaning-based expectations; equivalent Hebrew
-wording is valid. Neither the schema nor this milestone implements a semantic comparator.
+wording is valid. The runner uses explicit fact-pattern checks for the two current access-note
+scenarios; there is no general-purpose natural-language semantic comparator.
 Do not require exact conversation prose unless a future case explicitly explains why exact
 wording matters. Every real bug found during manual testing should become a permanent,
 anonymized regression case. Keep IDs stable as the suite grows.
@@ -199,7 +202,9 @@ pricing calculations, discounts or approval automation.
 
 server/src/evals/loadEvalCases.ts exports:
 
-- loadEvalCases(): reads both JSON files and this README, validates public content, and
+- loadEvalInputs(): reads both JSON files and this README and checks public content, including
+  decoded JSON strings; leaves case-level validation to the runner for per-case error reports.
+- loadEvalCases(): additionally validates both complete datasets and
   returns conversationCases and pricingCases.
 - parseConversationCases(value) and parsePricingCases(value): validate in-memory unknown
   JSON data, including decoded strings and unique IDs.
@@ -221,3 +226,96 @@ Run from the repository root:
     npm run typecheck
     npm run build
     git diff --check
+
+## Eval Runner v0.1
+
+The runner makes the dataset useful as a repeatable regression baseline for future CI.
+Run from the repository root:
+
+    npm run eval
+    npm run eval:json
+    npm run --silent eval:json
+
+The last command suppresses npm banners for a clean JSON stream. Both root and server
+packages provide eval and eval:json scripts; --json is also supported by the entry point.
+After building, the compiled entry point can run as:
+
+    node server/dist/evals/runEvals.js --json
+
+The root scripts invoke the entry point directly. An integration test verifies that the
+actual npm process exit code matches the JSON report. This avoids an installed npm workspace
+wrapper behavior that could report exit 0 after a failing nested workspace command.
+
+### What is executed
+
+Conversation execution uses createLead/createMoveItem and the existing
+processCustomerMessageWithExtractor workflow, requirements engine and response builder.
+The adapter validates and overlays partial moveDetails snapshots; it does not implement
+extraction, requirement ordering, pricing or response composition.
+
+conversationFixtures.ts contains separately authored, typed offline extractor responses
+for 22 cases. They are normalized domain updates, not model outputs. conv-005 exercises the
+existing deterministic short-photo reply directly and rejects any fallback extraction.
+The fixture message must match the dataset message, otherwise the case is NOT_RUN.
+The runner never derives fixture output from expectedExtraction or expectedStateChanges.
+Changing an expected result therefore cannot change the behavior being tested.
+
+PASS means the implemented workflow assertions passed under the specified fixture/domain
+mode. It does NOT measure the model's ability to extract Hebrew, normalize dates or convert
+measurement units. Fixture extraction comparisons test only the declared contract. No OpenAI
+module is imported by the runner, no API key is needed, and there is no live mode or AI fallback.
+
+Supported checks include declared state changes, extraction projections, preservation of
+undeclared state (including null, false and zero), avoiding already-satisfied questions,
+avoiding unavailable photo requests, and explicit next-question/response intents.
+Extraction items match by unique type. Response acknowledgements use small Hebrew keyword
+patterns, not exact sentences; the access-note cases use explicit fact patterns. These are
+limited assertions, not a model-based semantic judge.
+
+A small, explicit set of mustNot wording families maps to automated invariants. Remaining
+free-text policy statements appear in each JSON result's manualMustNot list and in a console
+coverage notice. Passing those implemented checks does not imply that all natural-language
+constraints were evaluated. Unknown intents, missing/stale fixtures, unsupported snapshot
+fields and future capabilities are NOT_RUN with reasons, never silently counted as passes.
+
+### Status, ordering and exit behavior
+
+- Conversation results: PASS, FAIL, NOT_RUN, with mode, reason, checked assertions, failed
+  assertions and remaining manual constraints.
+- Pricing results: READY_FOR_PRICING_EVAL or INVALID. The existing source-quality schema
+  validates evidence; no predicted price, accuracy score or error metric is produced.
+- Pricing summary counts valid evidence by sourceQuality, known closed/quoted prices, required
+  human approval and ranges. Invalid rows count in total/invalid, not in valid-evidence counts.
+- Results preserve input dataset order. Reports omit generated Lead IDs, timestamps and
+  durations, so identical input produces deterministic text and JSON.
+- Any conversation FAIL, pricing INVALID, duplicate ID, loading/privacy/JSON error, empty
+  pricing dataset, or run with no executable conversation cases exits 1.
+- Otherwise the run exits 0. NOT_RUN cases are reported explicitly and do not fail a run
+  with other executable cases. JSON status/exitCode matches the process result.
+- Reports go to stdout only and are not saved in the repository by default.
+
+### Current baseline
+
+The current offline baseline is 23 PASS, 0 FAIL, and 2 NOT_RUN out of 25 conversation cases.
+The deterministic workflow acknowledges applied corrections (including corrections combined
+with measurements), extra supplied information, and recorded access difficulties. A customer
+will-check reply retains missing requirements while deferring that question for the current
+response. Eval expectations, extraction fixtures, and runner assertions are unchanged.
+
+conv-011 and conv-025 remain NOT_RUN: the additional removal-service workflow has no execution
+adapter yet. PASS checks workflow with offline fixtures, not live model extraction accuracy.
+
+All 6 pricing cases are READY_FOR_PRICING_EVAL: 3 closed_job, 0 quoted_only, 3 historical_estimate.
+There are 3 known closed prices, 3 known quotes, 1 human-approval flag, and 1 price range.
+The runner returns PASSED / exit 0 for this baseline. Real assertion failures or invalid
+evidence still produce FAILED / exit 1.
+
+### Adding a real regression
+
+Anonymize the failing message and state before adding a stable case ID. Record state/intent
+expectations and relevant mustNot statements, keeping business facts separate from exact prose.
+Add or update a reviewed offline fixture with an independently specified extraction result
+and matching message, or leave the case explicitly NOT_RUN until an adapter exists.
+For a new response intent or access-note meaning, add a small explicit assertion and a runner
+test. Retain every real failure as a permanent case. A future CI job can run npm run eval;
+do not change expected results or fixtures merely to hide a production regression.

@@ -1,3 +1,5 @@
+import { identifyConversationEvents, sameRequirement } from './conversationEvents.js';
+import { selectNextQuestion } from '../requirements/nextQuestion.js';
 import { applyUnavailablePhotoReply } from './photoReply.js';
 import { buildConversationResponse, type ConversationResponse } from './buildConversationResponse.js';
 import { randomUUID } from 'node:crypto';
@@ -25,7 +27,7 @@ export function processCustomerMessage(
 
 // Shared orchestration for synchronous and asynchronous extractors.
 function applyCustomerExtraction(
-  lead: Lead, text: string, extraction: ExtractionResult, context: RequirementContext, acknowledgement?: string,
+  lead: Lead, text: string, extraction: ExtractionResult, context: RequirementContext, acknowledgement?: string, lastQuestion?: NextQuestion,
 ): ProcessCustomerMessageResult {
   const merged = mergeExtraction(lead, extraction);
   const timestamp = new Date().toISOString();
@@ -36,10 +38,17 @@ function applyCustomerExtraction(
   };
   const updatedLead = updateLeadReadiness(withMessage, context);
   const requirements = evaluateRequirements(updatedLead, context);
+  const events = identifyConversationEvents(lead, updatedLead, text, requirements, lastQuestion);
+  const deferred = events.flatMap(event => event.type === 'CUSTOMER_WILL_CONFIRM_LATER' ? event.requirements : []);
+  if (deferred.length) {
+    // Only change this turn's selected question. Missing facts, policy and readiness stay intact.
+    requirements.nextQuestion = selectNextQuestion(requirements.requirements.map(result =>
+      deferred.some(ref => sameRequirement(ref, result)) ? { ...result, question: null } : result));
+  }
   return {
     lead: updatedLead, extraction, unappliedItems: merged.unappliedItems,
     requirements, nextQuestion: requirements.nextQuestion,
-    ...buildConversationResponse(updatedLead, requirements, acknowledgement, lead),
+    ...buildConversationResponse(updatedLead, requirements, acknowledgement, lead, events),
   };
 }
 
@@ -63,11 +72,11 @@ export async function processCustomerMessageWithExtractor(
   const context = structuredClone(options.requirementsContext ?? {});
   const photoReply = applyUnavailablePhotoReply(snapshot, text, options.lastQuestion);
   if (photoReply) {
-    return applyCustomerExtraction(photoReply.lead, text, {}, context, photoReply.acknowledgement);
+    return applyCustomerExtraction(photoReply.lead, text, {}, context, photoReply.acknowledgement, options.lastQuestion);
   }
   const extraction = await options.extractor({
     lead: structuredClone(snapshot), text, referenceDate: options.referenceDate,
     lastQuestion: options.lastQuestion ? structuredClone(options.lastQuestion) : undefined,
   });
-  return applyCustomerExtraction(snapshot, text, extraction, context);
+  return applyCustomerExtraction(snapshot, text, extraction, context, undefined, options.lastQuestion);
 }

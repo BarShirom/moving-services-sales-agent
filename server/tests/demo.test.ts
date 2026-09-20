@@ -55,7 +55,9 @@ test('message route retains facts, forwards the displayed question and records b
   assert.equal(firstResponse.status, 200);
   const first: DemoSnapshot = await firstResponse.json() as DemoSnapshot;
   assert.deepEqual(first.lead.messages.map(message => message.sender), ['CUSTOMER', 'AGENT']);
-  assert.equal(first.lead.messages[1].text, first.nextQuestion?.text);
+  assert.match(first.acknowledgement!, /קיבלתי/);
+  assert.equal(first.responseText, `${first.acknowledgement} ${first.nextQuestion?.text}`);
+  assert.equal(first.lead.messages[1].text, first.responseText);
   assert.equal(first.requirements.missingRequired.some(requirement => requirement.id === 'pickup.elevator'), false);
   const second: DemoSnapshot = await (await api.post('message', { message: '2' })).json() as DemoSnapshot;
   assert.equal(second.lead.moveDetails.pickup.floor, 0);
