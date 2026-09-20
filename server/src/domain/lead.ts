@@ -23,6 +23,8 @@ export interface MoveItem {
   photoStatus: 'REQUIRED' | 'RECEIVED' | 'NOT_APPLICABLE' | 'NOT_AVAILABLE';
   description: string | null;
   dimensions: Dimensions;
+  // Customer can supply measurements; this is not evidence of their actual values.
+  dimensionsAvailable: boolean | null;
   requiresDisassembly: boolean | null;
   requiresAssembly: boolean | null;
 }

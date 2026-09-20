@@ -106,7 +106,7 @@ test('application reference date follows Jerusalem midnight rather than UTC or h
   assert.equal(israelReferenceDate(new Date('2026-09-15T21:01:00Z')), '2026-09-16');
 });
 
-for (const reply of ['אין', 'אין לי', 'אין תמונה', 'אין לי תמונה', 'לא', 'לא כרגע']) {
+for (const reply of ['אין', 'אין לי', 'אין תמונה', 'אין לי תמונה', 'אין לי כרגע', 'לא', 'לא כרגע']) {
   test(`photo request followed by ${reply} updates availability, acknowledges and never repeats`, async () => {
     const lead = readyLead();
     const before = structuredClone(lead);

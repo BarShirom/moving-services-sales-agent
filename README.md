@@ -385,7 +385,8 @@ Previously no state represented an unavailable photo: the item stayed REQUIRED a
 was selected again. The asynchronous workflow now recognizes `אין`, `אין לי`, `אין תמונה`,
 `אין לי תמונה`, `לא`, and `לא כרגע` only when the actually presented question contains one
 targeted item.photo requirement and that item is still REQUIRED. It updates only that item to
-NOT_AVAILABLE. Elevator answers and ambiguous/compound replies do not take this shortcut.
+NOT_AVAILABLE. The shortcut accepts only an entire, unambiguous short reply (including `אין לי כרגע`).
+Compound replies always go through full extraction, including their photo and measurement facts.
 Existing RECEIVED and NOT_APPLICABLE meanings are preserved.
 
 `buildConversationResponse.ts` combines the photo acknowledgement with the next engine question,
@@ -409,3 +410,36 @@ Automated tests are offline. Separate manual live checks passed the reported con
 each of the four numeric date formats; these sample model behavior, not every possible phrasing.
 Browser checks use an isolated injected extractor and cover desktop/mobile, loading, retained
 drafts on safe errors, response rendering, and reset.
+
+### Off-script facts, photo declines, and offered dimensions
+
+Every compound customer message is extracted in full before validated updates are merged and
+the full Lead is re-evaluated. The actual last question resolves references; it does not restrict
+extraction to the requested fields. Address replies can include floors, elevators, dates or
+corrections. Only explicitly updated fields change; unknown facts and unrelated known data remain intact.
+
+The strict per-item AI schema now includes photoStatus (only NOT_AVAILABLE can be extracted)
+and dimensionsAvailable. The latter is stored on MoveItem as true, false, or null:
+true records an explicit offer, false records inability to supply measurements, and null is unknown.
+None of these values supplies width, height or depth. Measurements remain separately validated,
+positive centimeter values. The prompt covers Hebrew labels before/after values, approximate
+measurements, meter/millimeter conversion, and explicitly ordered triples. Unlabelled triples do
+not establish axes; promises never generate numbers. Received/non-applicable photos cannot be
+overwritten by model output. Ambiguous same-type item patches remain unapplied.
+
+An offered measurement set produces questions only for missing axes, grouped into one question.
+When a size category already meets pricing requirements, these measurements are optional REVIEW
+information; the offer adds no pricing requirement. If size itself is unknown, explicit dimensions
+can satisfy the existing size requirement. Withdrawing an optional offer preserves measurements
+already collected. Unavailable photos remain pending human review without a repeated photo request.
+
+Response composition compares the previous and merged item state. A photo decline plus a
+measurement offer acknowledges the alternative; a decline plus complete dimensions acknowledges
+receipt and continues to the next relevant question or human review/pricing step. No second model
+call, pricing change, automatic approval, upload support, or React business logic is introduced.
+
+server/tests/offScript.test.ts covers the reported combined reply, available-versus-supplied
+measurements, partial measurement follow-ups, dimension units/orientation fixtures, early dates,
+extra address details, partial answers, isolated corrections, compound corrections, unavailable
+photos outside the active question, ambiguity, atomic validation, and preservation of known state.
+These are offline structured-model fixtures and workflow tests, not a live-model language benchmark.

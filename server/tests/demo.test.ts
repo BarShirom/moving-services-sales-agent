@@ -148,6 +148,7 @@ test('reported conversation progresses through address, elevator, date and unava
       data.items = ['refrigerator', 'box'].map(type => ({
         type: type as 'refrigerator' | 'box', quantity: type === 'box' ? set(15) : keep(),
         sizeCategory: type === 'refrigerator' ? set('LARGE') : keep(),
+        photoStatus: keep(), dimensionsAvailable: keep(),
         dimensions: { width: keep(), height: keep(), depth: keep() }, requiresDisassembly: keep(), requiresAssembly: keep(),
       }));
       data.pickup = { city: set('רמת גן'), address: set('ביאליק 20'), floor: set(2), elevator: set(false) };
@@ -192,4 +193,50 @@ test('reported conversation progresses through address, elevator, date and unava
   assert.match(result.responseText, /אין בעיה, נמשיך בלי תמונה/);
   assert.match(result.responseText, /בדיקה ותמחור/);
   assert.equal(result.lead.messages.length, 10);
+});
+
+
+test('HTTP demo persists a compound photo alternative and all three dimension question references', async t => {
+  let calls = 0;
+  const api = await demo(t, input => {
+    calls++;
+    if (calls === 1) return { moveDetails: {
+      items: [{ type: 'refrigerator', sizeCategory: 'LARGE' }, { type: 'box', quantity: 15 }],
+      pickup: { city: 'רמת גן', address: 'ביאליק 20', floor: 2, elevator: false },
+      dropoff: { city: 'תל אביב', address: 'סלמה 67', floor: 5, elevator: true },
+      requestedDate: '2026-09-25',
+    } };
+    if (calls === 2) {
+      assert.equal(input.text, 'אין לי כרגע, אבל יש לי את המידות');
+      assert.deepEqual(input.lastQuestion?.requirements, [{ id: 'item.photo', itemIndex: 0 }]);
+      return { moveDetails: { items: [{
+        type: 'refrigerator', photoStatus: 'NOT_AVAILABLE', dimensionsAvailable: true,
+      }] } };
+    }
+    assert.equal(calls, 3);
+    assert.deepEqual(input.lastQuestion?.requirements.map(r => r.id), ['item.width', 'item.height', 'item.depth']);
+    assert.equal(input.lead.moveDetails.items[0].dimensionsAvailable, true);
+    assert.equal(input.lead.messages.at(-1)?.sender, 'AGENT');
+    return { moveDetails: { items: [{ type: 'refrigerator', dimensions: { width: 70, height: 180, depth: 70 } }] } };
+  });
+  let response = await api.post('message', { message:
+    'מקרר גדול ו-15 ארגזים מרמת גן ביאליק 20 קומה 2 בלי מעלית לתל אביב סלמה 67 קומה 5 עם מעלית ב-25/09/2026' });
+  assert.equal(response.status, 200);
+  response = await api.post('message', { message: 'אין לי כרגע, אבל יש לי את המידות' });
+  assert.equal(response.status, 200);
+  const offered = await response.json() as DemoSnapshot;
+  assert.equal(offered.lead.moveDetails.items[0].photoStatus, 'NOT_AVAILABLE');
+  assert.match(offered.responseText, /המידות יעזרו/);
+  assert.equal(offered.lead.messages.at(-1)?.text, offered.responseText);
+  assert.deepEqual(await (await api.get()).json(), offered);
+  response = await api.post('message', { message: '70 רוחב, 180 גובה, 70 עומק' });
+  assert.equal(response.status, 200);
+  const completed = await response.json() as DemoSnapshot;
+  assert.equal(calls, 3);
+  assert.equal(completed.nextQuestion, null);
+  assert.deepEqual(completed.lead.moveDetails.items[0].dimensions, { width: 70, height: 180, depth: 70 });
+  assert.equal(completed.lead.moveDetails.items[1].quantity, 15);
+  assert.equal(completed.lead.messages.at(-1)?.text, completed.responseText);
+  assert.match(completed.responseText, /בדיקה ותמחור/);
+  assert.deepEqual(await (await api.get()).json(), completed);
 });

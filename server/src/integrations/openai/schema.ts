@@ -22,6 +22,8 @@ export const AIExtractionSchema = z.object({
     type: z.enum(['refrigerator', 'box', 'washing_machine', 'wardrobe', 'bed']),
     quantity: update(z.number()).describe('Explicit positive integer total, including approximate totals such as בערך 15, כ-15, משהו כמו 15. Unknown, incremental or ranged counts use keep.'),
     sizeCategory: update(z.enum(['SMALL', 'REGULAR', 'LARGE', 'FOUR_DOOR'])),
+    photoStatus: update(z.literal('NOT_AVAILABLE')).describe('Explicit photo refusal/unavailability for this item. Never infer receipt or completion of photo review.'),
+    dimensionsAvailable: update(z.boolean()).describe('Customer explicitly offers measurements (true) or says they cannot supply them (false). A promise contains no numeric dimensions.'),
     dimensions: z.object({
       width: update(z.number()), height: update(z.number()), depth: update(z.number()),
     }).strict(),

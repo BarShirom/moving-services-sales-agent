@@ -56,6 +56,7 @@ test('unknown booleans, confirmed false, and confirmed true survive JSON seriali
       quantity: null,
       sizeCategory: null,
       photoStatus: 'REQUIRED',
+      dimensionsAvailable: value,
       description: null,
       dimensions: { width: null, height: 180, depth: null },
       requiresDisassembly: value,
@@ -72,6 +73,7 @@ test('unknown booleans, confirmed false, and confirmed true survive JSON seriali
     assert.equal(restored.moveDetails.dropoff.elevator, value);
     assert.equal(restored.moveDetails.items[0].requiresDisassembly, value);
     assert.equal(restored.moveDetails.items[0].requiresAssembly, value);
+    assert.equal(restored.moveDetails.items[0].dimensionsAvailable, value);
     assert.equal(restored.moveDetails.pickup.floor, 0);
   }
 });

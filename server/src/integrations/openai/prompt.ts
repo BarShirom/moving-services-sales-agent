@@ -11,7 +11,8 @@ Otherwise use only a clearly relevant latest AGENT/HUMAN question in recentMessa
 Never assume a computed missing requirement was asked. If the referent is ambiguous, keep.
 
 Every field uses {action:"keep"}, or {action:"set",value:...}, or {action:"correct",value:...}.
-keep means no update, including uncertainty, alternatives, conflicting facts, and unmentioned fields.
+keep means no update, including uncertainty, conflicting candidate values, and unmentioned fields.
+An offered alternative source of information IS useful evidence; extract its availability separately.
 set supplies a previously unknown value (or explicitly repeats the same known value).
 correct is ONLY for an explicit customer correction/change to a known fact.
 An unrelated message must never reset a field. Never fill defaults or invent values.
@@ -56,9 +57,11 @@ For an empty Lead, items must contain BOTH entries below (all other response fie
 [
   {"type":"refrigerator","quantity":{"action":"keep"},"sizeCategory":{"action":"set","value":"LARGE"},
    "dimensions":{"width":{"action":"keep"},"height":{"action":"keep"},"depth":{"action":"keep"}},
+   "photoStatus":{"action":"keep"},"dimensionsAvailable":{"action":"keep"},
    "requiresDisassembly":{"action":"keep"},"requiresAssembly":{"action":"keep"}},
   {"type":"box","quantity":{"action":"set","value":15},"sizeCategory":{"action":"keep"},
    "dimensions":{"width":{"action":"keep"},"height":{"action":"keep"},"depth":{"action":"keep"}},
+   "photoStatus":{"action":"keep"},"dimensionsAvailable":{"action":"keep"},
    "requiresDisassembly":{"action":"keep"},"requiresAssembly":{"action":"keep"}}
 ]
 Also extract the communicated pickup/dropoff facts. The last line is part of the message, not optional context.
@@ -69,8 +72,16 @@ Do not let the coverage check override negation or uncertain existence; coverage
 
 Refrigerator sizeCategory only: קטן SMALL, רגיל REGULAR, גדול LARGE,
 ארבע דלתות or 4 דלתות FOUR_DOOR. Never set sizeCategory on another item type.
-Dimensions: width/height/depth in centimeters, only explicitly given measurements with clear
-axes and units (convert explicit meters to centimeters). Unlabelled ambiguous measurements stay keep.
+Dimensions: width/height/depth in centimeters. Use centimeters for bare axis-labelled measurements;
+convert explicit meters to centimeters and millimeters to centimeters. Labels can precede or follow numbers:
+"70 רוחב, 180 גובה, 70 עומק" and "רוחב 70 גובה 180 עומק 70" give width=70, height=180, depth=70.
+"גובה 180 ס"מ" gives height=180; "בערך 70 רוחב" gives width=70; "גובה 1.8 מטר" gives height=180.
+Approximate labelled measurements are useful. Preserve other unknown axes.
+"70 על 70 על 180" without explicit axis order is ambiguous: keep ALL axes, even if a fridge
+is usually taller than it is wide. If the customer explicitly labels the order רוחב, עומק, גובה,
+that same triple gives width=70, depth=70, height=180. Never use typical appliance shape to guess.
+A bare number can answer one specifically requested axis; multiple requested axes make it ambiguous.
+"יש לי את המידות" supplies NO numeric measurements: keep every axis.
 requiresDisassembly and requiresAssembly must be explicitly communicated for an identifiable item.
 לא צריך פירוק means requiresDisassembly=false; it says nothing about assembly.
 
@@ -99,8 +110,29 @@ Use set for an unknown date, correct only for an explicitly changed known date.
 requestedTime must be HH:mm (24-hour local time); normalize explicit unambiguous times.
 Relative dates היום, מחר, יום חמישי remain unresolved: keep requestedDate for those phrases.
 "לא, התכוונתי ליום חמישי ב-18:00" may correct the time to 18:00 but must keep the date.
-Photo availability is handled contextually by the application. A photo answer must not become
-an elevator, item, or date update unless the customer also explicitly communicates that fact.
+PHOTO AND DIMENSION AVAILABILITY: extract these facts alongside ALL other facts in the same message.
+For an identifiable existing item, explicit "אין לי תמונה" sets photoStatus=NOT_AVAILABLE.
+"אין לי כרגע" has that meaning only when the actual lastQuestion requests a photo for that item.
+Never interpret a generic negative elevator answer as photo unavailability. Never assert photo receipt.
+"אין לי כרגע, אבל יש לי את המידות" after a refrigerator photo request sets BOTH
+photoStatus=NOT_AVAILABLE and dimensionsAvailable=true; all numeric axes stay keep.
+"אין לי תמונה אבל יש מידות" has the same meaning. "יש לי את המידות" offers measurements;
+set dimensionsAvailable=true for the clearly identified item, even if another question was asked.
+"אין לי תמונה, רוחב 70 גובה 180 עומק 70" sets photoStatus=NOT_AVAILABLE AND all three axes.
+Explicitly supplied measurements may also set dimensionsAvailable=true. Never discard measurements
+because another clause declines a photo. "אין לי את המידות" sets dimensionsAvailable=false (correct
+if previously offered); keep any measurements already recorded. Do not infer unavailable dimensions
+from unavailable photos. Uncertain offers such as "אולי יש לי מידות" keep availability and axes.
+If multiple items make a referent ambiguous, omit that item's updates; extract other clear facts.
+Photo availability must not become an elevator or date update unless explicitly communicated.
+
+OFF-SCRIPT MESSAGES: the lastQuestion resolves references, it never limits what can be extracted.
+Read the entire message for partial answers, extras, future information, corrections, declines and offers.
+After a dropoff address question, "סלמה 67, קומה 5 ויש מעלית" sets dropoff.address, floor AND elevator.
+"סלמה 67 קומה 5 עם מעלית, וזה ל-25/09" also sets requestedDate to the verbatim token "25/09".
+After a grouped address/floor question, "סלמה 67" sets only the address; it says nothing about floor.
+"טעיתי, האיסוף הוא מקומה 3" corrects only pickup.floor even if lastQuestion is about dropoff or photos.
+Do not copy the other known location, item or date facts into a correction.
 Extract specialAccessNotes only for explicitly stated access constraints, without inventing needs.
 Before returning, check every clause for an affirmed supported item type you have omitted.
 Include all such distinct types, while keeping unknown attributes and excluding negated or hypothetical items.

@@ -25,6 +25,8 @@ export function mergeExtraction(lead: Lead, extraction: ExtractionResult): Merge
     if (matches.length === 0) items.push(item);
     if (update.quantity !== undefined) item.quantity = update.quantity;
     if (update.sizeCategory !== undefined) item.sizeCategory = update.sizeCategory;
+    if (update.dimensionsAvailable !== undefined) item.dimensionsAvailable = update.dimensionsAvailable;
+    if (update.photoStatus !== undefined) item.photoStatus = update.photoStatus;
     for (const axis of ['width', 'height', 'depth'] as const) {
       const value = update.dimensions?.[axis];
       if (value !== undefined) item.dimensions[axis] = value;

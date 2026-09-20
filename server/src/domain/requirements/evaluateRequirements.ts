@@ -57,12 +57,16 @@ export function evaluateRequirements(lead: Lead, context: RequirementContext = {
     const completeDimensions = Object.values(item.dimensions).every(positive);
     const partialDimensions = Object.values(item.dimensions).some(value => value !== null);
     const sizeKnown = hasText(item.sizeCategory) || completeDimensions;
-    const dimensionsNeeded = hints.dimensionsRequired === true || (profile?.size === true && !sizeKnown && partialDimensions);
+    const dimensionsNeeded = hints.dimensionsRequired === true || (profile?.size === true && !sizeKnown && (partialDimensions || item.dimensionsAvailable === true));
+    // Accept offered measurements without turning optional review information into
+    // a new pricing policy. Availability alone never satisfies a measurement.
+    const dimensionsOffered = item.dimensionsAvailable === true
+      || (item.photoStatus === 'NOT_AVAILABLE' && partialDimensions && item.dimensionsAvailable !== false);
     add('item.size', sizeKnown, dimensionsNeeded ? null : `מה הגודל או סוג הדגם של ${label}?`,
       { ...options, applicable: profile?.size === true });
     for (const [axis, title] of [['width', 'הרוחב'], ['height', 'הגובה'], ['depth', 'העומק']] as const) {
       add(`item.${axis}`, positive(item.dimensions[axis]), `מה ${title} של ${label} בסנטימטרים?`,
-        { ...options, applicable: dimensionsNeeded });
+        { ...options, applicable: dimensionsNeeded || dimensionsOffered, stage: dimensionsNeeded ? 'PRICING' : 'REVIEW' });
     }
     add('item.disassembly', item.requiresDisassembly !== null, `האם נדרש פירוק של ${label}?`,
       { ...options, applicable: hints.disassemblyRelevant ?? profile?.assembly ?? false });

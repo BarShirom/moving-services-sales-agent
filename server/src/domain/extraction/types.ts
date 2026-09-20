@@ -16,6 +16,8 @@ export interface ItemPatch {
   quantity?: number;
   sizeCategory?: RefrigeratorSize;
   dimensions?: { width?: number; height?: number; depth?: number };
+  dimensionsAvailable?: boolean;
+  photoStatus?: 'NOT_AVAILABLE';
   requiresDisassembly?: boolean;
   requiresAssembly?: boolean;
 }

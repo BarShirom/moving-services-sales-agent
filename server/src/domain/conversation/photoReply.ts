@@ -15,7 +15,7 @@ export function applyUnavailablePhotoReply(lead: Lead, text: string, lastQuestio
   const item = lead.moveDetails.items[index];
   if (!item || item.photoStatus !== 'REQUIRED') return undefined;
   const reply = text.trim().replace(/[.!]+$/u, '').trim().replace(/\s+/gu, ' ');
-  if (!/^(?:אין(?: לי)?(?: תמונה)?|לא(?: כרגע)?)$/u.test(reply)) return undefined;
+  if (!/^(?:אין(?: לי)?(?: תמונה)?(?: כרגע)?|לא(?: כרגע)?)$/u.test(reply)) return undefined;
   const updated = structuredClone(lead);
   updated.moveDetails.items[index].photoStatus = 'NOT_AVAILABLE';
   return { lead: updated, acknowledgement: 'אין בעיה, נמשיך בלי תמונה. אם יהיה צורך, נבקש השלמה בהמשך.' };

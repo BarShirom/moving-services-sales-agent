@@ -23,6 +23,7 @@ function empty(): AIExtraction {
 }
 function item(type: AIExtraction['items'][number]['type']): AIExtraction['items'][number] {
   return { type, quantity: keep(), sizeCategory: keep(),
+    photoStatus: keep(), dimensionsAvailable: keep(),
     dimensions: { width: keep(), height: keep(), depth: keep() },
     requiresDisassembly: keep(), requiresAssembly: keep() };
 }

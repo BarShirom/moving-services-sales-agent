@@ -18,7 +18,7 @@ export function buildExtractionContext({ lead, text, lastQuestion, referenceDate
   const limits = EXTRACTION_CONTEXT_LIMITS;
   if (text.length > limits.latestMessageChars
     || JSON.stringify(lead.moveDetails).length > limits.structuredStateChars
-    || (lastQuestion && (lastQuestion.text.length > limits.questionChars || lastQuestion.requirements.length > 2))) {
+    || (lastQuestion && (lastQuestion.text.length > limits.questionChars || lastQuestion.requirements.length > 3))) {
     throw new AIExtractionError('CONTEXT_TOO_LARGE', 'Extraction input exceeds the bounded context limits.');
   }
   // Keep whole messages. Truncating a sentence could remove a correction or negation.

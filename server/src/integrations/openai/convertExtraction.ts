@@ -54,6 +54,13 @@ export function convertAIExtraction(output: unknown, lead: Lead, context: { refe
       invalid(`${update.type}.sizeCategory`);
     }
     write(patch, 'sizeCategory', update.sizeCategory, known?.sizeCategory, `${update.type}.sizeCategory`);
+    write(patch, 'dimensionsAvailable', update.dimensionsAvailable, known?.dimensionsAvailable, `${update.type}.dimensionsAvailable`);
+    // REQUIRED is a request, not a customer-provided availability fact. Receipt and
+    // non-applicability remain application-owned; text cannot undo them.
+    if (update.photoStatus.action !== 'keep') {
+      if (known && !['REQUIRED', 'NOT_AVAILABLE'].includes(known.photoStatus)) invalid(`${update.type}.photoStatus`);
+      patch.photoStatus = update.photoStatus.value;
+    }
     const dimensions: NonNullable<ItemPatch['dimensions']> = {};
     for (const axis of ['width', 'height', 'depth'] as const) {
       write(dimensions, axis, update.dimensions[axis], known?.dimensions[axis], `${update.type}.${axis}`, positive);

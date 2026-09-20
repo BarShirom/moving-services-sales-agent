@@ -39,7 +39,7 @@ function applyCustomerExtraction(
   return {
     lead: updatedLead, extraction, unappliedItems: merged.unappliedItems,
     requirements, nextQuestion: requirements.nextQuestion,
-    ...buildConversationResponse(updatedLead, requirements, acknowledgement),
+    ...buildConversationResponse(updatedLead, requirements, acknowledgement, lead),
   };
 }
 
