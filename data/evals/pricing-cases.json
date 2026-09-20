@@ -1,0 +1,137 @@
+[
+  {
+    "sourceQuality": "closed_job",
+    "requestedDate": null,
+    "specialDifficulty": null,
+    "disassemblyAssembly": null,
+    "currency": "ILS",
+    "outcome": "WON",
+    "id": "pricing-001",
+    "items": [
+      {
+        "type": "dishwasher",
+        "quantity": 1
+      },
+      {
+        "type": "oven",
+        "quantity": 1
+      }
+    ],
+    "boxCount": null,
+    "pickup": {
+      "floor": 3,
+      "elevator": true
+    },
+    "dropoff": {
+      "floor": 1,
+      "elevator": false
+    },
+    "workers": 2,
+    "vehicles": null,
+    "quotedPrice": 450,
+    "closedPrice": 450,
+    "notes": "User-supplied anonymized closed-job example. Box count, vehicle count, date and service details were not supplied."
+  },
+  {
+    "sourceQuality": "closed_job",
+    "requestedDate": null,
+    "specialDifficulty": null,
+    "disassemblyAssembly": null,
+    "currency": "ILS",
+    "outcome": "WON",
+    "id": "pricing-002",
+    "items": [
+      {
+        "type": "sofa",
+        "quantity": 1
+      },
+      {
+        "type": "bed_base",
+        "quantity": 1
+      },
+      {
+        "type": "mattress",
+        "quantity": 1
+      },
+      {
+        "type": "refrigerator",
+        "quantity": 1
+      },
+      {
+        "type": "television",
+        "quantity": 2
+      },
+      {
+        "type": "coffee_table",
+        "quantity": 1
+      }
+    ],
+    "boxCount": 8,
+    "pickup": {
+      "floor": 2,
+      "elevator": false
+    },
+    "dropoff": {
+      "floor": 0,
+      "elevator": true
+    },
+    "workers": 3,
+    "vehicles": 2,
+    "quotedPrice": 1200,
+    "closedPrice": 1200,
+    "notes": "User-supplied anonymized closed-job example. Ground floor and elevator presence are retained as reported."
+  },
+  {
+    "sourceQuality": "closed_job",
+    "requestedDate": null,
+    "specialDifficulty": null,
+    "disassemblyAssembly": null,
+    "currency": "ILS",
+    "outcome": "WON",
+    "id": "pricing-003",
+    "items": [
+      {
+        "type": "bed",
+        "quantity": 1
+      },
+      {
+        "type": "television",
+        "quantity": 1
+      },
+      {
+        "type": "washing_machine",
+        "quantity": 1
+      },
+      {
+        "type": "dryer",
+        "quantity": 1
+      },
+      {
+        "type": "cabinet",
+        "quantity": 1
+      },
+      {
+        "type": "armchair",
+        "quantity": 1
+      },
+      {
+        "type": "electric_piano",
+        "quantity": 1
+      }
+    ],
+    "boxCount": 25,
+    "pickup": {
+      "floor": 3,
+      "elevator": false
+    },
+    "dropoff": {
+      "floor": 2,
+      "elevator": false
+    },
+    "workers": 3,
+    "vehicles": 2,
+    "quotedPrice": 2990,
+    "closedPrice": 2990,
+    "notes": "User-supplied anonymized closed-job example. No additional difficulty, disassembly or assembly details were supplied."
+  }
+]

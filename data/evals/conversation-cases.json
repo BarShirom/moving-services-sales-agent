@@ -1,0 +1,1341 @@
+[
+  {
+    "id": "conv-001",
+    "status": "regression",
+    "scenario": "initial_refrigerator_and_approximate_boxes",
+    "description": "Synthetic regression of a first message containing a main item and an approximate box total.",
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [],
+        "pickup": {
+          "city": null,
+          "address": null,
+          "floor": null,
+          "elevator": null
+        },
+        "dropoff": {
+          "city": null,
+          "address": null,
+          "floor": null,
+          "elevator": null
+        },
+        "requestedDate": null,
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "צריך להעביר מקרר גדול מרמת גן לתל אביב. האיסוף מרחוב דוגמה א 20, קומה 2 בלי מעלית. יש גם בערך 15 ארגזים.",
+    "expectedExtraction": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "sizeCategory": "LARGE"
+          },
+          {
+            "type": "box",
+            "quantity": 15
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב"
+        }
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.items.0.type": "refrigerator",
+      "moveDetails.items.1.type": "box",
+      "moveDetails.items.1.quantity": 15,
+      "moveDetails.pickup.elevator": false
+    },
+    "expectedAgentIntent": [
+      "collect_missing_dropoff_address_and_floor"
+    ],
+    "mustNot": [
+      "Do not drop boxes because the refrigerator is mentioned first.",
+      "Do not interpret an approximate stated total as unknown or as an incremental count.",
+      "Do not ask again for pickup facts already supplied.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-002",
+    "status": "regression",
+    "scenario": "partial_dropoff_details_address_and_floor",
+    "description": "Address and floor answer a grouped question; elevator remains unknown.",
+    "previousAgentQuestion": {
+      "text": "מה כתובת הפריקה ובאיזו קומה היא?",
+      "requirements": [
+        {
+          "id": "dropoff.address"
+        },
+        {
+          "id": "dropoff.floor"
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": null,
+          "floor": null,
+          "elevator": null
+        },
+        "requestedDate": "2026-09-25",
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "רחוב דוגמה ב 12, קומה 5",
+    "expectedExtraction": {
+      "moveDetails": {
+        "dropoff": {
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5
+        }
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.dropoff.address": "רחוב דוגמה ב 12",
+      "moveDetails.dropoff.floor": 5,
+      "moveDetails.dropoff.elevator": null
+    },
+    "expectedAgentIntent": [
+      "ask_dropoff_elevator"
+    ],
+    "mustNot": [
+      "Do not ask again for the known address or floor.",
+      "Do not infer elevator availability from the floor.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-003",
+    "status": "regression",
+    "scenario": "contextual_no_for_elevator",
+    "previousAgentQuestion": {
+      "text": "האם יש מעלית בכתובת הפריקה?",
+      "requirements": [
+        {
+          "id": "dropoff.elevator"
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5,
+          "elevator": null
+        },
+        "requestedDate": "2026-09-25",
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "לא",
+    "expectedExtraction": {
+      "moveDetails": {
+        "dropoff": {
+          "elevator": false
+        }
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.dropoff.elevator": false,
+      "moveDetails.items.0.photoStatus": "REQUIRED"
+    },
+    "expectedAgentIntent": [
+      "request_refrigerator_photo"
+    ],
+    "mustNot": [
+      "Do not interpret this short answer as photo unavailability.",
+      "Do not treat false as an unanswered field.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-004",
+    "status": "regression",
+    "scenario": "day_month_date_with_reference",
+    "previousAgentQuestion": {
+      "text": "באיזה תאריך תרצו לבצע את ההובלה?",
+      "requirements": [
+        {
+          "id": "requestedDate"
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5,
+          "elevator": true
+        },
+        "requestedDate": null,
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "25/09",
+    "referenceDate": "2026-09-20",
+    "expectedExtraction": {
+      "moveDetails": {
+        "requestedDate": "2026-09-25"
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.requestedDate": "2026-09-25"
+    },
+    "expectedAgentIntent": [
+      "request_refrigerator_photo"
+    ],
+    "mustNot": [
+      "Do not invent a year from model memory or the system clock.",
+      "Do not treat this answer as a floor or quantity.",
+      "Do not ask for the date again.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-005",
+    "status": "regression",
+    "scenario": "photo_unavailable_short_answer",
+    "previousAgentQuestion": {
+      "text": "אפשר לצרף תמונה של המקרר לבדיקה?",
+      "requirements": [
+        {
+          "id": "item.photo",
+          "itemIndex": 0
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5,
+          "elevator": true
+        },
+        "requestedDate": "2026-09-25",
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "אין לי",
+    "description": "The entire short reply refers to the one actually requested photo.",
+    "expectedStateChanges": {
+      "moveDetails.items.0.photoStatus": "NOT_AVAILABLE",
+      "moveDetails.items.0.dimensionsAvailable": null,
+      "moveDetails.items.0.dimensions": {
+        "width": null,
+        "height": null,
+        "depth": null
+      }
+    },
+    "expectedAgentIntent": [
+      "acknowledge_photo_unavailable",
+      "explain_human_review_and_pricing_next_step"
+    ],
+    "mustNot": [
+      "Do not repeat the photo request after the customer declines.",
+      "Do not infer that measurements are available.",
+      "Do not mark the photo received or approve a quote.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-006",
+    "status": "regression",
+    "scenario": "photo_decline_and_dimensions_offer",
+    "previousAgentQuestion": {
+      "text": "אפשר לצרף תמונה של המקרר לבדיקה?",
+      "requirements": [
+        {
+          "id": "item.photo",
+          "itemIndex": 0
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5,
+          "elevator": true
+        },
+        "requestedDate": "2026-09-25",
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "אין לי כרגע, אבל יש לי את המידות",
+    "expectedExtraction": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "photoStatus": "NOT_AVAILABLE",
+            "dimensionsAvailable": true
+          }
+        ]
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.items.0.photoStatus": "NOT_AVAILABLE",
+      "moveDetails.items.0.dimensionsAvailable": true,
+      "moveDetails.items.0.dimensions": {
+        "width": null,
+        "height": null,
+        "depth": null
+      },
+      "moveDetails.items.1.quantity": 15
+    },
+    "expectedAgentIntent": [
+      "acknowledge_dimensions_alternative",
+      "ask_missing_width_height_depth"
+    ],
+    "mustNot": [
+      "Do not stop reading after the photo decline.",
+      "Do not invent promised-but-not-provided measurements.",
+      "Do not repeat the photo request.",
+      "Do not add a new pricing requirement solely because optional dimensions were offered.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-007",
+    "status": "regression",
+    "scenario": "measurements_after_offer",
+    "previousAgentQuestion": {
+      "text": "אפשר לשלוח רוחב, גובה ועומק של המקרר בסנטימטרים?",
+      "requirements": [
+        {
+          "id": "item.width",
+          "itemIndex": 0
+        },
+        {
+          "id": "item.height",
+          "itemIndex": 0
+        },
+        {
+          "id": "item.depth",
+          "itemIndex": 0
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "NOT_AVAILABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": true,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5,
+          "elevator": true
+        },
+        "requestedDate": "2026-09-25",
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "גובה 180 ס\"מ, רוחב 70 ועומק 68",
+    "expectedExtraction": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "dimensions": {
+              "width": 70,
+              "height": 180,
+              "depth": 68
+            }
+          }
+        ]
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.items.0.dimensions": {
+        "width": 70,
+        "height": 180,
+        "depth": 68
+      },
+      "moveDetails.items.0.photoStatus": "NOT_AVAILABLE"
+    },
+    "expectedAgentIntent": [
+      "acknowledge_measurements_received",
+      "explain_human_review_and_pricing_next_step"
+    ],
+    "mustNot": [
+      "Do not ask again for supplied axes.",
+      "Do not repeat the unavailable photo request.",
+      "Do not swap height and width based on word order.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-008",
+    "status": "regression",
+    "scenario": "photo_decline_dimensions_and_floor_correction",
+    "previousAgentQuestion": {
+      "text": "אפשר לצרף תמונה של המקרר לבדיקה?",
+      "requirements": [
+        {
+          "id": "item.photo",
+          "itemIndex": 0
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5,
+          "elevator": true
+        },
+        "requestedDate": "2026-09-25",
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "אין לי תמונה, הוא 180 גובה, 70 רוחב ו-68 עומק. אגב טעיתי, הפריקה קומה 4 ולא 5.",
+    "expectedExtraction": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "photoStatus": "NOT_AVAILABLE",
+            "dimensions": {
+              "width": 70,
+              "height": 180,
+              "depth": 68
+            }
+          }
+        ],
+        "dropoff": {
+          "floor": 4
+        }
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.items.0.photoStatus": "NOT_AVAILABLE",
+      "moveDetails.items.0.dimensions": {
+        "width": 70,
+        "height": 180,
+        "depth": 68
+      },
+      "moveDetails.dropoff.floor": 4,
+      "moveDetails.dropoff.elevator": true,
+      "moveDetails.pickup.floor": 2,
+      "moveDetails.items.1.quantity": 15
+    },
+    "expectedAgentIntent": [
+      "acknowledge_measurements_and_correction",
+      "explain_human_review_and_pricing_next_step"
+    ],
+    "mustNot": [
+      "Do not ignore the correction because the active question is about a photo.",
+      "Do not merge the negated old floor 5.",
+      "Do not repeat photo or dimension requests.",
+      "Do not overwrite other known facts without an explicit correction.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-009",
+    "status": "regression",
+    "scenario": "many_move_facts_in_first_message",
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [],
+        "pickup": {
+          "city": null,
+          "address": null,
+          "floor": null,
+          "elevator": null
+        },
+        "dropoff": {
+          "city": null,
+          "address": null,
+          "floor": null,
+          "elevator": null
+        },
+        "requestedDate": null,
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "מקרר רגיל ו-8 ארגזים. איסוף מרמת גן ברחוב דוגמה א 20, קומה 2 בלי מעלית. פריקה בתל אביב ברחוב דוגמה ב 12, קומת קרקע עם מעלית. ההובלה ב-25/09/2026.",
+    "expectedExtraction": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "sizeCategory": "REGULAR"
+          },
+          {
+            "type": "box",
+            "quantity": 8
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": "רחוב דוגמה ב 12",
+          "floor": 0,
+          "elevator": true
+        },
+        "requestedDate": "2026-09-25"
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.items.1.quantity": 8,
+      "moveDetails.dropoff.floor": 0,
+      "moveDetails.dropoff.elevator": true,
+      "moveDetails.requestedDate": "2026-09-25"
+    },
+    "expectedAgentIntent": [
+      "request_refrigerator_photo"
+    ],
+    "mustNot": [
+      "Do not force the customer to repeat facts in questionnaire order.",
+      "Do not discard zero floors or false elevator values.",
+      "Do not quote a price before human approval.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-010",
+    "status": "regression",
+    "scenario": "stairs_and_access_difficulty",
+    "previousAgentQuestion": {
+      "text": "אפשר לצרף תמונה של המקרר לבדיקה?",
+      "requirements": [
+        {
+          "id": "item.photo",
+          "itemIndex": 0
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5,
+          "elevator": true
+        },
+        "requestedDate": "2026-09-25",
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "באיסוף חדר המדרגות צר ויש פנייה חדה בין הקומות.",
+    "expectedExtraction": {
+      "moveDetails": {
+        "specialAccessNotes": "חדר מדרגות צר עם פנייה חדה באיסוף"
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.pickup.floor": 2,
+      "moveDetails.pickup.elevator": false
+    },
+    "expectedAgentIntent": [
+      "retain_access_difficulty_for_human_review",
+      "continue_collecting_missing_information"
+    ],
+    "mustNot": [
+      "Do not ignore access information because a photo was requested.",
+      "Do not invent stair dimensions, a crane requirement, workers or a surcharge.",
+      "Do not infer changes to dropoff access.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-011",
+    "status": "future",
+    "scenario": "additional_old_refrigerator_removal_service",
+    "description": "Future capability target: preserve and clarify a service request without pretending the current domain already models removal services.",
+    "previousAgentQuestion": {
+      "text": "אפשר לצרף תמונה של המקרר לבדיקה?",
+      "requirements": [
+        {
+          "id": "item.photo",
+          "itemIndex": 0
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5,
+          "elevator": true
+        },
+        "requestedDate": "2026-09-25",
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "אפשר גם לפנות מקרר ישן מהדירה שאליה עוברים?",
+    "expectedAgentIntent": [
+      "acknowledge_additional_service_request",
+      "clarify_old_refrigerator_removal_details",
+      "refer_service_availability_and_price_to_human_review"
+    ],
+    "mustNot": [
+      "Do not ignore an off-script additional service request.",
+      "Do not silently add the old refrigerator to the delivery inventory.",
+      "Do not promise disposal service or invent its price.",
+      "Do not overwrite the existing refrigerator details.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-012",
+    "status": "regression",
+    "scenario": "off_script_reply_answers_multiple_requirements",
+    "previousAgentQuestion": {
+      "text": "מה הכתובת המדויקת של הפריקה?",
+      "requirements": [
+        {
+          "id": "dropoff.address"
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": null,
+          "floor": null,
+          "elevator": null
+        },
+        "requestedDate": "2026-09-25",
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "רחוב דוגמה ב 12, קומה 5 ויש מעלית. למקרר רוחב 70, גובה 180 ועומק 68.",
+    "expectedExtraction": {
+      "moveDetails": {
+        "dropoff": {
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5,
+          "elevator": true
+        },
+        "items": [
+          {
+            "type": "refrigerator",
+            "dimensions": {
+              "width": 70,
+              "height": 180,
+              "depth": 68
+            }
+          }
+        ]
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.dropoff.elevator": true,
+      "moveDetails.dropoff.floor": 5,
+      "moveDetails.items.0.dimensions": {
+        "width": 70,
+        "height": 180,
+        "depth": 68
+      }
+    },
+    "expectedAgentIntent": [
+      "acknowledge_extra_move_facts",
+      "request_refrigerator_photo"
+    ],
+    "mustNot": [
+      "Do not ignore floor, elevator or dimensions because only an address was asked.",
+      "Do not ask again for any supplied fact.",
+      "Do not assume dimensions imply a photo was received.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-013",
+    "status": "regression",
+    "scenario": "future_date_provided_with_address",
+    "previousAgentQuestion": {
+      "text": "מה כתובת הפריקה ובאיזו קומה היא?",
+      "requirements": [
+        {
+          "id": "dropoff.address"
+        },
+        {
+          "id": "dropoff.floor"
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": null,
+          "floor": null,
+          "elevator": true
+        },
+        "requestedDate": null,
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "רחוב דוגמה ב 12, וזה ל-25/09.",
+    "referenceDate": "2026-09-20",
+    "expectedExtraction": {
+      "moveDetails": {
+        "dropoff": {
+          "address": "רחוב דוגמה ב 12"
+        },
+        "requestedDate": "2026-09-25"
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.dropoff.address": "רחוב דוגמה ב 12",
+      "moveDetails.requestedDate": "2026-09-25",
+      "moveDetails.dropoff.floor": null,
+      "moveDetails.dropoff.elevator": true
+    },
+    "expectedAgentIntent": [
+      "ask_dropoff_floor"
+    ],
+    "mustNot": [
+      "Do not ignore or postpone the early date.",
+      "Do not ask for the address or date again.",
+      "Do not invent the unanswered floor.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-014",
+    "status": "regression",
+    "scenario": "only_address_in_grouped_question",
+    "previousAgentQuestion": {
+      "text": "מה כתובת הפריקה ובאיזו קומה היא?",
+      "requirements": [
+        {
+          "id": "dropoff.address"
+        },
+        {
+          "id": "dropoff.floor"
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": null,
+          "floor": null,
+          "elevator": true
+        },
+        "requestedDate": "2026-09-25",
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "רחוב דוגמה ב 12",
+    "expectedExtraction": {
+      "moveDetails": {
+        "dropoff": {
+          "address": "רחוב דוגמה ב 12"
+        }
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.dropoff.address": "רחוב דוגמה ב 12",
+      "moveDetails.dropoff.floor": null,
+      "moveDetails.dropoff.elevator": true
+    },
+    "expectedAgentIntent": [
+      "ask_dropoff_floor"
+    ],
+    "mustNot": [
+      "Do not repeat the whole grouped question.",
+      "Do not interpret the house number as a floor.",
+      "Do not overwrite known elevator availability.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  },
+  {
+    "id": "conv-015",
+    "status": "regression",
+    "scenario": "explicit_correction_of_known_pickup_floor",
+    "previousAgentQuestion": {
+      "text": "באיזה תאריך תרצו לבצע את ההובלה?",
+      "requirements": [
+        {
+          "id": "requestedDate"
+        }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          {
+            "type": "refrigerator",
+            "quantity": null,
+            "sizeCategory": "LARGE",
+            "photoStatus": "REQUIRED",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          },
+          {
+            "type": "box",
+            "quantity": 15,
+            "sizeCategory": null,
+            "photoStatus": "NOT_APPLICABLE",
+            "description": null,
+            "dimensions": {
+              "width": null,
+              "height": null,
+              "depth": null
+            },
+            "dimensionsAvailable": null,
+            "requiresDisassembly": null,
+            "requiresAssembly": null
+          }
+        ],
+        "pickup": {
+          "city": "רמת גן",
+          "address": "רחוב דוגמה א 20",
+          "floor": 2,
+          "elevator": false
+        },
+        "dropoff": {
+          "city": "תל אביב",
+          "address": "רחוב דוגמה ב 12",
+          "floor": 5,
+          "elevator": true
+        },
+        "requestedDate": null,
+        "requestedTime": null,
+        "specialAccessNotes": null
+      }
+    },
+    "customerMessage": "טעיתי, האיסוף הוא מקומה 3",
+    "expectedExtraction": {
+      "moveDetails": {
+        "pickup": {
+          "floor": 3
+        }
+      }
+    },
+    "expectedStateChanges": {
+      "moveDetails.pickup.floor": 3,
+      "moveDetails.pickup.elevator": false,
+      "moveDetails.dropoff.floor": 5,
+      "moveDetails.requestedDate": null,
+      "moveDetails.items.1.quantity": 15
+    },
+    "expectedAgentIntent": [
+      "acknowledge_floor_correction",
+      "ask_requested_date"
+    ],
+    "mustNot": [
+      "Do not ignore a correction that does not answer the current question.",
+      "Do not change dropoff floor or other unmentioned fields.",
+      "Do not overwrite known facts without an explicit correction.",
+      "Do not erase unrelated known Lead fields.",
+      "Do not require exact response wording when meaning, intent and state behavior are correct."
+    ]
+  }
+]
