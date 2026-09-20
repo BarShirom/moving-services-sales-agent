@@ -17,12 +17,24 @@ const labels: Record<string, string> = {
 };
 const answer = (value: boolean | null) => value === null ? 'טרם צוין' : value ? 'כן' : 'לא';
 
+// Display labels only; the backend remains the source of status and readiness.
+export function statusLabel(state: DemoSnapshot): string {
+  const labels: Record<DemoSnapshot['lead']['status'], string> = {
+    COLLECTING_INFORMATION: state.nextQuestion ? 'איסוף מידע' : 'ממתין למידע נוסף',
+    READY_FOR_PRICING: 'מוכן לבדיקה ותמחור',
+    AWAITING_REVIEW: 'ממתין לבדיקה',
+    QUOTE_SENT: 'הצעת המחיר נשלחה',
+    WON: 'ההובלה אושרה',
+    LOST: 'הפנייה נסגרה',
+  };
+  return labels[state.lead.status];
+}
+
 export function AgentState({ state }: { state: DemoSnapshot | null }) {
   const details = state?.lead.moveDetails;
-  return <aside className="state-column" aria-label="מצב הסוכן" dir="rtl">
-    <div className="column-heading"><span className="eyebrow">תמונת מצב</span><span className="live-label"><i /> מתעדכן עם השיחה</span></div>
-    <section className="card understood">
-      <div className="card-heading"><span className="section-icon">✦</span><h2>מה הבנתי</h2><span className="small-label">פרטי ההובלה</span></div>
+  return <div className="state-sections" aria-label="מצב הסוכן" dir="rtl">
+    <section className="card understood" aria-labelledby="understood-heading">
+      <div className="card-heading"><span className="section-icon">✦</span><h2 id="understood-heading">מה הבנתי</h2><span className="small-label">פרטי ההובלה</span></div>
       {!details?.items.length ? <div className="empty-facts"><span className="empty-box"><Icon name="box" /></span><p>כל הובלה מתחילה בכמה פרטים</p><span>המידע שנאסף יופיע כאן אחרי ההודעה הראשונה.</span></div> :
         <div className="items-list">{details.items.map((item, index) => <div className="item-row" key={index}>
           <span className="item-symbol"><Icon name="box" /></span><div><strong>{itemNames[item.type ?? ''] ?? item.type ?? 'פריט לא מזוהה'}</strong>
@@ -42,14 +54,14 @@ export function AgentState({ state }: { state: DemoSnapshot | null }) {
         return <div className="location" key={side}><span className={`route-dot dot-${index}`} /><div>
           <span className="field-label">{side === 'pickup' ? 'איסוף' : 'פריקה'}</span>
           <strong>{[location?.address, location?.city].filter(Boolean).join(', ') || 'הכתובת עדיין לא צוינה'}</strong>
-          <span className="location-access">קומה: {location?.floor ?? '—'}<span>מעלית: {location ? answer(location.elevator) : '—'}</span></span>
+          <span className="location-access">קומה: {location?.floor ?? 'טרם צוין'}<span>מעלית: {location ? answer(location.elevator) : 'טרם צוין'}</span></span>
         </div></div>;
       })}</div>
       {(details?.requestedDate || details?.requestedTime) && <div className="schedule"><span>מועד מבוקש</span><strong dir="ltr">{[details.requestedDate, details.requestedTime].filter(Boolean).join(' · ')}</strong></div>}
       {details?.specialAccessNotes && <div className="access-notes"><span className="field-label">גישה מיוחדת</span><p>{details.specialAccessNotes}</p></div>}
     </section>
-    <section className="card missing-card">
-      <div className="card-heading"><span className="section-icon amber">≡</span><h2>מה עדיין חסר</h2><span className="count">{state?.requirements.missingRequired.length ?? '—'}</span></div>
+    <section className="card missing-card" aria-labelledby="missing-heading">
+      <div className="card-heading"><span className="section-icon amber">≡</span><h2 id="missing-heading">מה עדיין חסר</h2><span className="count">{state?.requirements.missingRequired.length ?? '—'}</span></div>
       <p className="card-description">הפרטים הדרושים כדי להתקדם לתמחור</p>
       {!state ? <p className="muted">ממתינים לחיבור לשרת…</p> : state.requirements.missingRequired.length ?
         <ul className="missing-list">{state.requirements.missingRequired.map((requirement, index) => <li key={`${requirement.id}-${requirement.itemIndex ?? index}`}>
@@ -59,10 +71,10 @@ export function AgentState({ state }: { state: DemoSnapshot | null }) {
       {!!state?.requirements.pendingReview.length && <p className="review-note">נושאים לבדיקה לפני שליחת הצעה: {state.requirements.pendingReview.length}.</p>}
       {!!state?.unappliedItems.length && <p className="review-note">יש כמה פריטים מאותו סוג. העדכון לא שויך לפריט מסוים ונדרשת הבהרה.</p>}
     </section>
-    <section className="next-card" aria-live="polite" aria-atomic="true">
-      <div className="next-heading"><span>✦</span><h2>{state?.nextQuestion ? 'השאלה הבאה' : 'השלב הבא'}</h2><span className="next-line" /></div>
-      <p>{state?.responseText ?? 'טוענים את תמונת המצב…'}</p>
+    <section className="card next-card" aria-labelledby="next-heading" aria-live="polite" aria-atomic="true">
+      <div className="next-heading"><span>✦</span><h2 id="next-heading">השלב הבא</h2><span className="next-line" /></div>
+      <p>{state?.responseText ?? 'פרטי השלב הבא יופיעו לאחר החיבור לשיחה.'}</p>
       <span className="next-footnote">{state?.requirements.readyForPricing ? 'המידע מוכן לתמחור · כל הצעה מחייבת אישור אנושי' : 'מתקדמים רק לפי המידע שעדיין חסר'}</span>
     </section>
-  </aside>;
+  </div>;
 }
