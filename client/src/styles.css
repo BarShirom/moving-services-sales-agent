@@ -87,8 +87,8 @@ textarea::placeholder { color: #65716a; }
 .location-access { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-top: 4px; font-size: .85rem; color: var(--muted); }
 .schedule { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 8px; border-top: 1px solid var(--line); margin-top: 16px; padding-top: 16px; font-size: .9rem; }
 .access-notes { margin-top: 16px; font-size: .95rem; line-height: 1.7; overflow-wrap: anywhere; }
-.missing-list { display: flex; flex-direction: column; gap: 10px; list-style: none; padding: 0; margin: 16px 0 0; }
-.missing-list li { display: flex; align-items: baseline; gap: 9px; font-size: .9rem; line-height: 1.6; overflow-wrap: anywhere; }
+.missing-list, .review-list { display: flex; flex-direction: column; gap: 10px; list-style: none; padding: 0; margin: 16px 0 0; }
+.missing-list li, .review-list li { display: flex; align-items: baseline; gap: 9px; font-size: .9rem; line-height: 1.6; overflow-wrap: anywhere; }
 .missing-list small { font-size: .8rem; color: var(--muted); }
 .missing-dot { width: 5px; height: 5px; border-radius: 50%; background: #7c8880; flex-shrink: 0; }
 .muted, .complete-note { margin-top: 16px; font-size: .9rem; line-height: 1.7; color: var(--muted); }
@@ -113,3 +113,64 @@ footer { margin-top: 28px; padding: 0 4px 28px; color: var(--muted); text-align:
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation: none !important; scroll-behavior: auto !important; transition: none !important; }
 }
+
+/* Owner review shares the same centered, vertical product surface. */
+.view-switch { display: flex; gap: 4px; padding: 5px; margin-bottom: 20px; background: #e8eeea; border-radius: 12px; }
+.view-switch button { flex: 1; border: 0; border-radius: 9px; background: transparent; color: var(--muted); font-weight: 600; }
+.view-switch button[aria-pressed="true"] { background: white; color: var(--accent-dark); box-shadow: 0 2px 6px #20392b10; }
+.owner-view { display: flex; flex-direction: column; gap: 16px; }
+.owner-title { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.eyebrow { display: block; color: var(--muted); font-size: .8rem; margin-bottom: 8px; }
+.owner-emblem { display: grid; place-items: center; width: 48px; height: 48px; border-radius: 14px; background: #e8f3ec; color: var(--accent); font-size: 1.5rem; }
+.owner-toolbar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 18px; }
+.owner-view button { border: 1px solid var(--line); background: #fff; color: var(--accent-dark); border-radius: 9px; padding: 10px 14px; }
+.owner-view button:hover:not(:disabled) { background: #eef5f0; }
+.owner-toolbar button { font-size: .85rem; }
+.review-badge { padding: 5px 9px; font-size: .75rem; color: #815713; background: #faf0d9; border-radius: 20px; }
+.price-hero { margin: 24px 0; display: flex; flex-direction: column; gap: 5px; }
+.suggested-price { font-size: clamp(2rem, 8vw, 3rem); color: var(--accent-dark); letter-spacing: -.04em; }
+.price-hero > span { color: var(--muted); font-size: .9rem; }
+.price-metrics { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; padding: 18px 0; border-block: 1px solid var(--line); }
+.price-metrics > div { display: flex; flex-direction: column; gap: 8px; }
+.price-metrics span, .price-metrics small { color: var(--muted); font-size: .8rem; }
+.price-metrics strong { font-size: 1.15rem; align-self: start; }
+.pricing-explanation { margin: 20px 0; line-height: 1.8; font-size: .9rem; color: var(--muted); }
+.pricing-card h3 { font-size: 1rem; margin-top: 24px; }
+.price-breakdown, .omitted-list, .owner-history ul { padding: 0; list-style: none; }
+.price-breakdown li { padding: 16px 0; border-bottom: 1px solid var(--line); }
+.price-breakdown li > div { display: flex; justify-content: space-between; gap: 12px; }
+.price-breakdown p, .price-breakdown details, .omitted-list details { color: var(--muted); margin-top: 8px; font-size: .85rem; line-height: 1.7; overflow-wrap: anywhere; }
+.owner-view summary { cursor: pointer; padding-block: 8px; }
+.omitted-list { display: grid; gap: 8px; }
+.omitted-list li { padding: 12px 14px; background: #f6f7f5; border-radius: 9px; font-size: .9rem; display: flex; flex-direction: column; gap: 4px; }
+.review-reasons { background: #fffbf1; border: 1px solid #ece4cb; border-radius: 12px; padding: 16px; margin-top: 22px; }
+.review-reasons h3 { margin: 0; }
+.review-reasons ul { padding-inline-start: 20px; margin-bottom: 0; }
+.review-reasons li { margin-top: 12px; line-height: 1.6; font-size: .9rem; }
+.review-reasons small { display: block; color: var(--muted); }
+.owner-view .recalculate-button { margin-top: 18px; width: 100%; }
+.action-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; margin-top: 20px; }
+.owner-view .approve-button { background: var(--accent); color: white; border-color: var(--accent); }
+.owner-view .approve-button:hover:not(:disabled) { background: var(--accent-dark); }
+.owner-form { display: flex; flex-direction: column; gap: 10px; margin-top: 22px; padding-top: 20px; border-top: 1px solid var(--line); }
+.owner-form label { font-size: .9rem; font-weight: 600; }
+.owner-form input, .owner-form textarea { font: inherit; width: 100%; padding: 12px; border: 1px solid #bdccc2; border-radius: 8px; background: white; }
+.owner-form input:focus-visible { outline: 3px solid var(--accent); outline-offset: 3px; }
+.owner-form textarea { min-height: 90px; resize: vertical; }
+.cancel-action { margin-top: 10px; }
+.stale-banner, .sample-confirmation { background: #fff4d9; border-radius: 9px; padding: 14px; margin-top: 16px; line-height: 1.7; font-size: .9rem; }
+.sample-confirmation button { margin-top: 10px; }
+.owner-notice { color: var(--accent-dark); background: #edf6ef; padding: 12px; border-radius: 8px; margin-top: 14px; line-height: 1.7; }
+.owner-history li { border-bottom: 1px solid var(--line); padding: 16px 0; line-height: 1.8; overflow-wrap: anywhere; }
+.owner-history time { display: block; font-size: .8rem; color: var(--muted); }
+.owner-history p { font-size: .9rem; }
+.owner-view .card-heading { flex-wrap: wrap; }
+.owner-form .confirmation-field { display: flex; align-items: flex-start; gap: 10px; padding: 14px; border: 1px solid var(--line); border-radius: 9px; line-height: 1.7; background: #f6f8f5; }
+.owner-form .confirmation-field input { flex: 0 0 auto; width: 20px; height: 20px; margin-top: 3px; padding: 0; accent-color: var(--accent); }
+.calculated-subtotal { padding: 14px; background: #edf3ef; border-radius: 9px; line-height: 1.8; }
+.finalization-form h3, .finalization-form h4 { margin: 8px 0 0; }
+.finalization-form ul, .coordination-summary ul, .photo-decisions { padding-inline-start: 22px; line-height: 1.8; overflow-wrap: anywhere; }
+.final-quote-card, .coordination-summary { line-height: 1.8; overflow-wrap: anywhere; }
+.final-quote-card { border-inline-start: 3px solid var(--accent); }
+.final-quote-amount { display: inline-block; font-size: 1.4rem; color: var(--accent-dark); }
+.coordination-summary h3 { margin-top: 18px; font-size: 1rem; }

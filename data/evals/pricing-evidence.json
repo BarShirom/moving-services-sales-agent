@@ -1,0 +1,1240 @@
+{
+  "schemaVersion": 1,
+  "records": [
+    {
+      "id": "evidence-pricing-001",
+      "evidenceType": "CLOSED_JOB",
+      "sourceQuality": "STRONG",
+      "scope": "JOB_LEVEL",
+      "categories": [
+        "dishwasher_transport",
+        "oven_transport",
+        "stairs",
+        "general_appliance_transport"
+      ],
+      "sourceBasis": "REPOSITORY_JOB",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "User-supplied anonymized closed-job example. Box count, vehicle count, date and service details were not supplied.",
+      "limitations": [
+        "Whole-job evidence only. Do not divide the total into item, service, box, distance or stair tariffs.",
+        "User-supplied anonymized closed-job example. Box count, vehicle count, date and service details were not supplied.",
+        "This is a linked representation of the original case, not a new independent observation."
+      ],
+      "sourceReference": [
+        "data/evals/pricing-cases.json#pricing-001",
+        "data/evals/README.md#job-evidence-versus-historical-pricing-heuristics"
+      ],
+      "originalSourceQuality": "closed_job",
+      "items": [
+        {
+          "type": "dishwasher",
+          "quantity": 1
+        },
+        {
+          "type": "oven",
+          "quantity": 1
+        }
+      ],
+      "pickup": {
+        "floor": 3,
+        "elevator": true
+      },
+      "dropoff": {
+        "floor": 1,
+        "elevator": false
+      },
+      "workers": 2,
+      "vehicles": null,
+      "quotedPrice": 450,
+      "closedPrice": 450,
+      "outcome": "WON"
+    },
+    {
+      "id": "evidence-pricing-002",
+      "evidenceType": "CLOSED_JOB",
+      "sourceQuality": "STRONG",
+      "scope": "JOB_LEVEL",
+      "categories": [
+        "sofa_transport",
+        "boxes",
+        "bed_transport",
+        "refrigerator_transport",
+        "tv_transport",
+        "table_desk_transport",
+        "stairs"
+      ],
+      "sourceBasis": "REPOSITORY_JOB",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "User-supplied anonymized closed-job example. Ground floor and elevator presence are retained as reported.",
+      "limitations": [
+        "Whole-job evidence only. Do not divide the total into item, service, box, distance or stair tariffs.",
+        "User-supplied anonymized closed-job example. Ground floor and elevator presence are retained as reported.",
+        "This is a linked representation of the original case, not a new independent observation."
+      ],
+      "sourceReference": [
+        "data/evals/pricing-cases.json#pricing-002",
+        "data/evals/README.md#job-evidence-versus-historical-pricing-heuristics"
+      ],
+      "originalSourceQuality": "closed_job",
+      "items": [
+        {
+          "type": "sofa",
+          "quantity": 1
+        },
+        {
+          "type": "bed_base",
+          "quantity": 1
+        },
+        {
+          "type": "mattress",
+          "quantity": 1
+        },
+        {
+          "type": "refrigerator",
+          "quantity": 1
+        },
+        {
+          "type": "television",
+          "quantity": 2
+        },
+        {
+          "type": "coffee_table",
+          "quantity": 1
+        },
+        {
+          "type": "box",
+          "quantity": 8
+        }
+      ],
+      "pickup": {
+        "floor": 2,
+        "elevator": false
+      },
+      "dropoff": {
+        "floor": 0,
+        "elevator": true
+      },
+      "workers": 3,
+      "vehicles": 2,
+      "quotedPrice": 1200,
+      "closedPrice": 1200,
+      "outcome": "WON"
+    },
+    {
+      "id": "evidence-pricing-003",
+      "evidenceType": "CLOSED_JOB",
+      "sourceQuality": "STRONG",
+      "scope": "JOB_LEVEL",
+      "categories": [
+        "bed_transport",
+        "tv_transport",
+        "washing_machine_transport",
+        "dryer_transport",
+        "wardrobe_transport",
+        "armchair_transport",
+        "electric_piano_transport",
+        "boxes",
+        "stairs",
+        "general_appliance_transport"
+      ],
+      "sourceBasis": "REPOSITORY_JOB",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "User-supplied anonymized closed-job example. No additional difficulty, disassembly or assembly details were supplied.",
+      "limitations": [
+        "Whole-job evidence only. Do not divide the total into item, service, box, distance or stair tariffs.",
+        "User-supplied anonymized closed-job example. No additional difficulty, disassembly or assembly details were supplied.",
+        "This is a linked representation of the original case, not a new independent observation.",
+        "Repository item type cabinet is retained. The current task calls it cabinet/wardrobe; the wardrobe category is related context, not a confirmed exact wardrobe classification."
+      ],
+      "sourceReference": [
+        "data/evals/pricing-cases.json#pricing-003",
+        "data/evals/README.md#job-evidence-versus-historical-pricing-heuristics",
+        "User-supplied Pricing Evidence Table task: Closed job 3"
+      ],
+      "originalSourceQuality": "closed_job",
+      "items": [
+        {
+          "type": "bed",
+          "quantity": 1
+        },
+        {
+          "type": "television",
+          "quantity": 1
+        },
+        {
+          "type": "washing_machine",
+          "quantity": 1
+        },
+        {
+          "type": "dryer",
+          "quantity": 1
+        },
+        {
+          "type": "cabinet",
+          "quantity": 1
+        },
+        {
+          "type": "armchair",
+          "quantity": 1
+        },
+        {
+          "type": "electric_piano",
+          "quantity": 1
+        },
+        {
+          "type": "box",
+          "quantity": 25
+        }
+      ],
+      "pickup": {
+        "floor": 3,
+        "elevator": false
+      },
+      "dropoff": {
+        "floor": 2,
+        "elevator": false
+      },
+      "workers": 3,
+      "vehicles": 2,
+      "quotedPrice": 2990,
+      "closedPrice": 2990,
+      "outcome": "WON"
+    },
+    {
+      "id": "evidence-pricing-004",
+      "evidenceType": "HISTORICAL_ESTIMATE",
+      "sourceQuality": "WEAK",
+      "scope": "JOB_LEVEL",
+      "categories": [
+        "refrigerator_transport",
+        "washing_machine_transport",
+        "stairs",
+        "general_appliance_transport"
+      ],
+      "sourceBasis": "REPOSITORY_JOB",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "User-provided historical example C describes an approximately 750 ILS quoted/recommended amount. Available project/context evidence does not establish that a quote was sent or the job closed.",
+      "limitations": [
+        "Whole-job evidence only. Do not divide the total into item, service, box, distance or stair tariffs.",
+        "Approximately 750 ILS is retained as an internal recommendation only. Dropoff elevator, date, staffing, vehicle and box counts are unknown. Singular listed appliances are represented as one each.",
+        "This is a linked representation of the original case, not a new independent observation."
+      ],
+      "sourceReference": [
+        "data/evals/pricing-cases.json#pricing-004",
+        "data/evals/README.md#job-evidence-versus-historical-pricing-heuristics"
+      ],
+      "originalSourceQuality": "historical_estimate",
+      "items": [
+        {
+          "type": "refrigerator",
+          "sizeCategory": "SMALL",
+          "quantity": 1
+        },
+        {
+          "type": "washing_machine",
+          "quantity": 1
+        }
+      ],
+      "pickup": {
+        "floor": 3,
+        "elevator": false
+      },
+      "dropoff": {
+        "floor": 1,
+        "elevator": null
+      },
+      "workers": null,
+      "vehicles": null,
+      "quotedPrice": null,
+      "closedPrice": null,
+      "estimatedPrice": 750,
+      "outcome": "UNKNOWN"
+    },
+    {
+      "id": "evidence-pricing-005",
+      "evidenceType": "HISTORICAL_ESTIMATE",
+      "sourceQuality": "WEAK",
+      "scope": "JOB_LEVEL",
+      "categories": [
+        "washing_machine_transport",
+        "tv_transport",
+        "bed_transport",
+        "boxes",
+        "stairs",
+        "general_appliance_transport"
+      ],
+      "sourceBasis": "REPOSITORY_JOB",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "User-provided historical example D supports an internal discussion range and an approximately 2200 ILS recommendation. No corroborating evidence confirms a sent quote or an approximately 2000 ILS close; neither is recorded as an actual transaction.",
+      "limitations": [
+        "Whole-job evidence only. Do not divide the total into item, service, box, distance or stair tariffs.",
+        "Box count is approximately 30. Furniture, television and weight counts are unknown; the furniture description may overlap other listed items and must not be treated as a separate exact inventory count. Exact floors, elevators, staffing and outcome remain unknown.",
+        "This is a linked representation of the original case, not a new independent observation.",
+        "Current-task supplement: the load also described bed/base/mattress and heavier contents. These may overlap the original generic furniture/bed rows and must not be counted again.",
+        "An approximately 2000 ILS close is reported conditionally in the historical discussion but is not corroborated; closedPrice remains null and outcome UNKNOWN.",
+        "The original repository case explicitly reports meaningful stair/access difficulty at BOTH pickup and dropoff. Exact floors and elevator conditions remain unknown; unknown details do not mean easy access."
+      ],
+      "sourceReference": [
+        "data/evals/pricing-cases.json#pricing-005",
+        "data/evals/README.md#job-evidence-versus-historical-pricing-heuristics",
+        "User-supplied Pricing Evidence Table task: Large move with approximately 30 boxes"
+      ],
+      "originalSourceQuality": "historical_estimate",
+      "items": [
+        {
+          "type": "furniture",
+          "quantity": null
+        },
+        {
+          "type": "washing_machine",
+          "quantity": 1
+        },
+        {
+          "type": "television",
+          "quantity": null
+        },
+        {
+          "type": "weights",
+          "quantity": null
+        },
+        {
+          "type": "bed",
+          "quantity": 1,
+          "description": "Repository lists one bed. The current task expands the overlapping description to bed/base/mattress; no additional count is established."
+        },
+        {
+          "type": "box",
+          "quantity": 30,
+          "quantityApproximate": true
+        }
+      ],
+      "pickup": {
+        "floor": null,
+        "elevator": null
+      },
+      "dropoff": {
+        "floor": null,
+        "elevator": null
+      },
+      "workers": null,
+      "vehicles": null,
+      "quotedPrice": null,
+      "closedPrice": null,
+      "estimatedPrice": 2200,
+      "priceRange": {
+        "min": 1900,
+        "max": 2400
+      },
+      "outcome": "UNKNOWN"
+    },
+    {
+      "id": "evidence-pricing-006",
+      "evidenceType": "HISTORICAL_ESTIMATE",
+      "sourceQuality": "WEAK",
+      "scope": "JOB_LEVEL",
+      "categories": [
+        "wardrobe_transport",
+        "wardrobe_assembly_disassembly",
+        "bed_transport",
+        "dishwasher_transport",
+        "sofa_transport",
+        "electric_piano_transport",
+        "washing_machine_transport",
+        "boxes",
+        "stairs",
+        "additional_stop",
+        "general_appliance_transport"
+      ],
+      "sourceBasis": "REPOSITORY_JOB",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "User-provided historical example E describes an approximately 4500 ILS discussion/proposal requiring human approval. Available evidence does not establish that it was approved, sent as a quote, or closed.",
+      "limitations": [
+        "Whole-job evidence only. Do not divide the total into item, service, box, distance or stair tariffs.",
+        "Approximately 44 plants, 25 boxes and 5 suitcases. Wardrobe and bed counts are unspecified; chaise/sofa type and quantity remain unresolved. Human approval was required because of complexity. No disassembly or assembly service is inferred from the item list.",
+        "This is a linked representation of the original case, not a new independent observation.",
+        "Current-task supplements add the 4200-4600 ILS estimate range, an additional washing-machine pickup and approximately three wardrobe assembly jobs. They were not in the original repository case.",
+        "The original wardrobe quantity remains null despite the approximate service count. Multiple wardrobes and beds are known only as unquantified descriptions.",
+        "No supplement establishes an approved or sent quote, a closed job or exact route/access details.",
+        "The original repository case explicitly reports multiple points, floors and access complexity. The exact route and endpoint access details remain unknown."
+      ],
+      "sourceReference": [
+        "data/evals/pricing-cases.json#pricing-006",
+        "data/evals/README.md#job-evidence-versus-historical-pricing-heuristics",
+        "User-supplied Pricing Evidence Table task: Complex multi-item move"
+      ],
+      "originalSourceQuality": "historical_estimate",
+      "items": [
+        {
+          "type": "wardrobe",
+          "quantity": null
+        },
+        {
+          "type": "bed",
+          "quantity": null
+        },
+        {
+          "type": "dishwasher",
+          "quantity": 1
+        },
+        {
+          "type": "chaise_or_sofa",
+          "quantity": null
+        },
+        {
+          "type": "electric_piano",
+          "quantity": 1
+        },
+        {
+          "type": "plant",
+          "quantity": 44,
+          "quantityApproximate": true
+        },
+        {
+          "type": "suitcase",
+          "quantity": 5,
+          "quantityApproximate": true
+        },
+        {
+          "type": "box",
+          "quantity": 25,
+          "quantityApproximate": true
+        },
+        {
+          "type": "washing_machine",
+          "quantity": null,
+          "description": "Current-task supplement: washing machine collected at an additional pickup point; exact item count was not supplied."
+        }
+      ],
+      "pickup": {
+        "floor": null,
+        "elevator": null
+      },
+      "dropoff": {
+        "floor": null,
+        "elevator": null
+      },
+      "workers": null,
+      "vehicles": null,
+      "quotedPrice": null,
+      "closedPrice": null,
+      "estimatedPrice": 4500,
+      "outcome": "UNKNOWN",
+      "priceRange": {
+        "min": 4200,
+        "max": 4600
+      },
+      "services": [
+        {
+          "type": "wardrobe_assembly",
+          "required": true,
+          "quantity": 3,
+          "quantityApproximate": true,
+          "notes": "Current-task supplement says around three wardrobe assembly jobs. This is not an exact wardrobe transport count."
+        },
+        {
+          "type": "additional_pickup",
+          "required": true,
+          "quantity": 1,
+          "notes": "Current-task supplement explicitly identifies an additional washing-machine pickup point; no route or access details are supplied."
+        }
+      ]
+    },
+    {
+      "id": "ref-fridge-small",
+      "evidenceType": "ITEM_REFERENCE",
+      "sourceQuality": "MEDIUM",
+      "scope": "ITEM_LEVEL",
+      "categories": [
+        "refrigerator_transport"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 300 ILS for a small refrigerator; an isolated historical item reference.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Refrigerator transport references",
+        "data/evals/README.md#historical-pricing-heuristics"
+      ],
+      "items": [
+        {
+          "type": "refrigerator",
+          "sizeCategory": "SMALL"
+        }
+      ],
+      "referencePrice": 300
+    },
+    {
+      "id": "ref-fridge-regular",
+      "evidenceType": "ITEM_REFERENCE",
+      "sourceQuality": "MEDIUM",
+      "scope": "ITEM_LEVEL",
+      "categories": [
+        "refrigerator_transport"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 350 ILS for a regular refrigerator; an isolated historical item reference.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Refrigerator transport references",
+        "data/evals/README.md#historical-pricing-heuristics"
+      ],
+      "items": [
+        {
+          "type": "refrigerator",
+          "sizeCategory": "REGULAR"
+        }
+      ],
+      "referencePrice": 350
+    },
+    {
+      "id": "ref-fridge-large",
+      "evidenceType": "ITEM_REFERENCE",
+      "sourceQuality": "MEDIUM",
+      "scope": "ITEM_LEVEL",
+      "categories": [
+        "refrigerator_transport"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 400-450 ILS for a large or four-door refrigerator.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Refrigerator transport references",
+        "data/evals/README.md#historical-pricing-heuristics"
+      ],
+      "items": [
+        {
+          "type": "refrigerator",
+          "sizeCategory": "LARGE_OR_FOUR_DOOR"
+        }
+      ],
+      "priceRange": {
+        "min": 400,
+        "max": 450
+      }
+    },
+    {
+      "id": "ref-washing-machine",
+      "evidenceType": "ITEM_REFERENCE",
+      "sourceQuality": "MEDIUM",
+      "scope": "ITEM_LEVEL",
+      "categories": [
+        "washing_machine_transport"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 280-320 ILS for washing-machine transport; provisional historical item band.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Washing machine",
+        "data/evals/README.md#historical-pricing-heuristics"
+      ],
+      "items": [
+        {
+          "type": "washing_machine"
+        }
+      ],
+      "priceRange": {
+        "min": 280,
+        "max": 320
+      }
+    },
+    {
+      "id": "ref-general-appliance",
+      "evidenceType": "ITEM_REFERENCE",
+      "sourceQuality": "WEAK",
+      "scope": "ITEM_LEVEL",
+      "categories": [
+        "general_appliance_transport"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Common appliances approximately 220-450 ILS, depending on item and access. Supporting context only.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "Item identities and access conditions are not isolated. This broad band cannot establish precise tariffs for dishwasher, oven, dryer or other individual appliances."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: General appliance pricing band"
+      ],
+      "items": [
+        {
+          "type": "common_appliance"
+        }
+      ],
+      "priceRange": {
+        "min": 220,
+        "max": 450
+      }
+    },
+    {
+      "id": "ref-bed-transport",
+      "evidenceType": "ITEM_REFERENCE",
+      "sourceQuality": "WEAK",
+      "scope": "ITEM_LEVEL",
+      "categories": [
+        "bed_transport"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Historical bed/mattress reference is approximately 180-550+ ILS, depending on size, access and service inclusion.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "The described 550+ upper end is not a finite ceiling; max is deliberately null.",
+        "Transport is not isolated from possible disassembly/assembly or mattress scope; no precise bed transport tariff is established."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Beds / mattresses"
+      ],
+      "items": [
+        {
+          "type": "bed_or_mattress"
+        }
+      ],
+      "priceRange": {
+        "min": 180,
+        "max": null,
+        "upperBoundOpen": true
+      }
+    },
+    {
+      "id": "ref-sofa",
+      "evidenceType": "ITEM_REFERENCE",
+      "sourceQuality": "WEAK",
+      "scope": "ITEM_LEVEL",
+      "categories": [
+        "sofa_transport"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 320-600 ILS depending on sofa size and access.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "A broad reference with no size/access tiers or isolated closed-job verification; do not use mixed-load totals to strengthen it."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Sofa"
+      ],
+      "items": [
+        {
+          "type": "sofa"
+        }
+      ],
+      "priceRange": {
+        "min": 320,
+        "max": 600
+      }
+    },
+    {
+      "id": "ref-table-desk",
+      "evidenceType": "ITEM_REFERENCE",
+      "sourceQuality": "WEAK",
+      "scope": "ITEM_LEVEL",
+      "categories": [
+        "table_desk_transport"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 250-450 ILS for tables/desks as a broad historical reference.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "Dimensions, item construction and access conditions are not specified; no precise transport tariff is established."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Tables / desks"
+      ],
+      "items": [
+        {
+          "type": "table_or_desk"
+        }
+      ],
+      "priceRange": {
+        "min": 250,
+        "max": 450
+      }
+    },
+    {
+      "id": "ref-kitchen-island",
+      "evidenceType": "ITEM_REFERENCE",
+      "sourceQuality": "WEAK",
+      "scope": "ITEM_LEVEL",
+      "categories": [
+        "kitchen_island_transport"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Kitchen island transport from approximately 400 ILS; a weak lower-bound reference only.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "No supported upper bound, size tier or access condition is available. The lower bound is not an exact 400 ILS tariff."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Kitchen island"
+      ],
+      "items": [
+        {
+          "type": "kitchen_island"
+        }
+      ],
+      "priceRange": {
+        "min": 400,
+        "max": null,
+        "upperBoundOpen": true
+      }
+    },
+    {
+      "id": "ref-bed-service",
+      "evidenceType": "SERVICE_REFERENCE",
+      "sourceQuality": "MEDIUM",
+      "scope": "SERVICE_LEVEL",
+      "categories": [
+        "bed_assembly_disassembly"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 180-350 ILS for bed disassembly/assembly.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "Supports the service only; it does not establish the item's transport price.",
+        "The engine's combined one-bundle charge and standard-complexity gate are provisional implementation policies."
+      ],
+      "sourceReference": [
+        "data/evals/README.md#historical-pricing-heuristics",
+        "User-supplied Pricing Evidence Table task: Bed disassembly / assembly"
+      ],
+      "services": [
+        {
+          "type": "bed_assembly_disassembly",
+          "required": null
+        }
+      ],
+      "priceRange": {
+        "min": 180,
+        "max": 350
+      }
+    },
+    {
+      "id": "ref-wardrobe-service",
+      "evidenceType": "SERVICE_REFERENCE",
+      "sourceQuality": "MEDIUM",
+      "scope": "SERVICE_LEVEL",
+      "categories": [
+        "wardrobe_assembly_disassembly"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 350-600 ILS for wardrobe disassembly/assembly, depending on size and complexity.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "Supports the service only; it does not establish the item's transport price.",
+        "The engine's combined one-bundle charge and standard-complexity gate are provisional implementation policies."
+      ],
+      "sourceReference": [
+        "data/evals/README.md#historical-pricing-heuristics",
+        "User-supplied Pricing Evidence Table task: Wardrobe disassembly / assembly"
+      ],
+      "services": [
+        {
+          "type": "wardrobe_assembly_disassembly",
+          "required": null
+        }
+      ],
+      "priceRange": {
+        "min": 350,
+        "max": 600
+      }
+    },
+    {
+      "id": "ref-extra-stop",
+      "evidenceType": "SERVICE_REFERENCE",
+      "sourceQuality": "MEDIUM",
+      "scope": "RULE_LEVEL",
+      "categories": [
+        "additional_stop"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 200-300 ILS per additional pickup/dropoff point.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "An extra-point reference does not price its unmodeled floors/access or prove the distance of a route."
+      ],
+      "sourceReference": [
+        "data/evals/README.md#historical-pricing-heuristics",
+        "User-supplied Pricing Evidence Table task: Additional pickup/dropoff point"
+      ],
+      "priceRange": {
+        "min": 200,
+        "max": 300
+      },
+      "rule": {
+        "unit": "additional pickup/dropoff point"
+      }
+    },
+    {
+      "id": "ref-stairs",
+      "evidenceType": "BUSINESS_RULE",
+      "sourceQuality": "MEDIUM",
+      "scope": "RULE_LEVEL",
+      "categories": [
+        "stairs"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 100-150 ILS per relevant stair floor without a usable elevator.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "Whole-job impact depends on the supported load, floor conditions and access.",
+        "Current engine adds the band once per endpoint for its priced supported load, not per item. This composition is provisional; unsupported furniture stair/access work remains manual."
+      ],
+      "sourceReference": [
+        "data/evals/README.md#historical-pricing-heuristics",
+        "User-supplied Pricing Evidence Table task: Floors / stairs without elevator",
+        "README.md#provisional-pricing-assumptions"
+      ],
+      "priceRange": {
+        "min": 100,
+        "max": 150
+      },
+      "rule": {
+        "unit": "relevant stair floor"
+      }
+    },
+    {
+      "id": "ref-waiting",
+      "evidenceType": "BUSINESS_RULE",
+      "sourceQuality": "MEDIUM",
+      "scope": "RULE_LEVEL",
+      "categories": [
+        "waiting"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Approximately 150 ILS per started half-hour of waiting.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "The existing repository records approximately 150 per half-hour; the current task explicitly says started half-hour. Engine upward rounding remains a documented provisional application.",
+        "Waiting must be explicitly supplied; estimated moving duration is not waiting evidence."
+      ],
+      "sourceReference": [
+        "data/evals/README.md#historical-pricing-heuristics",
+        "User-supplied Pricing Evidence Table task: Waiting",
+        "README.md#provisional-pricing-assumptions"
+      ],
+      "referencePrice": 150,
+      "rule": {
+        "unit": "started half-hour",
+        "minutesPerBlock": 30
+      }
+    },
+    {
+      "id": "ref-student-discount",
+      "evidenceType": "BUSINESS_RULE",
+      "sourceQuality": "MEDIUM",
+      "scope": "RULE_LEVEL",
+      "categories": [
+        "student_discount"
+      ],
+      "sourceBasis": "HISTORICAL_REFERENCE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Historical student-discount rule: 10 percent.",
+      "limitations": [
+        "User-supplied historical reference, not an independently verified transaction or automatically approved current tariff.",
+        "Repeated copies in the task, repository guide and engine are the same source lineage, not independent observations.",
+        "Actual scope, load, access and owner judgment can affect the final commercial total.",
+        "Eligibility and the discount base require explicit business confirmation; engine applies it once to priced components.",
+        "If interpreted as exact prices with no other adjustment, the unverified 600 ILS proposal / 500 ILS close story is not a 10 percent reduction (which would be 540). Both prices are approximate and the actual calculation is unknown; this story does not validate or override the rule."
+      ],
+      "sourceReference": [
+        "data/evals/README.md#historical-pricing-heuristics",
+        "User-supplied Pricing Evidence Table task: Student discount"
+      ],
+      "rule": {
+        "unit": "percent",
+        "percentage": 10
+      }
+    },
+    {
+      "id": "historical-bed-stairs",
+      "evidenceType": "HISTORICAL_ESTIMATE",
+      "sourceQuality": "WEAK",
+      "scope": "JOB_LEVEL",
+      "categories": [
+        "bed_transport",
+        "stairs"
+      ],
+      "sourceBasis": "TASK_HISTORICAL_CASE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Bed 160 x 190 plus mattress, pickup floor 4 and dropoff floor 2 without elevators; proposed around 1000 ILS and expected close around 900 ILS.",
+      "limitations": [
+        "Proposal/estimate only: no independently established sent quote, actual close or WON outcome.",
+        "Whole-job evidence must not be decomposed into item/service/access tariffs.",
+        "Expected close is a forecast, not evidence of an actual closed amount.",
+        "No assembly was reported; disassembly, precise item counts, staffing, distance and outcome are unspecified."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Beds / mattresses: example 1"
+      ],
+      "outcome": "UNKNOWN",
+      "quotedPrice": null,
+      "closedPrice": null,
+      "items": [
+        {
+          "type": "bed",
+          "quantity": null,
+          "description": "Size described as 160 x 190; units were not explicitly supplied."
+        },
+        {
+          "type": "mattress",
+          "quantity": null
+        }
+      ],
+      "pickup": {
+        "floor": 4,
+        "elevator": false
+      },
+      "dropoff": {
+        "floor": 2,
+        "elevator": false
+      },
+      "services": [
+        {
+          "type": "assembly",
+          "required": false
+        }
+      ],
+      "estimatedPrice": 1000,
+      "expectedClosePrice": 900
+    },
+    {
+      "id": "historical-bed-service-route",
+      "evidenceType": "HISTORICAL_ESTIMATE",
+      "sourceQuality": "WEAK",
+      "scope": "JOB_LEVEL",
+      "categories": [
+        "bed_transport",
+        "bed_assembly_disassembly"
+      ],
+      "sourceBasis": "TASK_HISTORICAL_CASE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Bed 160 x 190 plus mattress; pickup elevator and ground-floor destination, disassembly and assembly included; proposed around 700 ILS, expected close around 600-650 ILS.",
+      "limitations": [
+        "Proposal/estimate only: no independently established sent quote, actual close or WON outcome.",
+        "Whole-job evidence must not be decomposed into item/service/access tariffs.",
+        "Expected close range is a forecast, not an actual close.",
+        "Pickup floor, destination elevator, exact item counts, staffing and distance are unspecified. Service cost is not isolated from transport."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Beds / mattresses: example 2"
+      ],
+      "outcome": "UNKNOWN",
+      "quotedPrice": null,
+      "closedPrice": null,
+      "items": [
+        {
+          "type": "bed",
+          "quantity": null,
+          "description": "Size described as 160 x 190; units were not explicitly supplied."
+        },
+        {
+          "type": "mattress",
+          "quantity": null
+        }
+      ],
+      "pickup": {
+        "floor": null,
+        "elevator": true
+      },
+      "dropoff": {
+        "floor": 0,
+        "elevator": null
+      },
+      "services": [
+        {
+          "type": "bed_disassembly",
+          "required": true
+        },
+        {
+          "type": "bed_assembly",
+          "required": true
+        }
+      ],
+      "estimatedPrice": 700,
+      "expectedCloseRange": {
+        "min": 600,
+        "max": 650
+      }
+    },
+    {
+      "id": "historical-washer-stairs-disputed-close",
+      "evidenceType": "HISTORICAL_ESTIMATE",
+      "sourceQuality": "WEAK",
+      "scope": "JOB_LEVEL",
+      "categories": [
+        "washing_machine_transport",
+        "stairs",
+        "student_discount"
+      ],
+      "sourceBasis": "TASK_HISTORICAL_CASE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Washing machine, pickup floor 3 without elevator, proposed approximately 600 ILS. A 500 ILS close with student discount is reported but unverified.",
+      "limitations": [
+        "Proposal/estimate only: no independently established sent quote, actual close or WON outcome.",
+        "Whole-job evidence must not be decomposed into item/service/access tariffs.",
+        "The reported 500 ILS close is preserved only as a disputed claim in prose; there is insufficient corroboration to populate closedPrice or mark WON.",
+        "If treated as exact amounts with only the student discount, 600 to 500 is approximately 16.67 percent, not 10 percent; 10 percent off 600 would be 540. Both reported prices are approximate, and the actual discount base, rounding or other negotiation is unverified. This story cannot validate or override the separate rule.",
+        "Dropoff access, distance, exact item count and staffing remain unknown."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Washing machine on difficult stairs"
+      ],
+      "outcome": "UNKNOWN",
+      "quotedPrice": null,
+      "closedPrice": null,
+      "items": [
+        {
+          "type": "washing_machine",
+          "quantity": null
+        }
+      ],
+      "pickup": {
+        "floor": 3,
+        "elevator": false
+      },
+      "estimatedPrice": 600,
+      "services": [
+        {
+          "type": "student_discount",
+          "required": null,
+          "notes": "Reported application is unverified; the approximate 600/500 amounts do not establish the actual discount base or corroborate a 10 percent calculation."
+        }
+      ]
+    },
+    {
+      "id": "historical-fridge-route",
+      "evidenceType": "JOB_LEVEL_CASE",
+      "sourceQuality": "WEAK",
+      "scope": "JOB_LEVEL",
+      "categories": [
+        "refrigerator_transport"
+      ],
+      "sourceBasis": "TASK_HISTORICAL_CASE",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Regular refrigerator reference around 350 ILS, from the Herzl/Florentin area to Jaffa. Access and floors determine the actual total.",
+      "limitations": [
+        "Supporting route-level reference, not an independently verified quote or closed transaction.",
+        "Neighborhood-level areas only; no exact addresses or customer identity are recorded.",
+        "The customer asked about removing an old refrigerator. Inclusion, requirement and price were not established; no removal tariff is inferred.",
+        "This may repeat the regular-fridge historical reference; it is not independent tariff corroboration."
+      ],
+      "sourceReference": [
+        "User-supplied Pricing Evidence Table task: Refrigerator route example"
+      ],
+      "items": [
+        {
+          "type": "refrigerator",
+          "quantity": null,
+          "sizeCategory": "REGULAR"
+        }
+      ],
+      "pickup": {
+        "area": "Herzl / Florentin area"
+      },
+      "dropoff": {
+        "area": "Jaffa"
+      },
+      "services": [
+        {
+          "type": "old_refrigerator_removal",
+          "required": null,
+          "notes": "Question only; inclusion and price unknown."
+        }
+      ],
+      "referencePrice": 350,
+      "outcome": "UNKNOWN"
+    },
+    {
+      "id": "engineering-boxes-1-10",
+      "evidenceType": "BUSINESS_RULE",
+      "sourceQuality": "WEAK",
+      "scope": "RULE_LEVEL",
+      "categories": [
+        "boxes"
+      ],
+      "sourceBasis": "ENGINEERING_ASSUMPTION",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Current demo engineering assumption: 1-10 total boxes use one 50-100 ILS job-level volume band.",
+      "limitations": [
+        "Not an isolated historical box tariff. Mixed-job evidence cannot calibrate this band.",
+        "The engine aggregates box rows once, adds no box fee without a box item, and leaves more than 30 boxes unpriced/manual.",
+        "Included for an audit of the existing engine, not as historical business validation."
+      ],
+      "sourceReference": [
+        "server/src/domain/pricing/pricingRules.ts#boxes",
+        "README.md#provisional-pricing-assumptions"
+      ],
+      "priceRange": {
+        "min": 50,
+        "max": 100
+      },
+      "rule": {
+        "unit": "job with 1-10 boxes",
+        "upToBoxes": 10
+      }
+    },
+    {
+      "id": "engineering-boxes-11-20",
+      "evidenceType": "BUSINESS_RULE",
+      "sourceQuality": "WEAK",
+      "scope": "RULE_LEVEL",
+      "categories": [
+        "boxes"
+      ],
+      "sourceBasis": "ENGINEERING_ASSUMPTION",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Current demo engineering assumption: 11-20 total boxes use one 100-200 ILS job-level volume band.",
+      "limitations": [
+        "Not an isolated historical box tariff. Mixed-job evidence cannot calibrate this band.",
+        "The engine aggregates box rows once, adds no box fee without a box item, and leaves more than 30 boxes unpriced/manual.",
+        "Included for an audit of the existing engine, not as historical business validation."
+      ],
+      "sourceReference": [
+        "server/src/domain/pricing/pricingRules.ts#boxes",
+        "README.md#provisional-pricing-assumptions"
+      ],
+      "priceRange": {
+        "min": 100,
+        "max": 200
+      },
+      "rule": {
+        "unit": "job with 11-20 boxes",
+        "upToBoxes": 20
+      }
+    },
+    {
+      "id": "engineering-boxes-21-30",
+      "evidenceType": "BUSINESS_RULE",
+      "sourceQuality": "WEAK",
+      "scope": "RULE_LEVEL",
+      "categories": [
+        "boxes"
+      ],
+      "sourceBasis": "ENGINEERING_ASSUMPTION",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Current demo engineering assumption: 21-30 total boxes use one 200-300 ILS job-level volume band.",
+      "limitations": [
+        "Not an isolated historical box tariff. Mixed-job evidence cannot calibrate this band.",
+        "The engine aggregates box rows once, adds no box fee without a box item, and leaves more than 30 boxes unpriced/manual.",
+        "Included for an audit of the existing engine, not as historical business validation."
+      ],
+      "sourceReference": [
+        "server/src/domain/pricing/pricingRules.ts#boxes",
+        "README.md#provisional-pricing-assumptions"
+      ],
+      "priceRange": {
+        "min": 200,
+        "max": 300
+      },
+      "rule": {
+        "unit": "job with 21-30 boxes",
+        "upToBoxes": 30
+      }
+    },
+    {
+      "id": "engineering-distance",
+      "evidenceType": "BUSINESS_RULE",
+      "sourceQuality": "WEAK",
+      "scope": "RULE_LEVEL",
+      "categories": [
+        "distance"
+      ],
+      "sourceBasis": "ENGINEERING_ASSUMPTION",
+      "currency": "ILS",
+      "humanApprovalRequired": true,
+      "evidenceNote": "Current demo engineering assumption: first 10 numeric kilometers are included in handling; each additional kilometer adds 5-10 ILS.",
+      "limitations": [
+        "No supplied historical evidence isolates a distance tariff or validates the 10 km threshold.",
+        "Addresses and neighborhood names are not distances. The engine accepts numeric distance supplied outside pricing.",
+        "Registered 20 km demo routes are synthetic test fixtures, not measured geography or independent business evidence."
+      ],
+      "sourceReference": [
+        "server/src/domain/pricing/pricingRules.ts#distance",
+        "README.md#provisional-pricing-assumptions",
+        "server/src/demo/distanceAdapter.ts"
+      ],
+      "priceRange": {
+        "min": 5,
+        "max": 10
+      },
+      "rule": {
+        "unit": "additional kilometer",
+        "includedKm": 10
+      }
+    }
+  ]
+}

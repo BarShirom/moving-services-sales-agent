@@ -12,7 +12,7 @@ test('initial refrigerator request extracts only identified items and route citi
 
 for (const [text, type] of [
   ['מקרר', 'refrigerator'], ['ארגז', 'box'], ['ארגזים', 'box'],
-  ['מכונת כביסה', 'washing_machine'], ['ארון', 'wardrobe'], ['מיטה', 'bed'],
+  ['מכונת כביסה', 'washing_machine'], ['ארון', 'wardrobe'], ['מיטה', 'bed'], ['שידה', 'dresser'],
 ] as const satisfies readonly (readonly [string, SupportedItemType])[]) {
   test(`recognizes supported item: ${type} (${text})`, () => {
     assert.deepEqual(extractMessage(text), { moveDetails: { items: [{ type }] } });

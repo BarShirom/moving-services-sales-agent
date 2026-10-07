@@ -65,4 +65,7 @@ export const offlineFixtures: Readonly<Record<string, OfflineFixture>> = {
     accessNoteMeaning: [/פריקה/u, /מעלית/u, /מקרר/u, /(?:לא|אינו).*נכנס/u, /מדרגות/u],
   },
   'conv-024': fixture('אני לא יודע כרגע, אבדוק ואעדכן', {}),
+  'conv-026': fixture('אין לי כרגע את המידות ודרוש פירוק ואחר כך גם הרכבה.', { moveDetails: { items: [
+    { type: 'wardrobe', dimensionsAvailable: false, requiresDisassembly: true, requiresAssembly: true },
+  ] } }),
 };

@@ -1,5 +1,6 @@
 import { readFile } from 'node:fs/promises';
 import { z } from 'zod';
+import { pricingInputSchema } from '../domain/pricing/buildPricingInput.js';
 
 const text = z.string().trim().min(1);
 const id = text.regex(/^[a-z][a-z0-9-]*$/);
@@ -54,6 +55,8 @@ export const pricingCaseSchema = z.object({
   dropoff: location.optional(),
   requestedDate: date.nullable().optional(),
   workers: positiveCount.nullable().optional(),
+  // Explicit external pricing facts; never filled from addresses or reference prices.
+  pricingContext: pricingInputSchema.shape.context.omit({ workers: true, specialDifficulty: true }).partial().optional(),
   vehicles: positiveCount.nullable().optional(),
   specialDifficulty: z.array(text).nullable().optional(),
   disassemblyAssembly: z.object({

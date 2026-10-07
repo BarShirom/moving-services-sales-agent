@@ -1,6 +1,7 @@
 import { identifyConversationEvents, sameRequirement } from './conversationEvents.js';
 import { selectNextQuestion } from '../requirements/nextQuestion.js';
 import { applyUnavailablePhotoReply } from './photoReply.js';
+import { extractDateReply } from './dateReply.js';
 import { buildConversationResponse, type ConversationResponse } from './buildConversationResponse.js';
 import { randomUUID } from 'node:crypto';
 import type { Lead } from '../lead.js';
@@ -70,6 +71,10 @@ export async function processCustomerMessageWithExtractor(
   // Snapshot before awaiting; an extractor cannot mutate the caller's lead or merge target.
   const snapshot = structuredClone(lead);
   const context = structuredClone(options.requirementsContext ?? {});
+  const dateReply = extractDateReply(snapshot, text, options.lastQuestion, options.referenceDate);
+  if (dateReply) {
+    return applyCustomerExtraction(snapshot, text, dateReply, context, undefined, options.lastQuestion);
+  }
   const photoReply = applyUnavailablePhotoReply(snapshot, text, options.lastQuestion);
   if (photoReply) {
     return applyCustomerExtraction(photoReply.lead, text, {}, context, photoReply.acknowledgement, options.lastQuestion);

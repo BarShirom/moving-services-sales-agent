@@ -6,8 +6,8 @@ import type { MessageExtractor } from '../src/domain/conversation/processCustome
 import { AIExtractionError } from '../src/integrations/openai/errors.js';
 import type { DemoSnapshot } from '../src/demo/types.js';
 
-async function demo(t: TestContext, extractor: MessageExtractor) {
-  const server = createApp({ extractor }).listen(0, '127.0.0.1');
+async function demo(t: TestContext, extractor: MessageExtractor, now?: () => Date) {
+  const server = createApp({ extractor, now }).listen(0, '127.0.0.1');
   await new Promise<void>(resolve => server.once('listening', resolve));
   t.after(() => new Promise<void>((resolve, reject) => {
     server.close(error => error ? reject(error) : resolve());
@@ -77,6 +77,90 @@ test('reset creates a fresh Lead with backend-derived requirements', async t => 
   assert.deepEqual(reset.extraction, {});
   assert.equal(reset.nextQuestion?.requirements[0].id, 'items');
 });
+
+for (const [date, expected] of [
+  ['10/10', '2026-10-10'], ['10/10/2026', '2026-10-10'],
+  ['10.10', '2026-10-10'], ['10.10.2026', '2026-10-10'],
+  ['06/10', '2027-10-06'], ['07/10', '2026-10-07'],
+]) {
+  test(`HTTP browser regression: elevator no, then ${date}, with explicit October reference`, async t => {
+    const { createAIExtractor } = await import('../src/integrations/openai/extractMessageWithAI.js');
+    let requests = 0;
+    const keep = () => ({ action: 'keep' as const });
+    const set = <T>(value: T) => ({ action: 'set' as const, value });
+    const location = () => ({ city: keep(), address: keep(), floor: keep(), elevator: keep() });
+    // Only the provider transport is mocked. Context, conversion, merge, requirements,
+    // demo routing and automatic owner pricing all run through production code.
+    const extractor = createAIExtractor({ request: async request => {
+      requests++;
+      assert.ok(Array.isArray(request.input));
+      const message = request.input[0];
+      assert.ok('content' in message && typeof message.content === 'string');
+      const context = JSON.parse(message.content);
+      assert.equal(context.referenceDate, '2026-10-07');
+      const data: import('../src/integrations/openai/schema.js').AIExtraction = {
+        items: [], pickup: location(), dropoff: location(), requestedDate: keep(), requestedTime: keep(), specialAccessNotes: keep(),
+      };
+      if (requests === 1) {
+        data.items = ['refrigerator', 'box'].map(type => ({
+          type: type as 'refrigerator' | 'box', quantity: type === 'box' ? set(15) : keep(),
+          sizeCategory: type === 'refrigerator' ? set('LARGE') : keep(), photoStatus: keep(), dimensionsAvailable: keep(),
+          dimensions: { width: keep(), height: keep(), depth: keep() }, requiresDisassembly: keep(), requiresAssembly: keep(),
+        }));
+        data.pickup = { city: set('רמת גן'), address: set('רחוב דוגמה 1'), floor: set(2), elevator: set(false) };
+        data.dropoff = { city: set('תל אביב'), address: set('רחוב דוגמה 2'), floor: set(4), elevator: keep() };
+      } else if (requests === 2) {
+        assert.equal(context.latestCustomerMessage, 'לא');
+        assert.equal(context.lastQuestion.text, 'האם יש מעלית בכתובת הפריקה?');
+        data.dropoff.elevator = set(false);
+      } else {
+        throw new Error('Simulated provider failure: date-only replies must not need the provider');
+      }
+      return { status: 'completed', output: [], output_parsed: data };
+    } });
+    const api = await demo(t, extractor, () => new Date('2026-10-07T09:00:00Z'));
+    const firstResponse = await api.post('message', { message: 'מקרר גדול ו-15 ארגזים, מרמת גן רחוב דוגמה 1 קומה 2 בלי מעלית לתל אביב רחוב דוגמה 2 קומה 4' });
+    assert.equal(firstResponse.status, 200);
+    const first = await firstResponse.json() as DemoSnapshot;
+    assert.equal(first.nextQuestion?.text, 'האם יש מעלית בכתובת הפריקה?');
+    const noResponse = await api.post('message', { message: 'לא' });
+    assert.equal(noResponse.status, 200);
+    const before = await noResponse.json() as DemoSnapshot;
+    assert.equal(before.nextQuestion?.text, 'באיזה תאריך תרצו לבצע את ההובלה?');
+    assert.equal(before.lead.moveDetails.dropoff.elevator, false);
+
+    // A genuine invalid date must fail, retaining every previous fact and message.
+    const ownerBefore = await (await fetch(`${api.root}/api/demo/owner`)).json();
+    assert.equal((await api.post('message', { message: '31/02' })).status, 502);
+    assert.deepEqual(await (await api.get()).json(), before);
+    assert.deepEqual(await (await fetch(`${api.root}/api/demo/owner`)).json(), ownerBefore);
+    const requestsBeforeDate = requests;
+
+    const response = await api.post('message', { message: date });
+    assert.equal(response.status, 200);
+    const after = await response.json() as DemoSnapshot;
+    assert.equal(requests, requestsBeforeDate);
+    assert.deepEqual(after.lead.moveDetails, { ...before.lead.moveDetails, requestedDate: expected });
+    assert.deepEqual(after.lead.messages.slice(0, -2), before.lead.messages);
+    assert.deepEqual(after.nextQuestion?.requirements, [{ id: 'item.photo', itemIndex: 0 }]);
+    assert.doesNotMatch(after.responseText, /באיזה תאריך/);
+    assert.equal(after.lead.status, 'AWAITING_REVIEW');
+    assert.deepEqual(await (await api.get()).json(), after);
+    const owner = await (await fetch(`${api.root}/api/demo/owner`)).json() as { pricingEvaluation: { humanApprovalRequired: boolean; inputSnapshot: { moveDetails: { requestedDate: string } } }; reviews: unknown[] };
+    assert.equal(owner.pricingEvaluation.inputSnapshot.moveDetails.requestedDate, expected);
+    assert.equal(owner.pricingEvaluation.humanApprovalRequired, true);
+    assert.deepEqual(owner.reviews, []);
+
+    // Completing the next requirement must not re-ask for the accepted date.
+    const continued = await (await api.post('message', { message: 'אין' })).json() as DemoSnapshot;
+    assert.equal(continued.lead.moveDetails.requestedDate, expected);
+    assert.equal(continued.nextQuestion, null);
+    assert.doesNotMatch(continued.responseText, /באיזה תאריך/);
+    const preserved = await (await api.get()).json();
+    assert.equal((await api.post('message', { message: 'הודעה שדורשת חילוץ' })).status, 502);
+    assert.deepEqual(await (await api.get()).json(), preserved);
+  });
+}
 
 test('invalid messages and caller-supplied Lead state are rejected without extraction', async t => {
   const api = await demo(t, () => { assert.fail('must not extract invalid input'); });
@@ -164,11 +248,7 @@ test('reported conversation progresses through address, elevator, date and unava
       assert.equal(context.latestCustomerMessage, 'לא');
       assert.equal(context.lastQuestion.requirements[0].id, 'dropoff.elevator');
       data.dropoff.elevator = set(false);
-    } else if (calls === 3) {
-      assert.equal(context.latestCustomerMessage, '16/09');
-      assert.equal(context.lastQuestion.requirements[0].id, 'requestedDate');
-      data.requestedDate = set('16/09');
-    } else { assert.fail('Photo refusal should not call the model'); }
+    } else { assert.fail('Date-only replies and photo refusal should not call the model'); }
     calls++;
     return { status: 'completed', output: [], output_parsed: data };
   } });
@@ -186,7 +266,7 @@ test('reported conversation progresses through address, elevator, date and unava
     assert.equal(result.lead.messages.at(-1)?.text, result.responseText);
     if (message === '16/09') assert.equal(result.nextQuestion?.requirements[0].id, 'item.photo');
   }
-  assert.equal(calls, 4);
+  assert.equal(calls, 3);
   assert.equal(result.lead.moveDetails.requestedDate, normalizeRequestedDate('16/09', referenceDate));
   assert.equal(result.lead.moveDetails.items[0].photoStatus, 'NOT_AVAILABLE');
   assert.equal(result.lead.moveDetails.items[1].quantity, 15);

@@ -10,7 +10,7 @@ export interface EvalInputs {
   conversationCases: unknown[];
   pricingCases: unknown[];
 }
-const scope = 'Offline only. Fixtures evaluate workflow, not AI extraction accuracy. Pricing accuracy is not scored.';
+const scope = 'Offline only. Fixtures evaluate workflow, not AI extraction accuracy. Provisional pricing comparisons never fail on historical price differences; incomplete subtotals are not whole-job accuracy scores.';
 
 export async function evaluateDatasets(inputs: EvalInputs): Promise<EvalReport> {
   const results = await runConversationEvals(inputs.conversationCases);

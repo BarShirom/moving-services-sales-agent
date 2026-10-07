@@ -20,7 +20,7 @@ const pricing = {
 };
 
 test('the reusable loader parses both datasets and preserves the supplied closed-job facts', () => {
-  assert.equal(fixtures.conversationCases.length, 25);
+  assert.equal(fixtures.conversationCases.length, 26);
   assert.equal(fixtures.pricingCases.length, 6);
   const closedJobs = fixtures.pricingCases.filter(entry => entry.sourceQuality === 'closed_job');
   assert.equal(closedJobs.length, 3);

@@ -20,7 +20,7 @@ There are no null updates, deletions, or dummy values. false and 0 are real valu
 
 ITEM COVERAGE: read ALL clauses and lines of latestCustomerMessage before producing items.
 Include EVERY distinctly affirmed supported item type, not just the first or main moving item.
-Types: refrigerator, box, washing_machine, wardrobe, bed. Emit at most one patch PER TYPE,
+Types: refrigerator, box, washing_machine, wardrobe, bed, dresser (שידה). Extracting a type does not mean its transport has a supported price. Emit at most one patch PER TYPE,
 not one patch per message. A refrigerator and boxes require TWO separate entries in items.
 The lastQuestion helps resolve short replies but must not restrict extraction to its topic.
 Do not drop an item because its quantity, dimensions, or other attributes are unknown:
@@ -123,6 +123,16 @@ Explicitly supplied measurements may also set dimensionsAvailable=true. Never di
 because another clause declines a photo. "אין לי את המידות" sets dimensionsAvailable=false (correct
 if previously offered); keep any measurements already recorded. Do not infer unavailable dimensions
 from unavailable photos. Uncertain offers such as "אולי יש לי מידות" keep availability and axes.
+When lastQuestion requests item.size or a dimension axis, use its itemIndex to resolve an otherwise
+unnamed item. "אין לי כרגע את המידות", "אני לא יודע את המידות", "אין לי את המידה עכשיו",
+and "אבדוק את המידות ואעדכן" mean dimensionsAvailable=false for THAT item, with all unknown axes kept.
+"אבדוק ואעדכן" in a dimension-only question also means measurements are pending, not supplied.
+Use correct when the availability changes from a previous explicit offer/refusal.
+After a wardrobe size/disassembly question, "אין לי כרגע את המידות ודרוש פירוק ואחר כך גם הרכבה."
+sets wardrobe dimensionsAvailable=false, requiresDisassembly=true AND requiresAssembly=true.
+Do not stop at the unavailable-information clause or miss the assembly clause because it was not asked.
+Do not apply uncertainty to another item, photo, date, elevator or service. A generic "לא יודע"
+outside an identifiable size/dimension question is not evidence of unavailable dimensions.
 If multiple items make a referent ambiguous, omit that item's updates; extract other clear facts.
 Photo availability must not become an elevator or date update unless explicitly communicated.
 

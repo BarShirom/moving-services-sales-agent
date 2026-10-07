@@ -6,6 +6,14 @@ import type { OfflineFixture } from './conversationFixtures.js';
 
 type Result = ProcessCustomerMessageResult;
 export const intentChecks: Readonly<Record<string, (result: Result) => boolean>> = {
+  acknowledge_unavailable_dimensions: r => /מידות.*(?:לא זמינות|ממתינות).*כרגע/u.test(r.responseText),
+  keep_wardrobe_dimensions_pending: r => !r.requirements.readyForPricing && r.lead.moveDetails.items.some((item, itemIndex) =>
+    item.type === 'wardrobe' && item.dimensionsAvailable === false && Object.values(item.dimensions).every(value => value === null)
+    && r.requirements.missingRequired.some(ref => ref.itemIndex === itemIndex && ref.id === 'item.size'
+      && ref.availability === 'TEMPORARILY_UNAVAILABLE' && ref.question === null)),
+  retain_wardrobe_services_without_reasking: r => r.lead.moveDetails.items.some((item, itemIndex) =>
+    item.type === 'wardrobe' && item.requiresDisassembly === true && item.requiresAssembly === true
+    && !r.nextQuestion?.requirements.some(ref => ref.itemIndex === itemIndex && ['item.disassembly', 'item.assembly'].includes(ref.id))),
   collect_missing_dropoff_address_and_floor: r => questions(r, ['dropoff.address', 'dropoff.floor']),
   ask_dropoff_elevator: r => questions(r, ['dropoff.elevator']),
   ask_dropoff_floor: r => questions(r, ['dropoff.floor']),
@@ -115,6 +123,7 @@ export function automatedMustNot(constraint: string): boolean {
       'Do not invent dimensions from a promise to supply them.',
       'Do not invent an unanswered floor.',
       'Do not invent the unanswered floor.',
+      'Do not repeat unavailable dimension questions.',
     ].includes(constraint);
 }
 
@@ -145,6 +154,7 @@ export function checkConversation(
   for (const ref of result.nextQuestion?.requirements ?? []) {
     const evaluated = result.requirements.requirements.find(r => r.id === ref.id && r.itemIndex === ref.itemIndex);
     if (!evaluated || evaluated.status !== 'MISSING') failures.push('Already-known or inapplicable requirement asked again: ' + ref.id);
+    if (evaluated?.availability === 'TEMPORARILY_UNAVAILABLE') failures.push('Unavailable dimension requested again: ' + ref.id);
     if (ref.id === 'item.photo' && ref.itemIndex !== undefined &&
       result.lead.moveDetails.items[ref.itemIndex]?.photoStatus === 'NOT_AVAILABLE') {
       failures.push('Unavailable photo requested again.');

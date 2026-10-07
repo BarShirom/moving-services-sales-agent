@@ -4,7 +4,8 @@ export type LeadStatus =
   | 'AWAITING_REVIEW'
   | 'QUOTE_SENT'
   | 'WON'
-  | 'LOST';
+  | 'LOST'
+  | 'HUMAN_HANDOFF';
 
 export type MessageSender = 'CUSTOMER' | 'AGENT' | 'HUMAN';
 
@@ -23,7 +24,8 @@ export interface MoveItem {
   photoStatus: 'REQUIRED' | 'RECEIVED' | 'NOT_APPLICABLE' | 'NOT_AVAILABLE';
   description: string | null;
   dimensions: Dimensions;
-  // Customer can supply measurements; this is not evidence of their actual values.
+  // null: availability unknown; false: explicitly unavailable now; true: can supply.
+  // Actual known values live in dimensions; availability never satisfies a requirement.
   dimensionsAvailable: boolean | null;
   requiresDisassembly: boolean | null;
   requiresAssembly: boolean | null;

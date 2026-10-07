@@ -40,6 +40,142 @@ const photo: NextQuestion = {
 };
 const dimensionIds = ['item.width', 'item.height', 'item.depth'];
 
+function wardrobeLead() {
+  const lead = readyLead();
+  lead.moveDetails.items = [lead.moveDetails.items[0], createMoveItem('wardrobe'), createMoveItem('dresser'),
+    { ...createMoveItem('box'), quantity: 40 }];
+  lead.moveDetails.dropoff.floor = 3;
+  lead.moveDetails.dropoff.elevator = false;
+  lead.moveDetails.requestedDate = '2026-10-09';
+  return lead;
+}
+
+test('wardrobe unavailable dimensions and both services do not loop on the active size question', async () => {
+  const lead = wardrobeLead();
+  const question = evaluateRequirements(lead).nextQuestion!;
+  assert.deepEqual(question.requirements, [{ id: 'item.size', itemIndex: 1 }, { id: 'item.disassembly', itemIndex: 1 }]);
+  const data = empty();
+  data.items = [fridge({ type: 'wardrobe', dimensionsAvailable: set(false), requiresDisassembly: set(true), requiresAssembly: set(true) })];
+  const result = await turn(lead, 'אין לי כרגע את המידות ודרוש פירוק ואחר כך גם הרכבה.', data, question);
+  const wardrobe = result.lead.moveDetails.items[1];
+  assert.equal(wardrobe.dimensionsAvailable, false);
+  assert.equal(wardrobe.requiresDisassembly, true);
+  assert.equal(wardrobe.requiresAssembly, true);
+  assert.deepEqual(wardrobe.dimensions, { width: null, height: null, depth: null });
+  assert.ok(!result.nextQuestion?.requirements.some(ref => ref.itemIndex === 1));
+  assert.equal(result.requirements.readyForPricing, false);
+  assert.ok(result.requirements.missingRequired.some(ref => ref.id === 'item.size' && ref.itemIndex === 1));
+  assert.deepEqual(result.lead.moveDetails, { ...lead.moveDetails, items: lead.moveDetails.items.map((item, i) => i === 1
+    ? { ...item, dimensionsAvailable: false, requiresDisassembly: true, requiresAssembly: true } : item) });
+  assert.match(result.responseText, /מידות.*כרגע/);
+  assert.match(result.responseText, /פירוק.*הרכבה/);
+  assert.equal(result.requirements.missingRequired.find(ref => ref.id === 'item.size' && ref.itemIndex === 1)?.availability, 'TEMPORARILY_UNAVAILABLE');
+  assert.deepEqual(result.nextQuestion?.requirements, [{ id: 'item.photo', itemIndex: 0 }]);
+});
+
+test('final manual-review response names pending wardrobe dimensions once and acknowledges the unavailable photo', async () => {
+  const lead = wardrobeLead();
+  lead.moveDetails.items[1].requiresDisassembly = true;
+  lead.moveDetails.items[1].requiresAssembly = true;
+  const data = empty();
+  data.items = [fridge({ photoStatus: set('NOT_AVAILABLE') }),
+    fridge({ type: 'wardrobe', dimensionsAvailable: set(false) })];
+  const result = await turn(lead, 'אין תמונה של המקרר ואין לי כרגע את המידות של הארון', data, evaluateRequirements(lead).nextQuestion!);
+  assert.equal(result.nextQuestion, null);
+  assert.equal(result.requirements.readyForPricing, false);
+  assert.equal(result.responseText.match(/המידות/gu)?.length, 1);
+  assert.match(result.responseText, /אין בעיה, נמשיך בלי תמונה/);
+  assert.match(result.responseText, /המידות של הארון נשארו להשלמה, והפרטים יעברו עכשיו לבדיקה ותמחור אצל בעל העסק/);
+  assert.doesNotMatch(result.responseText, /פריט 2|נבקש השלמה בהמשך|הפרטים נשמרו/);
+  assert.deepEqual(result.lead.moveDetails.items[1], { ...lead.moveDetails.items[1], dimensionsAvailable: false });
+  assert.ok(result.requirements.missingRequired.some(requirement =>
+    requirement.itemIndex === 1 && requirement.availability === 'TEMPORARILY_UNAVAILABLE' && requirement.status === 'MISSING'));
+});
+
+for (const text of ['אין לי כרגע את המידות', 'אני לא יודע את המידות', 'אבדוק את המידות ואעדכן', 'אין לי את המידה עכשיו', 'אבדוק ואעדכן']) {
+  test('contextual unavailable wardrobe dimensions: ' + text, async () => {
+    const lead = wardrobeLead();
+    const data = empty();
+    data.items = [fridge({ type: 'wardrobe', dimensionsAvailable: set(false) })];
+    const result = await turn(lead, text, data, evaluateRequirements(lead).nextQuestion!);
+    assert.equal(result.lead.moveDetails.items[1].dimensionsAvailable, false);
+    assert.deepEqual(result.lead.moveDetails.items[1].dimensions, { width: null, height: null, depth: null });
+    assert.ok(result.requirements.missingRequired.some(r => r.id === 'item.size' && r.status === 'MISSING' && r.question === null));
+    assert.ok(!result.nextQuestion?.requirements.some(r => ['item.size', ...dimensionIds].includes(r.id)));
+    assert.equal(result.lead.moveDetails.items[1].requiresAssembly, null);
+    assert.equal(result.lead.moveDetails.items[1].requiresDisassembly, null);
+    assert.deepEqual(result.lead.moveDetails.items[0], lead.moveDetails.items[0]);
+  });
+}
+
+test('dimension unavailability persists, retains partial values, and a later offer reopens only missing axes', async () => {
+  const lead = wardrobeLead();
+  lead.moveDetails.items[1].dimensions.width = 90;
+  lead.moveDetails.items[1].requiresDisassembly = true;
+  lead.moveDetails.items[1].requiresAssembly = true;
+  const unavailable = empty();
+  unavailable.items = [fridge({ type: 'wardrobe', dimensionsAvailable: set(false) })];
+  let result = await turn(lead, 'אין לי כרגע את שאר המידות', unavailable, evaluateRequirements(lead).nextQuestion!);
+  assert.equal(result.lead.moveDetails.items[1].dimensions.width, 90);
+  assert.equal(result.requirements.requirements.find(r => r.id === 'item.width' && r.itemIndex === 1)?.status, 'SATISFIED');
+  assert.ok(result.requirements.missingRequired.some(r => r.id === 'item.height' && r.availability === 'TEMPORARILY_UNAVAILABLE'));
+  result = await turn(result.lead, 'תודה', empty(), result.nextQuestion!);
+  assert.ok(!result.nextQuestion?.requirements.some(r => r.itemIndex === 1));
+  const offer = empty();
+  offer.items = [fridge({ type: 'wardrobe', dimensionsAvailable: correct(true) })];
+  result = await turn(result.lead, 'עכשיו יש לי את המידות של הארון', offer, result.nextQuestion!);
+  assert.deepEqual(result.nextQuestion?.requirements, [{ id: 'item.height', itemIndex: 1 }, { id: 'item.depth', itemIndex: 1 }]);
+  assert.ok(!result.requirements.requirements.some(r => r.itemIndex === 1 && r.availability));
+  const measurements = empty();
+  measurements.items = [fridge({ type: 'wardrobe', dimensions: { width: keep(), height: set(200), depth: set(60) } })];
+  result = await turn(result.lead, 'הארון גובה 200 ועומק 60', measurements, result.nextQuestion!);
+  assert.deepEqual(result.lead.moveDetails.items[1].dimensions, { width: 90, height: 200, depth: 60 });
+  assert.equal(result.requirements.requirements.find(r => r.id === 'item.size' && r.itemIndex === 1)?.status, 'SATISFIED');
+  assert.ok(!result.nextQuestion?.requirements.some(r => r.itemIndex === 1));
+});
+
+test('an unrelated unknown fact never globally defers wardrobe dimensions or invents availability', async () => {
+  const lead = wardrobeLead();
+  const question = evaluateRequirements(lead).nextQuestion!;
+  const result = await turn(lead, 'אני לא יודע מה מזג האוויר', empty(), question);
+  assert.deepEqual(result.nextQuestion, question);
+  assert.deepEqual(result.lead.moveDetails, lead.moveDetails);
+});
+
+test('disassembly-only structured extraction leaves assembly unknown and asks its relevant question', async () => {
+  const lead = wardrobeLead();
+  lead.moveDetails.items[1].dimensionsAvailable = false;
+  const data = empty();
+  data.items = [fridge({ type: 'wardrobe', requiresDisassembly: set(true) })];
+  const result = await turn(lead, 'נדרש פירוק', data, evaluateRequirements(lead).nextQuestion!);
+  assert.equal(result.lead.moveDetails.items[1].requiresDisassembly, true);
+  assert.equal(result.lead.moveDetails.items[1].requiresAssembly, null);
+  assert.deepEqual(result.nextQuestion?.requirements, [{ id: 'item.assembly', itemIndex: 1 }]);
+  assert.ok(result.requirements.missingRequired.some(requirement => requirement.id === 'item.assembly' && requirement.itemIndex === 1));
+  assert.deepEqual(result.lead.moveDetails.pickup, lead.moveDetails.pickup);
+  assert.deepEqual(result.lead.moveDetails.dropoff, lead.moveDetails.dropoff);
+});
+
+test('unsupported dresser still allows photo collection and an unavailable reply never loops', async () => {
+  const lead = readyLead();
+  lead.moveDetails.items.push({ ...createMoveItem('dresser'), sizeCategory: 'SMALL' });
+  const result = await turn(lead, 'כל הפרטים נכונים', empty());
+  assert.deepEqual(result.nextQuestion?.requirements, photo.requirements);
+  const unavailable = await processCustomerMessageWithExtractor(result.lead, 'אין לי תמונה', {
+    lastQuestion: result.nextQuestion!, referenceDate: '2026-10-07',
+    extractor: () => assert.fail('An unambiguous photo decline uses the existing contextual reply path'),
+  });
+  assert.equal(unavailable.lead.moveDetails.items[0].photoStatus, 'NOT_AVAILABLE');
+  assert.equal(unavailable.nextQuestion, null);
+  assert.match(unavailable.acknowledgement!, /נמשיך בלי תמונה/);
+  assert.equal(unavailable.requirements.pendingReview.find(requirement => requirement.id === 'item.photo')?.status, 'MISSING');
+  assert.ok(unavailable.requirements.missingRequired.some(requirement => requirement.id === 'item.support'));
+  const repeated = await turn(unavailable.lead, 'תודה', empty());
+  assert.equal(repeated.nextQuestion, null);
+  assert.doesNotMatch(repeated.responseText, /אפשר לצרף תמונה/);
+  assert.deepEqual(repeated.lead.moveDetails, unavailable.lead.moveDetails);
+});
+
 // Offline model fixtures verify context, strict conversion, merge and response selection;
 // they do not measure the live model's Hebrew accuracy.
 async function turn(lead: Lead, text: string, data: AIExtraction, lastQuestion?: NextQuestion) {

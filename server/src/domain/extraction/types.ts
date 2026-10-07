@@ -1,6 +1,7 @@
 import type { Lead } from '../lead.js';
 
-export type SupportedItemType = 'refrigerator' | 'box' | 'washing_machine' | 'wardrobe' | 'bed';
+// Supported for extraction; transport pricing support is a separate policy.
+export type SupportedItemType = 'refrigerator' | 'box' | 'washing_machine' | 'wardrobe' | 'bed' | 'dresser';
 export type RefrigeratorSize = 'SMALL' | 'REGULAR' | 'LARGE' | 'FOUR_DOOR';
 
 // Omitted properties mean no update. Null is never an extracted value.

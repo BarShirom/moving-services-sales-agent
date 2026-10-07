@@ -1,3 +1,5 @@
+import type { PricingEvaluation } from '../domain/pricing/types.js';
+
 export interface ConversationEvalResult {
   id: string;
   scenario: string;
@@ -12,9 +14,25 @@ export interface ConversationEvalResult {
 export interface PricingEvalResult {
   id: string;
   scenario: string;
-  status: 'READY_FOR_PRICING_EVAL' | 'INVALID';
+  status: 'SCORED' | 'PARTIAL_INPUT' | 'NOT_SUPPORTED' | 'INVALID';
   reason: string;
   failedAssertions: string[];
+  evaluation?: PricingEvaluation;
+  comparison?: {
+    sourceQuality: 'closed_job' | 'quoted_only' | 'historical_estimate';
+    informational: boolean;
+    scope: PricingEvaluation['amountScope'];
+    completeness: PricingEvaluation['completeness'];
+    comparableToWholeJob: boolean;
+    recommendedAmount: number | null;
+    referenceAmount: number | null;
+    closedAmount: number | null;
+    quotedAmount: number | null;
+    absoluteDifference: number | null;
+    percentageDifference: number | null;
+    referenceRange: { min: number; max: number } | null;
+    rangeComparison: 'BELOW' | 'WITHIN' | 'ABOVE' | 'UNAVAILABLE';
+  };
 }
 
 export interface EvalReport {
@@ -31,7 +49,10 @@ export interface EvalReport {
   };
   pricing: {
     total: number;
-    ready: number;
+    evaluated: number;
+    scored: number;
+    partialInput: number;
+    notSupported: number;
     invalid: number;
     sourceQuality: { closed_job: number; quoted_only: number; historical_estimate: number };
     withClosedPrice: number;

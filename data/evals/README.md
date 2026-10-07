@@ -1,15 +1,21 @@
 # Moving Services Sales Agent evaluation datasets
 
-These public fixtures evaluate conversation behavior and, later, deterministic pricing.
+These public fixtures evaluate conversation behavior and provisional deterministic pricing.
 They are evaluation data, not model-training data. Eval Runner v0.1 executes offline workflow
-checks and reports pricing evidence readiness. No pricing engine or live model call is included.
+checks and runs Pricing Engine v0.1 on validated structured inputs. No live model call is included.
 Passing dataset validation proves structural validity, not conversation behavior or pricing
 accuracy; the separate runner reports which supported behavioral assertions pass or fail.
 
 ## Files and privacy boundary
 
-- conversation-cases.json: 25 synthetic Hebrew conversation cases.
+- conversation-cases.json: 26 synthetic/anonymized Hebrew conversation cases.
 - pricing-cases.json: six job-level examples: three closed jobs and three historical estimates; no confirmed quoted-only cases.
+- [pricing-evidence.json](pricing-evidence.json): 29 linked job, historical reference and engineering
+  records, graded 3 STRONG, 10 MEDIUM and 16 WEAK. It does not replace the six pricing eval inputs.
+- [pricing-tariff-readiness.json](pricing-tariff-readiness.json): 23 category decisions: 10 PROVISIONAL,
+  5 INSUFFICIENT_EVIDENCE, 8 MANUAL_REVIEW_ONLY and none READY.
+- [PRICING_EVIDENCE.md](PRICING_EVIDENCE.md): readable evidence matrix, current-rule audit,
+  unresolved historical claims and the future owner learning loop.
 - ../private/: local source material only; the entire data/private/ directory is Git-ignored.
   Git does not retain empty directories. Create it locally if needed after a fresh clone.
 
@@ -195,8 +201,21 @@ There are six defensible job-level cases, rather than a forced target of eight t
 The references above remain available for future Pricing Engine design without contaminating
 closed-job ground truth. A future Pricing Engine must not simply memorize examples or assume
 every adjustment stacks independently. It should use deterministic rules with explicit
-conditions and human approval for uncertain or complex jobs. This milestone implements no
-pricing calculations, discounts or approval automation.
+conditions and human approval for uncertain or complex jobs. Pricing Engine MOVING_PRICING_V0_1_3 enables
+references A, B, F, G, H, I and J with explicit input requirements, plus documented provisional box/distance
+assumptions. See the root README; no approval is automated.
+
+The [pricing evidence register](PRICING_EVIDENCE.md) expands these references without changing
+the engine. All current tariffs remain provisional. Closed bundles are strong only as supplied
+job-level evidence, not isolated item tariffs or independently audited receipts. Repeated notes
+are one source lineage. The latest evidence task explicitly supplies started-half-hour waiting
+wording; the older note above said only per half-hour. The engine's existing rounding is unchanged.
+
+`server/src/evals/loadPricingEvidence.ts` exports `loadPricingEvidence()` for the new register,
+readiness map and readable audit, plus `parsePricingEvidence()` for in-memory validation. Its
+standalone tests run under `npm test`; `npm run eval` continues to execute the existing six pricing
+fixtures. Evidence validation checks structure, public-data boundaries and source/readiness
+constraints; it does not prove transaction authenticity or tariff accuracy.
 
 ## Loader and validation
 
@@ -282,12 +301,13 @@ fields and future capabilities are NOT_RUN with reasons, never silently counted 
 
 - Conversation results: PASS, FAIL, NOT_RUN, with mode, reason, checked assertions, failed
   assertions and remaining manual constraints.
-- Pricing results: READY_FOR_PRICING_EVAL or INVALID. The existing source-quality schema
-  validates evidence; no predicted price, accuracy score or error metric is produced.
+- Pricing results: SCORED, PARTIAL_INPUT, NOT_SUPPORTED or INVALID. Each valid case stores the
+  engine evaluation/snapshot and explicit comparison limitations. Complete supported inputs can be SCORED; partial subtotals never claim whole-job accuracy.
 - Pricing summary counts valid evidence by sourceQuality, known closed/quoted prices, required
-  human approval and ranges. Invalid rows count in total/invalid, not in valid-evidence counts.
-- Results preserve input dataset order. Reports omit generated Lead IDs, timestamps and
-  durations, so identical input produces deterministic text and JSON.
+  evaluation approval requirements and historical ranges. Invalid rows count in total/invalid only.
+- Results preserve input dataset order. Pricing evaluation IDs use the case ID; createdAt uses
+  fixed synthetic audit time 1970-01-01T00:00:00.000Z, never an inferred job date. Conversation
+  runtime IDs/timestamps are omitted, so identical input produces deterministic text and JSON.
 - Any conversation FAIL, pricing INVALID, duplicate ID, loading/privacy/JSON error, empty
   pricing dataset, or run with no executable conversation cases exits 1.
 - Otherwise the run exits 0. NOT_RUN cases are reported explicitly and do not fail a run
@@ -296,7 +316,13 @@ fields and future capabilities are NOT_RUN with reasons, never silently counted 
 
 ### Current baseline
 
-The current offline baseline is 23 PASS, 0 FAIL, and 2 NOT_RUN out of 25 conversation cases.
+The current offline baseline is 24 PASS, 0 FAIL, and 2 NOT_RUN out of 26 conversation cases.
+
+`conv-026` permanently records the anonymized wardrobe-dimensions loop: temporary unavailability,
+both disassembly and assembly, null measurements, retained dresser/40 boxes, a still-missing size
+requirement visible to the owner, and progression to another collectable requirement. Assertions
+reject re-asking unavailable dimensions or losing either service flag. Like other fixture-driven
+cases, this checks workflow behavior rather than live model extraction accuracy.
 The deterministic workflow acknowledges applied corrections (including corrections combined
 with measurements), extra supplied information, and recorded access difficulties. A customer
 will-check reply retains missing requirements while deferring that question for the current
@@ -305,8 +331,10 @@ response. Eval expectations, extraction fixtures, and runner assertions are unch
 conv-011 and conv-025 remain NOT_RUN: the additional removal-service workflow has no execution
 adapter yet. PASS checks workflow with offline fixtures, not live model extraction accuracy.
 
-All 6 pricing cases are READY_FOR_PRICING_EVAL: 3 closed_job, 0 quoted_only, 3 historical_estimate.
-There are 3 known closed prices, 3 known quotes, 1 human-approval flag, and 1 price range.
+All 6 pricing cases run: 0 SCORED, 5 PARTIAL_INPUT (002-006), 1 NOT_SUPPORTED (001),
+0 INVALID. Source quality remains 3 closed_job and 3 historical_estimate. There are 3 known
+closed prices, 3 known quotes and 1 historical range. All 6 evaluations require human approval;
+that is distinct from the original single humanApprovalRequired evidence flag.
 The runner returns PASSED / exit 0 for this baseline. Real assertion failures or invalid
 evidence still produce FAILED / exit 1.
 
@@ -319,3 +347,99 @@ and matching message, or leave the case explicitly NOT_RUN until an adapter exis
 For a new response intent or access-note meaning, add a small explicit assertion and a runner
 test. Retain every real failure as a permanent case. A future CI job can run npm run eval;
 do not change expected results or fixtures merely to hide a production regression.
+
+### Pricing Engine v0.1 adapter and comparisons
+
+hydratePricingLead.ts maps facts into a fresh structured Lead, never parsing messages/notes or
+using reference prices as inputs. boxCount becomes one box item; duplicate box representations
+are rejected. Unknown values remain null, floor 0 and elevator=false remain known, and missing
+addresses/dates are not filled. Historical inventories default to incomplete because these examples
+do not establish full exact counts. specialDifficulty stays explicit external context.
+
+The optional pricingContext object accepts explicit distanceKm/distanceBand, estimatedDurationHours,
+pickupPoints/dropoffPoints, pickupElevatorFits/dropoffElevatorFits, item-specific fit-check arrays
+pickupElevatorFitRequiredItems/dropoffElevatorFitRequiredItems, and inventoryComplete. Existing
+workers and specialDifficulty fields supply those facts separately. No existing fixture was changed.
+Fixed audit metadata makes the full evaluation, including snapshot and fingerprint, reproducible.
+The pricing-only singular convention independently considers refrigerator and wardrobe rows. It
+requires inventoryComplete=true, known item types throughout the inventory, exactly one row of the
+relevant type, null quantity and null description. Unsupported furniture or box volume does not
+cancel an otherwise safe singular refrigerator assumption. Inferred quantities and their per-type
+index metadata exist only in detached pricing input, never in the Lead or historical evidence.
+Historical inventories remain incomplete by default and do not gain inferred quantities.
+The demo's registered 20 km route fixtures are not injected into historical evaluations. Version
+MOVING_PRICING_V0_1_3 changes mixed-load component eligibility and confidence grouping without
+changing monetary rates or historical evidence.
+
+References A/B supply refrigerator/washing-machine bands; G supplies stair work. F/H/I/J supply
+explicit stop/service/waiting/discount heuristics. New box-volume and numeric-distance assumptions
+are centralized and documented in README.md, never inferred from closed-job totals. Pricing context
+also accepts waitingMinutes, studentDiscountEligible and per-item serviceComplexity. No historic
+fixture was filled with invented distance, inventory, service or access facts. Service tariffs require
+one item, explicitly STANDARD complexity and no explicitly pending dimensions; unresolved service
+scope stays unpriced. An elevator alone does not generate a fit warning: unknown fit matters only
+for explicitly designated items. Known supported-load stairs remain priced separately from
+unsupported furniture access. Overlapping unsupported-transport, service, dimension and quantity
+risks for one item incur only their largest deduction, while all distinct review notes remain visible.
+Unknown dresser services are not applicable by default and no longer manufacture service warnings.
+Relevant unknown bed/wardrobe services remain clarification issues; explicitly requested services
+remain distinct. This corrects applicability and wording without changing tariffs or amount formulas.
+
+The mixed-inventory regression is tested separately from these six historical records: a LARGE
+refrigerator, one unsupported wardrobe and 15 boxes; floor 2 pickup without elevator; floor 3
+dropoff with elevator; date 2026-11-08; no refrigerator photo and unavailable wardrobe dimensions.
+With a registered synthetic 20 km route, supported components are refrigerator 425, boxes 150,
+pickup stairs 250 and distance 75: **900 ILS**, range **750-1,050**, confidence **40**. With an
+unregistered route, distance remains missing: **825 ILS**, range **700-950**, confidence **30**.
+Both are partial recommendations requiring owner approval. Wardrobe transport, service and access
+remain unpriced, its pending dimensions remain unresolved, and no quote is sent automatically.
+These deterministic scenarios are not new closed-job evidence or accuracy targets.
+
+Current subtotals: 001 unavailable, 002 = 75, 003 = 1,175, 004 = 975, 005 = 550, 006 = 250 ILS.
+Case 003 now retains the washer/box subtotal plus supported-load stairs at both ends; unsupported
+furniture and its separate access work remain manual. The historical record itself is unchanged.
+All cases lack route distance and other job facts; 001 lacks any supported component, the others
+are partial. Unsupported furniture transport remains unsupported even when its assembly service
+can be priced. See the root README for precise rules, confidence and per-case limitations.
+
+Closed-job reports include recommendation, quoted/closed amount and absolute/percentage difference
+when a recommendation exists. Historical estimates remain informational, including range comparisons.
+Completeness is reported separately from manual-review status. Complete supported jobs are SCORED;
+partial numeric inputs are PARTIAL_INPUT; no numeric component is NOT_SUPPORTED. Differences never
+fail a run. Invalid evidence or structural invariants produce INVALID and exit 1. No evaluation
+expectations or historical prices were changed to manufacture agreement with provisional rules.
+
+### Quote finalization and acceptance regressions
+
+Pricing evidence and final commercial quotes remain separate. A partial engine amount is only a
+subtotal, not a whole-job offer. Domain/HTTP/client tests verify that partial or CANNOT_PRICE results
+require an explicit positive owner-entered total, confirmed scope and acknowledgement of omitted
+costs before sending. The owner may use the subtotal intentionally, but ordinary APPROVE cannot
+silently make it a complete offer. Complete/current recommendations still require an explicit
+owner action and any unresolved review acknowledgements.
+
+These workflow tests also retain photo requirements: unsupported dresser pricing must not suppress
+a collectable refrigerator photo question, unavailability must not repeat the request, and an owner
+decision to proceed without a photo must not mark it RECEIVED or SATISFIED. Access tests keep pickup
+and dropoff independent, including valid floor 0 and elevator=false. Disassembly-only updates do
+not fabricate assembly.
+
+Quote tests use a versioned scope and current acceptance-question context. Clear acceptance records
+the approved quote amount/identity, not an amount parsed from customer text. Mixed changes, other
+questions, stale quotes and repeated submissions cannot silently approve changed work or duplicate
+acceptance. WON in this demo means commercial acceptance with manual coordination pending, not a
+scheduled or completed move. This runtime meaning does not alter the historical evidence categories
+or claimed outcomes in pricing-cases.json.
+
+`server/src/demo/quoteFixture.ts` and the opt-in `npm run demo:quote --workspace server` server provide
+a synthetic browser sequence after `npm run build`: large fridge, small dresser and 15 boxes;
+pickup floor 2 and dropoff floor 1 without elevators; requested date 2026-11-08, using fixed reference
+date 2026-10-07; photo unavailable. The engine subtotal remains **950 ILS**, with dresser transport/access
+and distance omitted. The example owner finalizes **1,200 ILS**, explicitly acknowledges omitted costs
+and the absent photo, and the customer accepts that quote. Both totals are preserved separately.
+
+This fixture is an injected deterministic extractor with exact supported messages, not a live model.
+No quote/acceptance test calls OpenAI. The HTTP and React suite checks this lifecycle separately from
+the 26 conversation and six historical pricing eval records. No historical fixture or eval expectation
+is weakened or relabeled as a closed job because a local demo quote was accepted. See the root README
+for exact messages, browser steps, server protections and remaining local-demo limitations.

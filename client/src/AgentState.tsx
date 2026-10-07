@@ -1,20 +1,8 @@
 import { Icon } from './Icon';
 import type { DemoSnapshot } from './api';
+import { itemNames, requirementLabels as labels, presentRequirements, nextStepLabel } from './leadPresentation';
 
-const itemNames: Record<string, string> = {
-  refrigerator: 'מקרר', box: 'ארגזים', washing_machine: 'מכונת כביסה', wardrobe: 'ארון', bed: 'מיטה',
-};
 const sizes: Record<string, string> = { SMALL: 'קטן', REGULAR: 'רגיל', LARGE: 'גדול', FOUR_DOOR: 'ארבע דלתות' };
-const labels: Record<string, string> = {
-  items: 'פריטים להובלה', 'pickup.city': 'עיר האיסוף', 'pickup.address': 'כתובת האיסוף',
-  'pickup.floor': 'קומת האיסוף', 'pickup.elevator': 'מעלית באיסוף',
-  'dropoff.city': 'עיר הפריקה', 'dropoff.address': 'כתובת הפריקה',
-  'dropoff.floor': 'קומת הפריקה', 'dropoff.elevator': 'מעלית בפריקה',
-  requestedDate: 'תאריך ההובלה', specialAccessNotes: 'פרטי גישה מיוחדים',
-  'item.type': 'סוג הפריט', 'item.support': 'בדיקת תמיכה בסוג הפריט', 'item.quantity': 'כמות',
-  'item.size': 'גודל הפריט', 'item.width': 'רוחב', 'item.height': 'גובה', 'item.depth': 'עומק',
-  'item.disassembly': 'צורך בפירוק', 'item.assembly': 'צורך בהרכבה', 'item.photo': 'תמונת הפריט',
-};
 const answer = (value: boolean | null) => value === null ? 'טרם צוין' : value ? 'כן' : 'לא';
 
 // Display labels only; the backend remains the source of status and readiness.
@@ -24,14 +12,16 @@ export function statusLabel(state: DemoSnapshot): string {
     READY_FOR_PRICING: 'מוכן לבדיקה ותמחור',
     AWAITING_REVIEW: 'ממתין לבדיקה',
     QUOTE_SENT: 'הצעת המחיר נשלחה',
-    WON: 'ההובלה אושרה',
+    WON: 'הלקוח אישר את המחיר',
     LOST: 'הפנייה נסגרה',
+    HUMAN_HANDOFF: 'בטיפול נציג אנושי',
   };
   return labels[state.lead.status];
 }
 
 export function AgentState({ state }: { state: DemoSnapshot | null }) {
   const details = state?.lead.moveDetails;
+  const { customerMissing, ownerReview } = state ? presentRequirements(state) : { customerMissing: [], ownerReview: [] };
   return <div className="state-sections" aria-label="מצב הסוכן" dir="rtl">
     <section className="card understood" aria-labelledby="understood-heading">
       <div className="card-heading"><span className="section-icon">✦</span><h2 id="understood-heading">מה הבנתי</h2><span className="small-label">פרטי ההובלה</span></div>
@@ -44,6 +34,9 @@ export function AgentState({ state }: { state: DemoSnapshot | null }) {
               ...(['width', 'height', 'depth'] as const).map(axis => item.dimensions[axis] !== null && `${labels[`item.${axis}`]}: ${item.dimensions[axis]} ס״מ`),
               item.requiresDisassembly !== null && `פירוק: ${answer(item.requiresDisassembly)}`,
               item.requiresAssembly !== null && `הרכבה: ${answer(item.requiresAssembly)}`,
+              item.dimensionsAvailable === false && Object.values(item.dimensions).some(value => value === null) && 'מידות לא זמינות כרגע — ממתינות להשלמה',
+              item.photoStatus === 'REQUIRED' && 'ממתינים לתמונה',
+              item.photoStatus === 'NOT_APPLICABLE' && 'תמונה אינה נדרשת',
               item.photoStatus === 'NOT_AVAILABLE' && 'תמונה לא זמינה כרגע',
               item.photoStatus === 'RECEIVED' && 'תמונה התקבלה',
             ].filter(Boolean).join(' · ') || 'ממתינים לפרטים נוספים'}</div>
@@ -60,21 +53,18 @@ export function AgentState({ state }: { state: DemoSnapshot | null }) {
       {(details?.requestedDate || details?.requestedTime) && <div className="schedule"><span>מועד מבוקש</span><strong dir="ltr">{[details.requestedDate, details.requestedTime].filter(Boolean).join(' · ')}</strong></div>}
       {details?.specialAccessNotes && <div className="access-notes"><span className="field-label">גישה מיוחדת</span><p>{details.specialAccessNotes}</p></div>}
     </section>
-    <section className="card missing-card" aria-labelledby="missing-heading">
-      <div className="card-heading"><span className="section-icon amber">≡</span><h2 id="missing-heading">מה עדיין חסר</h2><span className="count">{state?.requirements.missingRequired.length ?? '—'}</span></div>
-      <p className="card-description">הפרטים הדרושים כדי להתקדם לתמחור</p>
-      {!state ? <p className="muted">ממתינים לחיבור לשרת…</p> : state.requirements.missingRequired.length ?
-        <ul className="missing-list">{state.requirements.missingRequired.map((requirement, index) => <li key={`${requirement.id}-${requirement.itemIndex ?? index}`}>
-          <span className="missing-dot" /><span>{labels[requirement.id] ?? requirement.id}{requirement.itemIndex !== undefined &&
-            <small> · {itemNames[details?.items[requirement.itemIndex]?.type ?? ''] ?? `פריט ${requirement.itemIndex + 1}`}</small>}</span>
-        </li>)}</ul> : <p className="complete-note">✓ נאספו כל הפרטים הדרושים לתמחור</p>}
-      {!!state?.requirements.pendingReview.length && <p className="review-note">נושאים לבדיקה לפני שליחת הצעה: {state.requirements.pendingReview.length}.</p>}
-      {!!state?.unappliedItems.length && <p className="review-note">יש כמה פריטים מאותו סוג. העדכון לא שויך לפריט מסוים ונדרשת הבהרה.</p>}
-    </section>
+    {!!customerMissing.length && <section className="card missing-card" aria-labelledby="missing-heading">
+      <div className="card-heading"><span className="section-icon amber">≡</span><h2 id="missing-heading">מה עדיין חסר מהלקוח</h2><span className="count">{customerMissing.length}</span></div>
+      <ul className="missing-list">{customerMissing.map((label, index) => <li key={index}><span className="missing-dot" /><span>{label}</span></li>)}</ul>
+    </section>}
+    {!!ownerReview.length && <section className="card owner-review-card" aria-labelledby="owner-review-heading">
+      <div className="card-heading"><span className="section-icon amber">≡</span><h2 id="owner-review-heading">נושאים לבדיקה אצל בעל העסק</h2><span className="count">{ownerReview.length}</span></div>
+      <ul className="review-list">{ownerReview.map((label, index) => <li key={index}><span className="missing-dot" /><span>{label}</span></li>)}</ul>
+    </section>}
     <section className="card next-card" aria-labelledby="next-heading" aria-live="polite" aria-atomic="true">
       <div className="next-heading"><span>✦</span><h2 id="next-heading">השלב הבא</h2><span className="next-line" /></div>
-      <p>{state?.responseText ?? 'פרטי השלב הבא יופיעו לאחר החיבור לשיחה.'}</p>
-      <span className="next-footnote">{state?.requirements.readyForPricing ? 'המידע מוכן לתמחור · כל הצעה מחייבת אישור אנושי' : 'מתקדמים רק לפי המידע שעדיין חסר'}</span>
+      <p>{nextStepLabel(state)}</p>
+      <span className="next-footnote">{state?.lead.status === 'WON' ? 'אישור המחיר אינו שריון מועד ההובלה.' : state?.lead.status === 'QUOTE_SENT' ? 'המועד המבוקש עדיין לא שוריין.' : 'כל הצעת מחיר מחייבת אישור של בעל העסק.'}</span>
     </section>
   </div>;
 }

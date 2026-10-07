@@ -16,20 +16,23 @@ const datasets = await loadEvalCases();
 const find = (id: string) => structuredClone(datasets.conversationCases.find(entry => entry.id === id)!);
 const validPricing = datasets.pricingCases[0];
 
-test('runner loads every public case and reports evidence readiness without scoring price accuracy', async () => {
+test('runner loads every public case and reports provisional partial pricing without claiming whole-job accuracy', async () => {
   const report = await runEvals();
-  assert.equal(report.conversation.total, 25);
+  assert.equal(report.conversation.total, 26);
   assert.ok(report.conversation.results.every(entry => entry.status === 'PASS' || ['conv-011', 'conv-025'].includes(entry.id)));
   assert.equal(report.conversation.notRun, 2);
   assert.equal(report.pricing.total, 6);
   assert.deepEqual(report.pricing.sourceQuality, { closed_job: 3, quoted_only: 0, historical_estimate: 3 });
   assert.equal(report.pricing.withClosedPrice, 3);
   assert.equal(report.pricing.withQuotedPrice, 3);
-  assert.equal(report.pricing.requiringHumanApproval, 1);
+  assert.equal(report.pricing.requiringHumanApproval, 6);
   assert.equal(report.pricing.withPriceRange, 1);
-  assert.equal(report.pricing.ready, 6);
+  assert.equal(report.pricing.evaluated, 6);
   assert.equal(report.pricing.invalid, 0);
-  assert.ok(report.pricing.results.every(entry => entry.status === 'READY_FOR_PRICING_EVAL'));
+  assert.equal(report.pricing.partialInput, 5);
+  assert.equal(report.pricing.notSupported, 1);
+  assert.equal(report.pricing.scored, 0);
+  assert.ok(report.pricing.results.every(entry => entry.evaluation?.humanApprovalRequired));
 });
 
 test('an executable domain photo case passes without an extraction mock being consumed', async () => {
@@ -109,6 +112,20 @@ test('extraction comparisons match unique item types rather than incidental arra
   assert.equal(failures.length, 1);
 });
 
+test('wardrobe eval fails if unavailable size is re-requested or a service fact is lost', async () => {
+  const entry = find('conv-026');
+  const lead = hydrateEvalLead(entry);
+  const output = await processCustomerMessageWithExtractor(lead, entry.customerMessage, {
+    lastQuestion: actualQuestion(entry, lead), extractor: () => structuredClone(offlineFixtures[entry.id].extraction!),
+  });
+  assert.deepEqual(checkConversation(entry, lead, output, offlineFixtures[entry.id]).failures, []);
+  output.nextQuestion = { text: 'מה הגודל של הארון?', requirements: [{ id: 'item.size', itemIndex: 1 }] };
+  output.lead.moveDetails.items[1].requiresAssembly = null;
+  const failed = checkConversation(entry, lead, output, offlineFixtures[entry.id]).failures;
+  assert.ok(failed.some(message => message.includes('Unavailable dimension requested again')));
+  assert.ok(failed.some(message => message.includes('requiresAssembly')));
+});
+
 test('access-note assertions accept meaning-preserving phrasing and reject missing facts', () => {
   const failures: string[] = [];
   const fixture = offlineFixtures['conv-010'];
@@ -124,10 +141,10 @@ test('invalid pricing evidence is INVALID and duplicate IDs are rejected in each
   const invalid = runPricingEvals([{ ...validPricing, closedPrice: null }]);
   assert.equal(invalid.invalid, 1);
   assert.equal(invalid.results[0].status, 'INVALID');
-  assert.equal(invalid.ready, 0);
+  assert.equal(invalid.evaluated, 0);
   const duplicatePricing = runPricingEvals([validPricing, validPricing]);
   assert.equal(duplicatePricing.invalid, 2);
-  assert.equal(duplicatePricing.ready, 0);
+  assert.equal(duplicatePricing.evaluated, 0);
   const duplicateConversation = await runConversationEvals([find('conv-005'), find('conv-005')]);
   assert.ok(duplicateConversation.every(entry => entry.status === 'FAIL'));
   assert.ok(duplicateConversation.every(entry => entry.failedAssertions.some(message => /Duplicate/.test(message))));
@@ -201,7 +218,7 @@ test('offline runner performs no live fetch even with all extraction fixtures ex
     assert.equal(calls, 0);
     assert.equal(report.conversation.notRun, 2);
     assert.ok(report.conversation.results.every(entry => entry.reason !== 'Invalid case or offline execution error.'));
-    assert.equal(report.pricing.ready, 6);
+    assert.equal(report.pricing.evaluated, 6);
   } finally {
     globalThis.fetch = originalFetch;
   }

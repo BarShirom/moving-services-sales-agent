@@ -1,0 +1,453 @@
+{
+  "schemaVersion": 1,
+  "pricingRuleVersion": "MOVING_PRICING_V0_1_3",
+  "categories": [
+    {
+      "category": "refrigerator_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "PROVISIONAL",
+      "evidenceIds": [
+        "evidence-pricing-002",
+        "evidence-pricing-004",
+        "ref-fridge-small",
+        "ref-fridge-regular",
+        "ref-fridge-large",
+        "historical-fridge-route"
+      ],
+      "tariffEvidenceIds": [
+        "ref-fridge-small",
+        "ref-fridge-regular",
+        "ref-fridge-large"
+      ],
+      "reason": "Isolated historical size-specific references exist, but repeated documentation is one source lineage and no repeated isolated closed jobs establish full calibration.",
+      "currentDecision": "Keep current size bands and owner approval; validate access/composition and quantity assumptions with owner outcomes before any rule update.",
+      "engineRule": {
+        "implemented": true,
+        "reference": "server/src/domain/pricing/pricingRules.ts#refrigerator",
+        "provenance": "HISTORICAL_WITH_PROVISIONAL_COMPOSITION"
+      }
+    },
+    {
+      "category": "washing_machine_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "PROVISIONAL",
+      "evidenceIds": [
+        "evidence-pricing-003",
+        "evidence-pricing-004",
+        "evidence-pricing-005",
+        "evidence-pricing-006",
+        "ref-washing-machine",
+        "historical-washer-stairs-disputed-close"
+      ],
+      "tariffEvidenceIds": [
+        "ref-washing-machine"
+      ],
+      "reason": "A specific historical item band exists. Whole-job totals and the disputed stair-case close do not provide an isolated stronger tariff.",
+      "currentDecision": "Keep the provisional 280-320 band and owner review; do not use the unverified 500 claim as a closed-price target.",
+      "engineRule": {
+        "implemented": true,
+        "reference": "server/src/domain/pricing/pricingRules.ts#washingMachine",
+        "provenance": "HISTORICAL_WITH_PROVISIONAL_COMPOSITION"
+      }
+    },
+    {
+      "category": "dresser_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "MANUAL_REVIEW_ONLY",
+      "evidenceIds": [],
+      "tariffEvidenceIds": [],
+      "reason": "No isolated dresser transport price is present. Generic furniture descriptions and synthetic demo jobs do not establish dresser evidence.",
+      "currentDecision": "Leave transport unpriced for manual finalization; collect explicitly identified dresser outcomes.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "wardrobe_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "MANUAL_REVIEW_ONLY",
+      "evidenceIds": [
+        "evidence-pricing-003",
+        "evidence-pricing-006"
+      ],
+      "tariffEvidenceIds": [],
+      "reason": "Available wardrobe/cabinet appearances are mixed-job evidence. The wardrobe service reference does not establish wardrobe transport.",
+      "currentDecision": "Keep wardrobe transport/access manual; do not convert assembly counts or bundle totals into transport tariffs.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "wardrobe_assembly_disassembly",
+      "scope": "SERVICE_LEVEL",
+      "status": "PROVISIONAL",
+      "evidenceIds": [
+        "evidence-pricing-006",
+        "ref-wardrobe-service"
+      ],
+      "tariffEvidenceIds": [
+        "ref-wardrobe-service"
+      ],
+      "reason": "A historical 350-600 service band is isolated from transport; size and complexity remain material and repeat mentions are not independent corroboration.",
+      "currentDecision": "Keep the existing standard-complexity service gate; unresolved dimensions/complexity remain manual. No wardrobe transport tariff follows.",
+      "engineRule": {
+        "implemented": true,
+        "reference": "server/src/domain/pricing/pricingRules.ts#services.wardrobe",
+        "provenance": "HISTORICAL_WITH_PROVISIONAL_COMPOSITION"
+      }
+    },
+    {
+      "category": "bed_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "evidenceIds": [
+        "evidence-pricing-002",
+        "evidence-pricing-003",
+        "evidence-pricing-005",
+        "evidence-pricing-006",
+        "ref-bed-transport",
+        "historical-bed-stairs",
+        "historical-bed-service-route"
+      ],
+      "tariffEvidenceIds": [
+        "ref-bed-transport"
+      ],
+      "reason": "The broad 180-550+ reference mixes size, access, mattresses and possible services. Two proposed bed jobs do not isolate transport.",
+      "currentDecision": "Keep transport manual; retain expected closes as forecasts and collect isolated bed transport evidence.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "bed_assembly_disassembly",
+      "scope": "SERVICE_LEVEL",
+      "status": "PROVISIONAL",
+      "evidenceIds": [
+        "ref-bed-service",
+        "historical-bed-service-route"
+      ],
+      "tariffEvidenceIds": [
+        "ref-bed-service"
+      ],
+      "reason": "A historical 180-350 service band exists independently of bed transport; the proposed bed service route remains job-level comparison evidence.",
+      "currentDecision": "Keep existing standard-complexity service pricing and owner approval; do not infer bed transport costs.",
+      "engineRule": {
+        "implemented": true,
+        "reference": "server/src/domain/pricing/pricingRules.ts#services.bed",
+        "provenance": "HISTORICAL_WITH_PROVISIONAL_COMPOSITION"
+      }
+    },
+    {
+      "category": "sofa_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "evidenceIds": [
+        "evidence-pricing-002",
+        "evidence-pricing-006",
+        "ref-sofa"
+      ],
+      "tariffEvidenceIds": [
+        "ref-sofa"
+      ],
+      "reason": "A broad 320-600 reference lacks size/access tiers; closed and estimated mixed loads cannot isolate the sofa component.",
+      "currentDecision": "Keep manual pricing until more isolated size/access evidence is reviewed.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "table_desk_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "evidenceIds": [
+        "evidence-pricing-002",
+        "ref-table-desk"
+      ],
+      "tariffEvidenceIds": [
+        "ref-table-desk"
+      ],
+      "reason": "Only a broad 250-450 reference and a coffee-table mixed load are available; construction, dimensions and access are not controlled.",
+      "currentDecision": "Keep manual pricing; do not derive a tariff from the closed bundle.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "tv_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "MANUAL_REVIEW_ONLY",
+      "evidenceIds": [
+        "evidence-pricing-002",
+        "evidence-pricing-003",
+        "evidence-pricing-005"
+      ],
+      "tariffEvidenceIds": [],
+      "reason": "Televisions occur in mixed closed/estimated jobs, with no isolated television transport price.",
+      "currentDecision": "Leave transport unpriced/manual and collect isolated scope, access and owner-finalized outcomes.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "dishwasher_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "MANUAL_REVIEW_ONLY",
+      "evidenceIds": [
+        "evidence-pricing-001",
+        "evidence-pricing-006"
+      ],
+      "tariffEvidenceIds": [],
+      "reason": "The 450 closed dishwasher-plus-oven job and a complex move do not isolate a dishwasher price.",
+      "currentDecision": "Leave transport unpriced/manual and collect isolated scope, access and owner-finalized outcomes.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "oven_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "MANUAL_REVIEW_ONLY",
+      "evidenceIds": [
+        "evidence-pricing-001"
+      ],
+      "tariffEvidenceIds": [],
+      "reason": "The dishwasher-plus-oven closed job supports only its whole-job total; oven cost is not isolated.",
+      "currentDecision": "Leave transport unpriced/manual and collect isolated scope, access and owner-finalized outcomes.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "dryer_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "MANUAL_REVIEW_ONLY",
+      "evidenceIds": [
+        "evidence-pricing-003"
+      ],
+      "tariffEvidenceIds": [],
+      "reason": "The dryer appears only in a mixed closed job; no isolated dryer tariff is supplied.",
+      "currentDecision": "Leave transport unpriced/manual and collect isolated scope, access and owner-finalized outcomes.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "armchair_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "MANUAL_REVIEW_ONLY",
+      "evidenceIds": [
+        "evidence-pricing-003"
+      ],
+      "tariffEvidenceIds": [],
+      "reason": "The armchair appears only in a mixed closed job; no isolated armchair reference is supplied.",
+      "currentDecision": "Leave transport unpriced/manual and collect isolated scope, access and owner-finalized outcomes.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "electric_piano_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "MANUAL_REVIEW_ONLY",
+      "evidenceIds": [
+        "evidence-pricing-003",
+        "evidence-pricing-006"
+      ],
+      "tariffEvidenceIds": [],
+      "reason": "Mixed-load evidence does not isolate electric-piano handling or its access complexity.",
+      "currentDecision": "Leave transport unpriced/manual and collect isolated scope, access and owner-finalized outcomes.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "boxes",
+      "scope": "RULE_LEVEL",
+      "status": "PROVISIONAL",
+      "evidenceIds": [
+        "evidence-pricing-002",
+        "evidence-pricing-003",
+        "evidence-pricing-005",
+        "evidence-pricing-006",
+        "engineering-boxes-1-10",
+        "engineering-boxes-11-20",
+        "engineering-boxes-21-30"
+      ],
+      "tariffEvidenceIds": [
+        "engineering-boxes-1-10",
+        "engineering-boxes-11-20",
+        "engineering-boxes-21-30"
+      ],
+      "reason": "The three existing volume bands are weak engineering assumptions; historical mixed jobs do not isolate box costs.",
+      "currentDecision": "Keep demo-only provisional bands and owner approval; do not label them historical or automatically extend beyond 30 boxes.",
+      "engineRule": {
+        "implemented": true,
+        "reference": "server/src/domain/pricing/pricingRules.ts#boxes",
+        "provenance": "ENGINEERING_ASSUMPTION"
+      }
+    },
+    {
+      "category": "stairs",
+      "scope": "RULE_LEVEL",
+      "status": "PROVISIONAL",
+      "evidenceIds": [
+        "evidence-pricing-001",
+        "evidence-pricing-002",
+        "evidence-pricing-003",
+        "evidence-pricing-004",
+        "evidence-pricing-005",
+        "evidence-pricing-006",
+        "ref-stairs",
+        "historical-bed-stairs",
+        "historical-washer-stairs-disputed-close"
+      ],
+      "tariffEvidenceIds": [
+        "ref-stairs"
+      ],
+      "reason": "A historical per-floor band exists, but supported-load composition and combining endpoints remain provisional rather than independently calibrated.",
+      "currentDecision": "Keep supported-load composition explicit; unsupported furniture access remains manual and whole-job examples do not isolate stair totals.",
+      "engineRule": {
+        "implemented": true,
+        "reference": "server/src/domain/pricing/pricingRules.ts#stairsPerFloor",
+        "provenance": "HISTORICAL_WITH_PROVISIONAL_COMPOSITION"
+      }
+    },
+    {
+      "category": "distance",
+      "scope": "RULE_LEVEL",
+      "status": "PROVISIONAL",
+      "evidenceIds": [
+        "engineering-distance"
+      ],
+      "tariffEvidenceIds": [
+        "engineering-distance"
+      ],
+      "reason": "The included-kilometer threshold and additional-kilometer rate have engineering provenance only; no isolated historical route-cost evidence exists.",
+      "currentDecision": "Keep explicitly synthetic/provisional numeric-distance pricing; no geographic inference or historical calibration is claimed.",
+      "engineRule": {
+        "implemented": true,
+        "reference": "server/src/domain/pricing/pricingRules.ts#distance",
+        "provenance": "ENGINEERING_ASSUMPTION"
+      }
+    },
+    {
+      "category": "additional_stop",
+      "scope": "RULE_LEVEL",
+      "status": "PROVISIONAL",
+      "evidenceIds": [
+        "evidence-pricing-006",
+        "ref-extra-stop"
+      ],
+      "tariffEvidenceIds": [
+        "ref-extra-stop"
+      ],
+      "reason": "Historical additional-point reference is available; it excludes unknown route/access effects at the extra point.",
+      "currentDecision": "Keep the provisional stop fee plus manual access assessment; no invented route distance.",
+      "engineRule": {
+        "implemented": true,
+        "reference": "server/src/domain/pricing/pricingRules.ts#extraStop",
+        "provenance": "HISTORICAL_WITH_PROVISIONAL_COMPOSITION"
+      }
+    },
+    {
+      "category": "waiting",
+      "scope": "RULE_LEVEL",
+      "status": "PROVISIONAL",
+      "evidenceIds": [
+        "ref-waiting"
+      ],
+      "tariffEvidenceIds": [
+        "ref-waiting"
+      ],
+      "reason": "Historical half-hour waiting reference exists; started-block wording is supplied by the current task and application remains provisional.",
+      "currentDecision": "Keep explicit waiting input and started-block rounding; do not infer waiting from estimated job duration.",
+      "engineRule": {
+        "implemented": true,
+        "reference": "server/src/domain/pricing/pricingRules.ts#waiting",
+        "provenance": "HISTORICAL_WITH_PROVISIONAL_COMPOSITION"
+      }
+    },
+    {
+      "category": "student_discount",
+      "scope": "RULE_LEVEL",
+      "status": "PROVISIONAL",
+      "evidenceIds": [
+        "ref-student-discount",
+        "historical-washer-stairs-disputed-close"
+      ],
+      "tariffEvidenceIds": [
+        "ref-student-discount"
+      ],
+      "reason": "The historical 10 percent rule is explicit. If treated as exact amounts, the disputed 600-to-500 story is not a 10 percent reduction; approximate reporting and an unknown discount base prevent corroboration of a revised rule.",
+      "currentDecision": "Keep explicit eligibility and current provisional discount scope; resolve the disputed example with owner evidence before any versioned rule change.",
+      "engineRule": {
+        "implemented": true,
+        "reference": "server/src/domain/pricing/pricingRules.ts#studentDiscount",
+        "provenance": "HISTORICAL_WITH_PROVISIONAL_COMPOSITION"
+      }
+    },
+    {
+      "category": "kitchen_island_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "evidenceIds": [
+        "ref-kitchen-island"
+      ],
+      "tariffEvidenceIds": [
+        "ref-kitchen-island"
+      ],
+      "reason": "Only a weak lower bound from approximately 400 exists; size/access conditions and upper costs are unknown.",
+      "currentDecision": "Keep manual pricing; never treat the lower bound as an exact fixed tariff.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    },
+    {
+      "category": "general_appliance_transport",
+      "scope": "ITEM_LEVEL",
+      "status": "INSUFFICIENT_EVIDENCE",
+      "evidenceIds": [
+        "evidence-pricing-001",
+        "evidence-pricing-003",
+        "evidence-pricing-004",
+        "evidence-pricing-005",
+        "evidence-pricing-006",
+        "ref-general-appliance"
+      ],
+      "tariffEvidenceIds": [
+        "ref-general-appliance"
+      ],
+      "reason": "The 220-450 band covers unspecified appliance types and access; it is contextual rather than a precise universal tariff.",
+      "currentDecision": "Do not introduce a generic appliance rate or substitute this band for unsupported individual types.",
+      "engineRule": {
+        "implemented": false,
+        "reference": null,
+        "provenance": "NOT_IMPLEMENTED"
+      }
+    }
+  ]
+}

@@ -7,7 +7,7 @@ const profiles: Record<string, { label: string; size: boolean; assembly: boolean
   box: { label: 'הארגזים', size: false, assembly: false, supported: true },
   wardrobe: { label: 'הארון', size: true, assembly: true, supported: false },
   bed: { label: 'המיטה', size: true, assembly: true, supported: false },
-  washing_machine: { label: 'מכונת הכביסה', size: false, assembly: false, supported: false },
+  washing_machine: { label: 'מכונת הכביסה', size: false, assembly: false, supported: true },
 };
 
 const hasText = (value: string | null): boolean => value !== null && value.trim().length > 0;
@@ -17,14 +17,15 @@ export function evaluateRequirements(lead: Lead, context: RequirementContext = {
   const requirements: RequirementResult[] = [];
   function add(
     id: RequirementResult['id'], known: boolean, question: string | null,
-    options: { applicable?: boolean; conditional?: boolean; stage?: RequirementResult['stage']; itemIndex?: number } = {},
+    options: { applicable?: boolean; conditional?: boolean; stage?: RequirementResult['stage']; itemIndex?: number; temporarilyUnavailable?: boolean } = {},
   ): void {
     const status = options.applicable === false ? 'NOT_APPLICABLE' : known ? 'SATISFIED' : 'MISSING';
     requirements.push({
       id, ...(options.itemIndex === undefined ? {} : { itemIndex: options.itemIndex }),
       stage: options.stage ?? 'PRICING', status,
       conditional: options.conditional ?? false,
-      question: status === 'MISSING' ? question : null,
+      ...(status === 'MISSING' && options.temporarilyUnavailable ? { availability: 'TEMPORARILY_UNAVAILABLE' as const } : {}),
+      question: status === 'MISSING' && !options.temporarilyUnavailable ? question : null,
     });
   }
 
@@ -57,16 +58,17 @@ export function evaluateRequirements(lead: Lead, context: RequirementContext = {
     const completeDimensions = Object.values(item.dimensions).every(positive);
     const partialDimensions = Object.values(item.dimensions).some(value => value !== null);
     const sizeKnown = hasText(item.sizeCategory) || completeDimensions;
+    const dimensionOptions = { ...options, temporarilyUnavailable: item.dimensionsAvailable === false };
     const dimensionsNeeded = hints.dimensionsRequired === true || (profile?.size === true && !sizeKnown && (partialDimensions || item.dimensionsAvailable === true));
     // Accept offered measurements without turning optional review information into
     // a new pricing policy. Availability alone never satisfies a measurement.
-    const dimensionsOffered = item.dimensionsAvailable === true
+    const dimensionsOffered = item.dimensionsAvailable !== null
       || (item.photoStatus === 'NOT_AVAILABLE' && partialDimensions && item.dimensionsAvailable !== false);
     add('item.size', sizeKnown, dimensionsNeeded ? null : `מה הגודל או סוג הדגם של ${label}?`,
-      { ...options, applicable: profile?.size === true });
+      { ...dimensionOptions, applicable: profile?.size === true });
     for (const [axis, title] of [['width', 'הרוחב'], ['height', 'הגובה'], ['depth', 'העומק']] as const) {
       add(`item.${axis}`, positive(item.dimensions[axis]), `מה ${title} של ${label} בסנטימטרים?`,
-        { ...options, applicable: dimensionsNeeded || dimensionsOffered, stage: dimensionsNeeded ? 'PRICING' : 'REVIEW' });
+        { ...dimensionOptions, applicable: dimensionsNeeded || dimensionsOffered, stage: dimensionsNeeded ? 'PRICING' : 'REVIEW' });
     }
     add('item.disassembly', item.requiresDisassembly !== null, `האם נדרש פירוק של ${label}?`,
       { ...options, applicable: hints.disassemblyRelevant ?? profile?.assembly ?? false });

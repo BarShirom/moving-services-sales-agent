@@ -2,6 +2,7 @@ import type { ConversationResponse } from '../domain/conversation/buildConversat
 import type { Lead } from '../domain/lead.js';
 import type { ExtractionResult, ItemPatch } from '../domain/extraction/types.js';
 import type { NextQuestion, RequirementEvaluation } from '../domain/requirements/types.js';
+import type { CustomerQuoteSafe } from '../domain/quote/types.js';
 
 // HTTP response contract only; the client imports these types, never domain runtime code.
 export interface DemoSnapshot extends ConversationResponse {
@@ -10,4 +11,5 @@ export interface DemoSnapshot extends ConversationResponse {
   unappliedItems: ItemPatch[];
   requirements: RequirementEvaluation;
   nextQuestion: NextQuestion | null;
+  quote?: CustomerQuoteSafe;
 }

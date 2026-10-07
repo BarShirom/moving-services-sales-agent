@@ -2295,5 +2295,68 @@
       "Do not erase unrelated known Lead state.",
       "Do not require exact response wording when intent and state behavior are correct."
     ]
+  },
+  {
+    "id": "conv-026",
+    "status": "regression",
+    "scenario": "wardrobe_dimensions_unavailable_with_disassembly_and_assembly",
+    "description": "Anonymized reported loop: wardrobe measurements unavailable, both services explicitly required, dresser and 40 boxes retained for manual review.",
+    "referenceDate": "2026-10-07",
+    "previousAgentQuestion": {
+      "text": "מה הגודל או סוג הדגם של הארון (פריט 2)? האם נדרש פירוק של הארון (פריט 2)?",
+      "requirements": [
+        { "id": "item.size", "itemIndex": 1 },
+        { "id": "item.disassembly", "itemIndex": 1 }
+      ]
+    },
+    "currentLeadState": {
+      "moveDetails": {
+        "items": [
+          { "type": "refrigerator", "sizeCategory": "LARGE", "quantity": null, "photoStatus": "REQUIRED" },
+          { "type": "wardrobe", "quantity": null, "dimensionsAvailable": null, "requiresDisassembly": null, "requiresAssembly": null },
+          { "type": "dresser", "quantity": null },
+          { "type": "box", "quantity": 40 }
+        ],
+        "pickup": { "city": "רמת גן", "address": "רחוב דוגמה א 20", "floor": 2, "elevator": false },
+        "dropoff": { "city": "תל אביב", "address": "רחוב דוגמה ב 12", "floor": 3, "elevator": false },
+        "requestedDate": "2026-10-09"
+      }
+    },
+    "customerMessage": "אין לי כרגע את המידות ודרוש פירוק ואחר כך גם הרכבה.",
+    "expectedExtraction": {
+      "moveDetails": { "items": [
+        { "type": "wardrobe", "dimensionsAvailable": false, "requiresDisassembly": true, "requiresAssembly": true }
+      ] }
+    },
+    "expectedStateChanges": {
+      "moveDetails.items.1.dimensionsAvailable": false,
+      "moveDetails.items.1.dimensions.width": null,
+      "moveDetails.items.1.dimensions.height": null,
+      "moveDetails.items.1.dimensions.depth": null,
+      "moveDetails.items.1.requiresDisassembly": true,
+      "moveDetails.items.1.requiresAssembly": true,
+      "moveDetails.items.2.type": "dresser",
+      "moveDetails.items.3.quantity": 40,
+      "moveDetails.pickup.floor": 2,
+      "moveDetails.pickup.elevator": false,
+      "moveDetails.dropoff.floor": 3,
+      "moveDetails.dropoff.elevator": false,
+      "moveDetails.requestedDate": "2026-10-09"
+    },
+    "expectedAgentIntent": [
+      "acknowledge_unavailable_dimensions",
+      "keep_wardrobe_dimensions_pending",
+      "retain_wardrobe_services_without_reasking",
+      "request_refrigerator_photo"
+    ],
+    "mustNot": [
+      "Do not repeat unavailable dimension questions.",
+      "Do not ask again for wardrobe disassembly or assembly after both were supplied.",
+      "Do not invent promised-but-not-provided measurements.",
+      "Do not mark unavailable dimensions satisfied or treat the complex job as fully priceable.",
+      "Do not erase unrelated known Lead state.",
+      "Do not drop the dresser or silently reduce the 40-box count.",
+      "Do not send a quote without owner approval."
+    ]
   }
 ]

@@ -27,6 +27,30 @@ function readyLead(date: string | null = '2026-09-16') {
 }
 const photoQuestion: NextQuestion = { text: 'אפשר לצרף תמונה של המקרר (פריט 1) לבדיקה?', requirements: [{ id: 'item.photo', itemIndex: 0 }] };
 const keep = () => ({ action: 'keep' as const });
+
+for (const [text, expected] of [
+  ['10/10', '2026-10-10'], ['10/10/2026', '2026-10-10'],
+  ['10.10', '2026-10-10'], ['10.10.2026', '2026-10-10'],
+  ['06/10', '2027-10-06'], ['07/10', '2026-10-07'],
+]) {
+  test(`active date question accepts ${text} without depending on an AI extraction`, async () => {
+    const lead = readyLead(null);
+    const before = structuredClone(lead);
+    const question = evaluateRequirements(lead).nextQuestion!;
+    assert.equal(question.text, 'באיזה תאריך תרצו לבצע את ההובלה?');
+    const result = await processCustomerMessageWithExtractor(lead, text, {
+      lastQuestion: question, referenceDate: '2026-10-07',
+      extractor: () => { throw new AIExtractionError('REQUEST_FAILED', 'Provider unavailable'); },
+    });
+    assert.equal(result.lead.moveDetails.requestedDate, expected);
+    assert.deepEqual(result.lead.moveDetails, { ...before.moveDetails, requestedDate: expected });
+    assert.deepEqual(lead, before);
+    assert.deepEqual(result.nextQuestion?.requirements, [{ id: 'item.photo', itemIndex: 0 }]);
+    assert.ok(!result.requirements.missingRequired.some(requirement => requirement.id === 'requestedDate'));
+    assert.doesNotMatch(result.responseText, /באיזה תאריך/);
+  });
+}
+
 function dateOutput(value: string): AIExtraction {
   return {
     items: [], pickup: { city: keep(), address: keep(), floor: keep(), elevator: keep() },
@@ -35,8 +59,57 @@ function dateOutput(value: string): AIExtraction {
   };
 }
 
+test('date shortcut leaves compound replies, corrections and other questions to extraction', async () => {
+  const dateQuestion: NextQuestion = { text: 'באיזה תאריך תרצו לבצע את ההובלה?', requirements: [{ id: 'requestedDate' }] };
+  const scenarios = [
+    { text: '10/10', question: undefined, knownDate: null },
+    { text: '10/10', question: photoQuestion, knownDate: null },
+    { text: '10/10', question: { text: 'תאריך ושעה?', requirements: [{ id: 'requestedDate' }, { id: 'dropoff.floor' }] } as NextQuestion, knownDate: null },
+    { text: '10/10 וגם 20 ארגזים', question: dateQuestion, knownDate: null },
+    { text: 'מחר', question: dateQuestion, knownDate: null },
+    { text: 'בעצם 10/10', question: dateQuestion, knownDate: '2026-10-09' },
+    { text: '10/10', question: dateQuestion, knownDate: '2026-10-09' },
+  ];
+  for (const scenario of scenarios) {
+    const lead = readyLead(scenario.knownDate);
+    let calls = 0;
+    const result = await processCustomerMessageWithExtractor(lead, scenario.text, {
+      lastQuestion: scenario.question, referenceDate: '2026-10-07',
+      extractor: input => { calls++; assert.equal(input.text, scenario.text); return {}; },
+    });
+    assert.equal(calls, 1, scenario.text);
+    assert.equal(result.lead.moveDetails.requestedDate, scenario.knownDate);
+  }
+});
+
+test('active yearless date requires reference context; explicit year does not', async () => {
+  const lead = readyLead(null);
+  const lastQuestion = evaluateRequirements(lead).nextQuestion!;
+  let calls = 0;
+  const extractor = () => { calls++; return {}; };
+  const unresolved = await processCustomerMessageWithExtractor(lead, '10/10', { lastQuestion, extractor });
+  assert.equal(unresolved.lead.moveDetails.requestedDate, null);
+  assert.equal(calls, 1);
+  const resolved = await processCustomerMessageWithExtractor(lead, ' 10.10.2026 ', { lastQuestion, extractor });
+  assert.equal(resolved.lead.moveDetails.requestedDate, '2026-10-10');
+  assert.equal(calls, 1);
+});
+
+test('invalid explicit dates and invalid reference dates fail without mutating any Lead information', async () => {
+  const lead = readyLead(null);
+  const before = structuredClone(lead);
+  for (const [text, referenceDate] of [['31/02', '2026-10-07'], ['29/02/2026', '2026-10-07'], ['10/10', '2026-02-30']]) {
+    await assert.rejects(processCustomerMessageWithExtractor(lead, text, {
+      lastQuestion: evaluateRequirements(lead).nextQuestion!, referenceDate,
+      extractor: () => { assert.fail('Do not send invalid explicit calendar dates to the model'); },
+    }), RangeError);
+    assert.deepEqual(lead, before);
+  }
+});
+
 for (const input of ['16/09', '16/09/2026', '16.09', '16.09.2026']) {
-  test(`${input} normalizes through the AI boundary and progresses from date to photo`, async () => {
+  test(`${input} in a sentence normalizes through the AI boundary and progresses from date to photo`, async () => {
+    const text = `בתאריך ${input}`;
     const lead = readyLead(null);
     const before = structuredClone(lead);
     const question = evaluateRequirements(lead).nextQuestion!;
@@ -46,11 +119,11 @@ for (const input of ['16/09', '16/09/2026', '16.09', '16.09.2026']) {
       assert.ok('content' in message && typeof message.content === 'string');
       const context = JSON.parse(message.content);
       assert.equal(context.referenceDate, '2026-09-15');
-      assert.equal(context.latestCustomerMessage, input);
+      assert.equal(context.latestCustomerMessage, text);
       assert.equal(context.lastQuestion.requirements[0].id, 'requestedDate');
       return { status: 'completed', output: [], output_parsed: dateOutput(input) };
     } });
-    const result = await processCustomerMessageWithExtractor(lead, input, {
+    const result = await processCustomerMessageWithExtractor(lead, text, {
       extractor, lastQuestion: question, referenceDate: '2026-09-15',
     });
     assert.deepEqual(lead, before);
@@ -183,9 +256,9 @@ test('later messages retain unavailable photo state and still receive a backend 
 
 test('a blocked unsupported item still receives a human-review response when no question is available', async () => {
   const lead = readyLead();
-  lead.moveDetails.items = [createMoveItem('washing_machine')];
+  lead.moveDetails.items = [createMoveItem('electric_piano')];
   const result = await processCustomerMessageWithExtractor(lead, 'תודה', { extractor: () => ({}) });
   assert.equal(result.nextQuestion, null);
   assert.equal(result.requirements.readyForPricing, false);
-  assert.match(result.responseText, /נדרשת בדיקה של הצוות/);
+  assert.match(result.responseText, /לבדיקה ותמחור אצל בעל העסק/);
 });

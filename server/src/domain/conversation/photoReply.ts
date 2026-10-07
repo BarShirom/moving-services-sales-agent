@@ -18,5 +18,5 @@ export function applyUnavailablePhotoReply(lead: Lead, text: string, lastQuestio
   if (!/^(?:אין(?: לי)?(?: תמונה)?(?: כרגע)?|לא(?: כרגע)?)$/u.test(reply)) return undefined;
   const updated = structuredClone(lead);
   updated.moveDetails.items[index].photoStatus = 'NOT_AVAILABLE';
-  return { lead: updated, acknowledgement: 'אין בעיה, נמשיך בלי תמונה. אם יהיה צורך, נבקש השלמה בהמשך.' };
+  return { lead: updated, acknowledgement: 'אין בעיה, נמשיך בלי תמונה.' };
 }

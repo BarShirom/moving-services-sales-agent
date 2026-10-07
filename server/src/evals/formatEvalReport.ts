@@ -9,10 +9,20 @@ export function formatEvalReport(report: EvalReport): string {
     '', 'Pricing dataset:', p.total + ' total',
     p.sourceQuality.closed_job + ' closed_job | ' + p.sourceQuality.quoted_only + ' quoted_only | ' +
       p.sourceQuality.historical_estimate + ' historical_estimate',
-    p.ready + ' ready for future pricing eval | ' + p.invalid + ' invalid',
+    p.evaluated + ' evaluated | ' + p.scored + ' scored | ' + p.partialInput + ' partial input | ' + p.notSupported + ' not supported | ' + p.invalid + ' invalid',
     'Known closed prices: ' + p.withClosedPrice + ' | Known quotes: ' + p.withQuotedPrice +
-      ' | Human approval required: ' + p.requiringHumanApproval + ' | Price ranges: ' + p.withPriceRange,
+      ' | Evaluations requiring approval: ' + p.requiringHumanApproval + ' | Historical reference ranges: ' + p.withPriceRange,
   ];
+  for (const result of p.results) {
+    const comparison = result.comparison;
+    lines.push('', result.id + ': ' + result.status + ' | ' + result.reason);
+    if (comparison) lines.push(
+      '  ' + comparison.completeness + ': ' + (comparison.recommendedAmount ?? 'unavailable') + ' ILS; closed amount: ' + (comparison.closedAmount ?? 'unknown') +
+      '; quoted amount: ' + (comparison.quotedAmount ?? 'unknown') + '; absolute difference: ' + (comparison.absoluteDifference ?? 'unavailable') + '; difference %: ' + (comparison.percentageDifference ?? 'unavailable'),
+      '  Reference amount: ' + (comparison.referenceAmount ?? 'unknown') + '; historical range comparison: ' + comparison.rangeComparison +
+      '; ' + (comparison.comparableToWholeJob ? 'whole-job provisional comparison; ' : 'whole-job comparison is not valid; ') + (comparison.informational ? 'informational only.' : 'closed-job evidence.'),
+    );
+  }
   const failures = [
     ...report.errors,
     ...c.results.filter(r => r.status === 'FAIL').flatMap(r => r.failedAssertions.map(f => r.id + ': ' + f)),

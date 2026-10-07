@@ -11,6 +11,8 @@ export interface RequirementResult {
   itemIndex?: number;
   stage: 'PRICING' | 'REVIEW';
   status: 'MISSING' | 'SATISFIED' | 'NOT_APPLICABLE';
+  // Missing information explicitly unavailable now; never a satisfied requirement.
+  availability?: 'TEMPORARILY_UNAVAILABLE';
   conditional: boolean;
   question: string | null;
 }

@@ -3,7 +3,13 @@ import type { NextQuestion, RequirementResult } from './types.js';
 export function selectNextQuestion(requirements: RequirementResult[]): NextQuestion | null {
   const missing = requirements.filter(result => result.status === 'MISSING');
   const pricing = missing.filter(result => result.stage === 'PRICING');
-  const candidates = (pricing.length > 0 ? pricing : missing).filter(result => result.question !== null);
+  const pricingQuestions = pricing.filter(result => result.question !== null);
+  // Owner-only pricing limitations do not suppress useful customer review questions.
+  // Ordinary unanswered/deferred pricing questions still keep their collection priority.
+  const onlyOwnerIssues = pricing.every(result =>
+    result.id === 'item.support' || result.availability === 'TEMPORARILY_UNAVAILABLE');
+  const candidates = pricingQuestions.length ? pricingQuestions : onlyOwnerIssues
+    ? missing.filter(result => result.stage === 'REVIEW' && result.question !== null) : [];
   const first = candidates[0];
   if (!first) return null;
 

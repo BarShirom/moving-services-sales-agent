@@ -19,11 +19,11 @@ const location = z.object({
 // Wire shape is separate from domain validation (calendar dates, positive values, etc.).
 export const AIExtractionSchema = z.object({
   items: z.array(z.object({
-    type: z.enum(['refrigerator', 'box', 'washing_machine', 'wardrobe', 'bed']),
+    type: z.enum(['refrigerator', 'box', 'washing_machine', 'wardrobe', 'bed', 'dresser']),
     quantity: update(z.number()).describe('Explicit positive integer total, including approximate totals such as בערך 15, כ-15, משהו כמו 15. Unknown, incremental or ranged counts use keep.'),
     sizeCategory: update(z.enum(['SMALL', 'REGULAR', 'LARGE', 'FOUR_DOOR'])),
     photoStatus: update(z.literal('NOT_AVAILABLE')).describe('Explicit photo refusal/unavailability for this item. Never infer receipt or completion of photo review.'),
-    dimensionsAvailable: update(z.boolean()).describe('Customer explicitly offers measurements (true) or says they cannot supply them (false). A promise contains no numeric dimensions.'),
+    dimensionsAvailable: update(z.boolean()).describe('Customer explicitly offers measurements now (true) or cannot supply them yet / will check later (false), for the identified item. Unknown uses keep. Never fabricate numeric dimensions.'),
     dimensions: z.object({
       width: update(z.number()), height: update(z.number()), depth: update(z.number()),
     }).strict(),

@@ -62,7 +62,7 @@ The client builds to client/dist and the server to server/dist. npm start runs t
 
 A local conversation simulator for refrigerator moves and deterministic demo pricing. Future move/item models should support additional item types. The workflow must preserve provided information, ask only relevant missing questions, and require human approval for every v0.1 quote. An LLM must never determine final prices.
 
-Pricing, MongoDB, WhatsApp, authentication, and production channel integration are intentionally not implemented. OpenAI extraction is available through the developer-only workflow described below.
+Recommendation-only deterministic pricing is available through the domain API below. MongoDB, WhatsApp, authentication, and production channel integration are intentionally not implemented. OpenAI extraction is available through the developer-only workflow described below.
 
 ## Domain Conventions
 
@@ -124,7 +124,7 @@ These modules live under server/src/domain/. Tests live in server/tests/extracti
 | יש 20 ארגזים | box quantity 20 |
 | בתאריך 2026-10-01 | requestedDate 2026-10-01 |
 
-Item names: מקרר, ארגז/ארגזים, מכונת כביסה, ארון, מיטה. Recognition does not expand pricing support: wardrobe, bed, and washing_machine still have the existing unsupported-policy requirement.
+Item names: מקרר, ארגז/ארגזים, מכונת כביסה, ארון, מיטה, שידה. Recognition does not expand pricing support: wardrobe, bed, and dresser transport remain unsupported.
 
 Cities: תל אביב, רמת גן, גבעתיים, בת ים, חולון. Unlabelled מ-city / ל-city phrases indicate pickup/dropoff. Explicit איסוף / פריקה labels take precedence for their side and accept city names with or without a prefix. Floors and elevators require these explicit labels within the same punctuation-delimited clause. Bare floor/elevator answers are not assigned using previous questions. Separate labels can appear in the same clause; punctuation ends their context.
 
@@ -318,10 +318,17 @@ backend `PORT`, update that proxy target too. Production builds remain separate 
 
 Click **טעינת הודעה לדוגמה** to fill the composer, then **שלח** to make a real extraction request.
 Customer messages and the exact backend `responseText` appear as chat bubbles, including acknowledgements and final next steps. The right side shows
-collected item/location/date details, the server's `requirements.missingRequired` with Hebrew display
-labels, and the complete `responseText` under the next-question or next-step heading. False elevator/service answers and floor zero are displayed
+collected item/location/date details, separate customer-information and owner-review lists, and
+a concise operational next step derived from the existing status/question. It does not repeat the chat reply. False elevator/service answers and floor zero are displayed
 as known facts. Pending review and ambiguous unapplied item updates are also surfaced. A collapsed
 JSON section provides the full response for development; it contains lead data, never credentials.
+
+`client/src/leadPresentation.ts` maps existing requirements to business wording without changing
+readiness or missing facts. Pending size/axis entries are grouped by item (for example,
+"מידות הארון — לא זמינות כרגע"). Item pricing checks, unavailable photos and ambiguous item updates
+appear under "נושאים לבדיקה אצל בעל העסק"; empty sections are hidden. Known aggregate box counts
+above the existing `pricingRules.review.maxBoxes` threshold show "נפח גבוה — 40 ארגזים — דורש בדיקה".
+Unknown totals are not guessed. Owner View retains the full pricing breakdown and all review reasons.
 
 ### Demo API and state
 
@@ -332,7 +339,7 @@ JSON section provides the full response for development; it contains lead data, 
 `server/src/demo/router.ts` holds one Lead in memory per Express app instance. All local browser
 tabs share this session. Reloading fetches current server state; resetting or restarting clears it.
 This is a single-session local demo, not a multi-user production service. The server binds to loopback.
-No database, authentication, pricing, or WhatsApp integration is added.
+No database, authentication, or WhatsApp integration is added. The later Owner Review Demo section describes the in-memory pricing and approval extension.
 
 Requests accept only nonblank text up to 4,000 characters. Clients cannot submit Lead/status or
 requirement state. Concurrent messages and resets during extraction return a friendly busy response.
@@ -379,6 +386,22 @@ conversion delegates normalization to `normalizeRequestedDate.ts`.
   current/next year; the policy does not search for a later leap year. Relative words and ranges
   remain unsupported. Known-date changes still require an explicit correction operation.
 
+When the active question is only `requestedDate`, the date is still unknown, and the whole
+reply is a numeric date token, `conversation/dateReply.ts` normalizes it before calling an
+external extractor. This removes the unnecessary provider dependency for answers such as
+`10/10`. The regular merge, requirements and owner workflow still apply. Compound messages,
+corrections and answers to other questions continue through extraction; invalid calendar dates
+still throw and the demo retains its previous state. The demo clock is injectable at app creation
+for HTTP tests, never from a customer request. With reference `2026-10-07`, `10/10` becomes
+`2026-10-10`, `07/10` stays `2026-10-07`, and `06/10` becomes `2027-10-06`.
+
+The October regression tests exercise the elevator question, `לא`, the displayed date question,
+the numeric reply and the next photo requirement through `/api/demo/message`. They also verify
+state retention on invalid dates and provider failures, and automatic pricing with owner approval
+still required. A simulated provider failure reproduced HTTP 502 before the date shortcut; the
+reported live `10/10` retry succeeded before the fix, so its original unlogged exception could
+not be established retrospectively.
+
 ### Contextual photo replies and final response
 
 Previously no state represented an unavailable photo: the item stayed REQUIRED and its question
@@ -399,8 +422,8 @@ defers only still-missing requirements from that question for this response; the
 Lead readiness remain unchanged. Other askable requirements may continue, and an acknowledgement
 alone is returned when waiting is the only next step. Deferral is transient, not a Lead field.
 This is deterministic and needs no second model call. The demo persists the complete response
-as an AGENT message. React renders that text in both chat and the response card without deciding
-requirements, readiness, or wording. Photos remain pending review; no upload, quote approval,
+as an AGENT message. React renders that text in chat and a separate brief status/action in the
+next-step card, without changing requirements or readiness. Photos remain pending review; no upload, quote approval,
 or pricing calculation is introduced.
 
 ### Regression coverage
@@ -409,8 +432,9 @@ or pricing calculation is introduced.
 explicit corrections, date-to-photo progression, all negative photo phrases, context isolation,
 per-item targeting, acknowledgement composition, review responses, and retained state.
 `server/tests/demo.test.ts` covers the full reported five-message flow over HTTP with a mocked
-structured extractor. `client/tests/response.test.tsx` verifies backend response rendering in
-chat and state cards, including when there is no next question.
+structured extractor. `client/tests/response.test.tsx` verifies full chat response rendering,
+separate customer/owner lists, box-volume boundaries, hidden empty sections and concise next-step
+wording across collection, manual review, quotes, handoff and closed states.
 
 Automated tests are offline. Separate manual live checks passed the reported conversation and
 each of the four numeric date formats; these sample model behavior, not every possible phrasing.
@@ -426,7 +450,7 @@ corrections. Only explicitly updated fields change; unknown facts and unrelated 
 
 The strict per-item AI schema now includes photoStatus (only NOT_AVAILABLE can be extracted)
 and dimensionsAvailable. The latter is stored on MoveItem as true, false, or null:
-true records an explicit offer, false records inability to supply measurements, and null is unknown.
+true records an explicit offer, false records inability to supply measurements now (including an explicit promise to check later), and null is unknown.
 None of these values supplies width, height or depth. Measurements remain separately validated,
 positive centimeter values. The prompt covers Hebrew labels before/after values, approximate
 measurements, meter/millimeter conversion, and explicitly ordered triples. Unlabelled triples do
@@ -438,6 +462,31 @@ When a size category already meets pricing requirements, these measurements are 
 information; the offer adds no pricing requirement. If size itself is unknown, explicit dimensions
 can satisfy the existing size requirement. Withdrawing an optional offer preserves measurements
 already collected. Unavailable photos remain pending human review without a repeated photo request.
+
+Unavailable dimensions use this same persisted availability field, not fabricated measurements or
+a new Lead lifecycle status. Requirement evaluation marks unresolved size/axis results as
+`MISSING` with `availability: TEMPORARILY_UNAVAILABLE` and no automatic question. Supplied values
+remain `SATISFIED`; null axes stay null. Later messages retain the unavailable state for owner
+review. An explicit new offer reopens missing axes, and supplied measurements satisfy only the
+corresponding facts. Compound replies still go through full structured extraction, so
+"אין לי כרגע את המידות ודרוש פירוק ואחר כך גם הרכבה." records availability plus BOTH service flags
+for the wardrobe identified by the active question. Unrelated uncertainty never globally defers facts.
+
+The agent acknowledges pending dimensions and services, then asks another collectable question.
+When no pricing question remains askable because dimensions are unavailable, optional review
+questions can continue. Once collection is exhausted, owner/manual pricing can proceed even while
+`readyForPricing` remains false, provided the only missing pricing requirements are unsupported
+item policies or explicitly unavailable dimensions. This does not satisfy or remove those requirements.
+An owner can also explicitly calculate a partial recommendation while assembly/disassembly is still
+unanswered for an item that already has a missing unsupported-item policy. This exception is limited
+to that same unsupported item; other missing customer requirements still block calculation.
+Its service question remains active and `readyForPricing` remains false. Automatic generation for
+this manual-only path still waits until no next question remains, so requesting an owner subtotal
+does not skip collection or imply that the unanswered service was accepted.
+Owner Review shows the missing availability status and the pricing risk reason. Unknown quantities,
+unsupported wardrobe/dresser transport, over-30-box volume and service complexity remain flagged;
+only defensible components form a subtotal, and every quote still requires owner approval.
+The anonymized `conv-026` fixture and HTTP/owner/UI tests cover this loop and retained information.
 
 Response composition compares the previous and merged item state. A photo decline plus a
 measurement offer acknowledges the alternative; a decline plus complete dimensions acknowledges
@@ -453,8 +502,8 @@ These are offline structured-model fixtures and workflow tests, not a live-model
 ## Offline evaluation runner
 
 Eval Runner v0.1 checks the conversation workflow against the public evaluation datasets
-and reports pricing evidence readiness. It uses explicit offline extraction fixtures and
-existing domain logic; it never calls live OpenAI or scores pricing accuracy.
+and executes provisional pricing evaluations. It uses explicit offline extraction fixtures and
+existing domain logic; it never calls live OpenAI or treats partial subtotals as whole-job pricing accuracy.
 
 From the repository root:
 
@@ -466,10 +515,419 @@ Failed executable assertions or invalid evidence exit with code 1; unsupported/f
 are reported as NOT_RUN. PASS is limited to the supported checks, with remaining natural-language
 mustNot statements explicitly listed for manual review.
 
-The current baseline is 23 conversation cases passing, 0 failing, and 2 future removal-service
-cases not run. All 6 pricing records are ready for a future Pricing Engine evaluation.
+The current baseline is 24 conversation cases passing, 0 failing, and 2 future removal-service
+cases not run. The 6 pricing records produce 5 PARTIAL_INPUT and 1 NOT_SUPPORTED results; none is a complete job-price score.
 The eval command exits 0 for this baseline. Dataset expectations and execution fixtures remain
 unchanged; the workflow now acknowledges applied updates and defers will-check questions.
 
 See [the evaluation dataset and runner guide](data/evals/README.md) for fixtures, limitations,
 source-quality reporting and how to turn an anonymized manual bug into a permanent regression case.
+
+## Pricing Engine v0.1: complete and partial recommendations
+
+The deterministic engine uses `MOVING_PRICING_V0_1_3`. This revision preserves defensible supported
+components in mixed inventories, narrows service/fit eligibility, and groups overlapping review
+deductions; the monetary rates and formulas below are unchanged. Structured Lead facts and explicit numeric
+pricing context are the only inputs; the LLM never calculates prices, ranges or confidence.
+All results remain provisional and require owner approval. No automatic customer quote, maps
+request, WhatsApp, database or scheduling integration is introduced.
+
+The [pricing evidence and tariff-readiness audit](data/evals/PRICING_EVIDENCE.md) separates
+29 historical/reference/engineering records from 23 category decisions. It preserves the six
+original job fixtures, marks all ten current rule families PROVISIONAL, and documents the future
+owner learning loop. No category is production-ready, and the evidence register changes no runtime
+pricing rule. Boxes and distance remain engineering assumptions; closed bundles do not establish
+isolated item tariffs.
+
+### Provisional pricing assumptions
+
+The historical references in [the eval guide](data/evals/README.md#historical-pricing-heuristics)
+support appliance, floor, service, waiting, extra-stop and student-discount heuristics. The six
+job totals do NOT isolate box or distance costs. The box/distance rules below are newly chosen,
+explicit engineering assumptions for owner-reviewed demonstrations, not calibrated business rates.
+They must be validated with the pilot owner before business reliance. No historical total is used
+as a coefficient or memorized result; current estimates are not ground truth.
+
+| Component | Exact rule in ILS | Provenance / assumption |
+| --- | --- | --- |
+| Refrigerator | SMALL 300; REGULAR 350; LARGE/FOUR_DOOR band 400-450, midpoint 425 | Historical A; handling/base labor included, no extra BASE charge |
+| Washing machine | Band 280-320, midpoint 300 per known unit | Historical B |
+| Boxes | No boxes adds 0; 1-10 adds 50-100 (75); 11-20 adds 100-200 (150); 21-30 adds 200-300 (250) | New provisional volume bands; aggregate all box rows into one band |
+| Distance | First 10 km included in item handling; each additional km adds 5-10 (7.5 midpoint) | New provisional numeric-distance tariff; fractional km supported |
+| Stairs | 100-150 (125 midpoint) per positive floor at pickup and dropoff | Historical G; once per endpoint for the supported load, not per item |
+| Bed service | 180-350 (265 midpoint) | Historical H; one bundle for an explicitly requested service, quantity 1, confirmed STANDARD complexity, and no explicitly pending dimensions |
+| Wardrobe service | 350-600 (475 midpoint) | Historical H; same eligibility and bundle policy |
+| Extra stop | 200-300 (250 midpoint) per pickup/dropoff beyond the initial two points | Historical F; additional access remains unpriced |
+| Waiting | 150 per started half-hour; zero minutes adds 0 | Historical I; rounding upward is provisional |
+| Student discount | 10% of all priced components, once, applied last | Historical J; explicit eligibility required; scope is provisional |
+
+The simple complete-job scope is at most two known refrigerators/washing machines combined,
+with up to 30 boxes and one pickup/dropoff. Known appliance quantities multiply their reference
+bands; those bands include normal handling and base transport labor. Adding their bands and the
+box/floor/distance additions is a provisional composition policy, not a fitted labor model.
+Boxes-only jobs can use the volume band and route/stair components. A zero box count is represented
+by no box item (the domain retains positive quantities for recorded items); no box fee is then added.
+More than 30 boxes or two appliances requires manual review and omits the unsupported component.
+No arbitrary furniture transport tariff or special-difficulty surcharge is created.
+
+Floor 0 is known ground floor with no stair charge, even if elevator availability is unknown.
+At positive floors, elevator=false means stairs. Elevator=true does not by itself require a fit
+answer, add stairs, or create a missing-fit penalty. An unknown fit matters only when explicit
+pricing context identifies a specific item requiring that check at that endpoint. If fit=false,
+the elevator stays true: ordinary stair work is priced and a separate unpriced special-carry issue
+makes the result partial. Explicit narrow-access or other difficulty also retains ordinary stairs
+but flags the unpriced additional work. Unknown floors/elevators, explicitly required fit checks,
+basements and loads outside the supported limits cannot silently become free access.
+The stair heuristic applies once per endpoint to the supported load of priced appliances and up
+to 30 boxes, not once per appliance or box. Unsupported wardrobe/furniture transport does not remove
+that subtotal; its stair/access work remains unpriced and flagged for owner review. Extending
+historical G to the supported load is explicitly provisional.
+
+Bed/wardrobe services do not establish a transport rate for that furniture, so such jobs remain
+partial. Services are never inferred from item type. A single item with either service=true is
+eligible for the historical band only when serviceComplexity is explicitly STANDARD and dimensions
+are not explicitly pending. Either or both requested services use one bundle, never two charges.
+Unknown/COMPLEX service complexity, explicitly unavailable incomplete dimensions, and multiple or
+unresolved service quantities leave the service unpriced for manual assessment. A unique wardrobe
+can use the documented pricing-only quantity convention below, but that assumption does not establish
+service complexity or measurements. Unsupported appliance service requirements also remain unpriced.
+Unknown assembly/disassembly flags on refrigerators, washing machines and boxes do not create
+missing-service warnings: ordinary transport does not require those answers. Explicitly requested
+services still require assessment. Unknown bed/wardrobe service needs are clarification issues,
+not a claim that assembly or disassembly is required. A dresser's unknown service flags are not
+applicable by default and do not manufacture a pricing warning; an explicitly requested dresser
+service still requires manual assessment. Disassembly never establishes assembly or vice versa.
+
+Workers and estimatedDurationHours are complexity signals only. More than two workers or two hours
+adds review and a confidence deduction, but no fabricated labor charge or automatic partial flag.
+These thresholds are engineering review limits. Estimated duration never implies waiting minutes.
+
+### Calculation, ranges and completeness
+
+Suggested amount = item references + box-volume band + applicable stair work + excess-distance
+charge + explicit supported services/stops/waiting, followed by an eligible student discount.
+Each component records its amount, range, source and calculation basis. Monetary values settle
+to integer agorot at component boundaries; unsafe arithmetic rejects. Component amounts sum to
+the suggestion to the nearest agora. Without a discount, total ranges sum component endpoints.
+A discount is correlated with the subtotal: multiply both subtotal endpoints by 0.9, rather than
+adding independent negative interval bounds. Its negative breakdown amount remains traceable.
+
+`completeness` is separate from workflow `status`:
+
+- COMPLETE_RECOMMENDATION / amountScope FULL_JOB: a positive amount with all meaningful supported
+  cost components known. Provisional assumptions still lower confidence and require owner approval.
+- PARTIAL_RECOMMENDATION / SUPPORTED_COMPONENTS_ONLY: a positive subtotal with an unsupported or
+  missing meaningful component. Its range does not bound the whole job. Unresolved quantity/size,
+  relevant assembly needs, route distance, access details or incomplete inventory produce partial results.
+- CANNOT_PRICE: no defensible numeric component. Amount and range are null, never a zero-price quote.
+  Distance/stair/waiting/stop supplements alone cannot price unknown inventory.
+
+Complete inputs normally return RECOMMENDATION_READY. Operational uncertainty (missing date/address,
+missing photo/dimensions, unknown extra access difficulty, staffing/duration risk) can return MANUAL_REVIEW_REQUIRED
+while the cost completeness remains complete. Partial recommendations always require manual review.
+The absence of special-access notes remains an owner caution, not an invented missing surcharge.
+Explicit difficulty still identifies unpriced extra work; known ordinary stair work remains priced.
+Dates/addresses carry no seasonal or geography-based tariff in the engine. In all cases
+humanApprovalRequired is true; only explicit owner approval/adjustment can send the demo quote.
+
+### Inputs, distance adapter and audit
+
+buildPricingInput validates/copies the Lead's moveDetails and external PricingContext. Unknowns,
+floor zero and false are preserved except for the narrow pricing-only quantity convention below.
+Raw messages are excluded. Size categories are explicit;
+dimensions never imply a refrigerator category. Invalid dates/numbers/counts reject before pricing.
+
+For a complete v0.1 inventory, a unique refrigerator or wardrobe row with `quantity=null` can use
+quantity 1 in pricing. Each type is assessed independently: `inventoryComplete=true`, all inventory
+rows have a known type, exactly one row of the relevant type, and `description=null` are required.
+Other item types, an unsupported wardrobe,
+or unknown/high box volume do not invalidate an otherwise unambiguous singular refrigerator.
+Duplicate rows of the same type, descriptive ambiguity or incomplete inventory disable that type's
+convention. Explicit quantities are never replaced, and no such convention applies to other types.
+The adapter changes only the detached pricing input and records affected indices in
+`assumptions.singularRefrigeratorQuantity` and `assumptions.singularWardrobeQuantity`; Lead
+quantities remain unchanged. `SINGULAR_ITEM_QUANTITY` exposes the
+convention and deducts five points once even when both refrigerator and wardrobe use it.
+This convention uses structured inventory only and does not parse messages to establish quantities.
+
+Context supports numeric distanceKm, legacy distanceBand (not used to price), workers, estimated
+job duration, pickup/dropoff point counts, per-endpoint elevator-fit booleans and item-specific
+fit-check requirements (`pickupElevatorFitRequiredItems` / `dropoffElevatorFitRequiredItems`, arrays
+of zero-based item indices, default empty), explicit specialDifficulty descriptions, inventoryComplete,
+waitingMinutes, studentDiscountEligible and
+serviceComplexity keyed by zero-based item index (STANDARD or COMPLEX). Defaults are one pickup
+and dropoff, inventoryComplete=true, no requested waiting/discount, and otherwise unknown facts.
+The historical adapter defaults inventoryComplete=false; original fixtures remain unchanged.
+
+`server/src/demo/distanceAdapter.ts` supplies a fixed **20 synthetic km** for two registered demo routes:
+
+- רמת גן, רחוב דוגמה 1 → תל אביב, רחוב דוגמה 2 (the owner sample).
+- רמת גן, ביאליק 20 → תל אביב, סלמה 37 (the reported refrigerator-and-boxes regression).
+
+These values are demonstration fixtures, not measured or estimated travel distances. Owner Review
+labels the registered distance as synthetic/provisional. Unregistered routes return null; there is
+no city-wide fallback. The demo refreshes this context on customer changes and before recalculation,
+so changing a route to an unregistered address removes its old distance. A future Maps adapter can
+supply actual numeric kilometers through the same boundary; pricing itself neither parses addresses
+nor calls a service.
+
+Each evaluation stores its rule version, detached inputSnapshot and SHA-256 inputFingerprint.
+Identical validated input and supplied audit metadata produce identical evaluations. The fingerprint
+canonicalizes `REQUIRED`, `NOT_AVAILABLE` and `NOT_APPLICABLE` photos as the same lack of received
+evidence, because calculation treats them identically. A photo refusal after automatic pricing
+therefore leaves the recommendation current; the audit snapshot still retains the original photo
+status. `RECEIVED` remains distinct. Actual quantity/size/dimension/access/route changes, quantity
+assumption provenance and rule-version changes invalidate previous evaluations. Messages, lifecycle
+status and timestamps are excluded. Explicit owner requests for more information still hold the
+recommendation stale until recalculated, even when the reply does not change a priced fact.
+The owner workflow retains prior evaluations and decisions in memory and blocks stale approvals;
+no persistence or complex versioning is added.
+
+### Confidence and review
+
+Confidence is deterministic completeness/risk, not statistical accuracy. Start at 100, subtract
+the deductions exposed in review reasons after grouping overlapping risks, and clamp to 0-100;
+CANNOT_PRICE scores 0.
+Deduct 10 for provisional rules, 5 for each active provisional composition/new-rate assumption,
+15 for missing distance, 5 for missing facts or missing photo/complete dimensions, 20 for unsupported
+items or complexity, and 10 when a contextual rate cannot be applied. The singular-item quantity
+assumption deducts 5 once globally. For each unsupported item, transport, manual service,
+unavailable dimensions and unresolved quantity are one overlapping risk group: apply the largest
+deduction in that group once (normally 20), while retaining every distinct review note. Other items
+and independent route/access risks still deduct separately. This prevents one wardrobe from losing
+points repeatedly for the same unresolved manual assessment. A complete recommendation may still
+have a low score and require manual review.
+
+### Calculated sample and historical evaluation
+
+The synthetic owner sample is a LARGE fridge plus 15 boxes, pickup floor 2 without elevator,
+dropoff floor 5 with a fitting elevator, confirmed no assembly/disassembly, known dimensions,
+no special difficulty and a supplied synthetic 20 km route. It calculates:
+
+- Refrigerator 425, boxes 150, pickup stairs 250, excess distance 75 = **900 ILS**.
+- Range **750-1,050 ILS**, completeness COMPLETE_RECOMMENDATION, confidence **75**, approval required.
+- The owner may approve 900 or adjust it; no recommendation is customer-visible before approval.
+
+The reported browser case uses the second registered route: one LARGE refrigerator with unknown
+quantity, 15 boxes, floor 2 without an elevator at both ends, date 2026-11-08 and no available photo
+or dimensions. With the pricing-only singular assumption, the calculation is:
+
+- Refrigerator 425 + boxes 150 + pickup stairs 250 + dropoff stairs 250 + excess distance 75 = **1,150 ILS**.
+- Range **950-1,350 ILS**, COMPLETE_RECOMMENDATION, MANUAL_REVIEW_REQUIRED, confidence **60**.
+- Reasons: provisional rules (10); singular quantity, missing visual evidence, unconfirmed extra access
+  difficulty, provisional box rate, provisional distance rate and stair composition (5 each).
+- No quantity-missing or irrelevant assembly warning; no supported component is omitted. Photo refusal
+  does not stale the recommendation, and only an owner approval/adjustment sends a customer quote.
+
+The mixed-inventory regression adds an unsupported wardrobe to a LARGE refrigerator and 15 boxes.
+The refrigerator and wardrobe each have a unique, unambiguous row with unknown quantity; the pricing
+adapter treats each as one without changing the Lead. Pickup is floor 2 without an elevator;
+dropoff is floor 3 with an elevator and no explicitly required fit check. The date is 2026-11-08.
+The refrigerator has no photo, wardrobe dimensions are unavailable, and disassembly is requested
+without confirmed STANDARD service complexity. The wardrobe remains a manual item even when its
+size description or assembly flag is known.
+
+| Supported component | Midpoint | Range in ILS |
+| --- | --- | --- |
+| LARGE refrigerator | 425 | 400-450 |
+| 15 boxes | 150 | 100-200 |
+| Supported-load pickup stairs, floor 2 | 250 | 200-300 |
+| Registered synthetic 20 km route | 75 | 50-100 |
+| Supported subtotal with registered route | **900** | **750-1,050** |
+
+This is **PARTIAL_RECOMMENDATION**, **MANUAL_REVIEW_REQUIRED**, confidence **40**, and always
+requires owner approval. Wardrobe transport, its disassembly/assembly, pending dimensions and
+wardrobe stair/access work remain omitted/manual; the supported-load stair subtotal does not
+include that furniture work. There is no dropoff stair charge or default elevator-fit warning,
+and no generic quantity warning for the two safe singular assumptions. Owner Review separates
+the priced subtotal from components requiring manual pricing using item-specific Hebrew labels.
+
+The score follows the rules, not a case-specific target: provisional rules 10; overlapping wardrobe
+risk 20 once; singular quantities, missing refrigerator visual evidence, box tariff, distance tariff,
+stair composition and unconfirmed additional access difficulty 5 each. All distinct wardrobe review
+notes remain visible even when their overlapping deductions are zero. If addresses do not match a
+registered demo route, no distance is invented: the subtotal is **825 ILS**, range **700-950 ILS**,
+confidence **30**, with missing distance requiring review. Known cities alone do not select 20 km.
+These examples are deterministic regression cases, not historical job-price evidence.
+
+The runner reports quoted/closed/reference amounts, absolute/percentage differences, completeness,
+and review reasons. A complete result is SCORED even if manual review is needed. Price differences
+never fail the build; malformed evidence and structural invariants do. Historical estimates are
+informational. Partial subtotal-to-whole-job differences are reported with an explicit limitation.
+
+| Historical case | Calculated subtotal | Why not a complete job recommendation |
+| --- | --- | --- |
+| 001 | None | Dishwasher/oven transport unsupported |
+| 002 | 75 | Boxes only; fridge size missing, other furniture unsupported |
+| 003 | 1,175 | Washing machine, boxes and supported-load stairs at both ends; other furniture/electric piano and their access work unsupported |
+| 004 | 975 | Small fridge, washer and pickup stairs; incomplete dropoff access and inventory |
+| 005 | 550 | Washer plus boxes; mixed unsupported inventory and difficult access |
+| 006 | 250 | Boxes only; unsupported complex inventory and unclear quantities/access |
+
+All six lack numeric distance; none is a full historical score. Current baseline: 5 PARTIAL_INPUT,
+1 NOT_SUPPORTED, 0 INVALID. Three closed-job totals remain 450, 1,200 and 2,990; the historical
+estimate cases remain estimates. The conversation baseline remains 24 passing, 2 future cases not run.
+
+
+## Quote Finalization & Customer Acceptance v0.1
+
+The **לקוח** and **בעל העסק** views share one local session. The engine's calculation, the owner's
+commercial decision, and the quote actually sent to the customer are separate records. A useful
+partial subtotal is never automatically promoted to a price for the whole move. The mobile-first
+Hebrew interface retains conversation history, drafts and errors when switching views; it refreshes
+backend state after actions and view switches.
+
+### Calculation, owner decision and customer quote
+
+`PricingEvaluation` retains the original amount/range, completeness, omissions, assumptions and
+review reasons. `OwnerReview` records the suggested and final approved amounts separately, its
+decision/evaluation reference, scope snapshot/version/fingerprint, finalization acknowledgements,
+timestamp and optional private internal reason. A decision does not rewrite an evaluation or make
+partial pricing complete.
+
+`CustomerQuoteRecord` in `server/src/domain/quote/types.ts` stores a quote ID and increasing version,
+Lead/evaluation/decision references, final amount and currency, the known move scope, sent time,
+status and any acceptance. Scope includes item facts, pickup/dropoff access, requested date/time
+and explicitly supplied services. Unknown facts remain unknown, including quantities that only
+the pricing adapter assumed for calculation. The record also retains owner-reviewed missing photos
+and unresolved details; owner approval does not turn them into factual answers.
+
+| Current calculation | Explicit owner action |
+| --- | --- |
+| COMPLETE_RECOMMENDATION | **אשר ושלח הצעת מחיר** / APPROVE uses the current suggested amount. Existing unresolved review conditions still require their acknowledgements. |
+| PARTIAL_RECOMMENDATION | **השלם ואשר מחיר סופי** opens a form separating the calculated subtotal/range from omitted work. ADJUST_PRICE must supply a final total, scopeConfirmed=true and omittedCostsAcknowledged=true. |
+| CANNOT_PRICE | Owner-entered final total through ADJUST_PRICE with the same scope/omitted-cost confirmations; it is not labeled an engine recommendation. |
+
+The partial finalization confirmation is unchecked initially: the owner must explicitly confirm
+that the final amount covers the described move, including the components the engine did not price.
+The owner may deliberately choose the same amount as the subtotal or a different positive total;
+no arbitrary surcharge is required. APPROVE cannot send a partial/null recommendation, including
+through a direct API call. ADJUST_PRICE cannot bypass the incomplete-cost confirmations.
+
+Finalization validates the current Lead revision and pricing evaluation. Null, zero, negative,
+non-finite, unsafe or more-than-two-decimal amounts are rejected. The customer receives only the
+final owner-approved amount, never a stale recommendation or an unapproved subtotal. The owner view
+keeps the original engine calculation as context after sending and acceptance, separately from the
+final quote; the current quote no longer appears to be awaiting owner approval.
+
+### Collection and pending review information
+
+Unsupported item tariffs are owner issues, not a reason to skip customer questions. The requirements
+selector asks collectable PRICING questions first, then collectable REVIEW questions when only
+unsupported-item policies or explicitly unavailable dimensions remain. The dresser regression
+therefore reaches the refrigerator photo question. Requirement statuses and readyForPricing are
+unchanged; a deferred ordinary pricing question still preserves its one-turn wait behavior.
+
+Pickup and dropoff floor/elevator facts are independent. Known floor 0 and elevator=false stay valid,
+early facts are retained, and updating one endpoint does not erase the other. A contextual photo
+decline records NOT_AVAILABLE, is acknowledged briefly and is not asked again. The photo requirement
+remains unresolved for owner review. No image upload exists.
+
+Before either approval path, the backend supplies pendingPhotoItemIndices and requires the owner
+to include each in reviewedPhotoItemIndices. This applies to REQUIRED and NOT_AVAILABLE photos.
+The acknowledgement records a decision to proceed without received evidence; it neither writes
+RECEIVED nor marks the original photo requirement SATISFIED. Preparing an evaluation alone leaves
+collection questions intact and never sends a quote.
+
+Unknown dresser service flags remain not applicable under the default requirements. Explicit
+disassembly is displayed as disassembly; it does not imply assembly. Unknown relevant bed/wardrobe
+services are clarification issues (SERVICES_UNKNOWN / SERVICE_REQUIREMENTS), while explicitly
+requested unpriced services retain their manual-pricing issue. Tariffs and amount formulas are unchanged.
+
+### Acceptance and manual coordination
+
+The backend sends an acceptance question tied to the current quote. A clear contextual `כן`, `מאשר`,
+`מאשרת` or `סגור` accepts that quote only after verifying its identity/version, explicit owner
+approval, active question, current status and unchanged commercial scope. The accepted amount
+comes from the quote record. A `כן` answering an elevator question is an ordinary collection reply,
+not approval of some quote found in history.
+
+Compound replies such as `כן, אבל יש גם עוד ארון`, `כן, אבל רק אחרי 18:00` and
+`סגור, רק שהפריקה עכשיו בקומה 4` are not shortcut acceptances. Relevant facts go through the existing
+extraction/merge workflow; material changes invalidate the old quote or return it to review.
+An unextracted condition, coverage question or price objection goes to a representative for
+clarification rather than accepting the existing offer. Negations do not automatically mark a Lead
+LOST. No negotiation engine is introduced.
+
+Acceptance records the quote ID/version, amount and timestamp, sets quote status ACCEPTED, and
+uses Lead status WON to mean **the customer accepted the commercial quote**. WON does not mean
+a scheduled move, allocated crew or completed job. Coordination remains PENDING and the customer
+is told that final arrangements will be handled by a representative and the requested date is not reserved.
+
+The owner coordination summary uses the accepted scope and amount, including items, both locations
+and access, requested date/time, explicit services, unresolved details and the owner's acknowledgements.
+It does not invent contact information. Later material changes require review/handoff and do not
+rewrite the accepted quote or restart ordinary automatic collection. Human takeover still retains
+messages without extraction or automatic replies.
+
+### Freshness, duplicate protection and API boundaries
+
+Pricing fingerprints protect the calculation; a separate commercial-scope fingerprint protects the
+quote. Item quantities/descriptions/sizes/measurements/services, route/access, requested date/time
+and special access notes are material scope facts. Photo availability alone does not change the
+described commercial work. Quotes retain their original scope even if later Lead facts change.
+
+Every owner mutation includes leadId and revision; finalization also references pricingEvaluationId.
+Stale owner screens and repeated finalization cannot create duplicate quotes. Only the current
+valid sent quote can be accepted; invalidated/superseded quotes cannot be accepted. Repeated
+acceptance does not duplicate acceptance records or coordination summaries. In-flight extraction
+blocks competing mutations/reset, and failed processing leaves the prior session intact.
+Customer message requests may include quoteId and quoteVersion together; a stale supplied token
+cannot accept a different quote. Even without that optional token, the backend requires its actual
+current quote and active acceptance question, so a historical QUOTE_SENT status alone is insufficient.
+
+| Endpoint | Behavior |
+| --- | --- |
+| GET /api/demo | Customer Lead/conversation and an explicit customer-safe quote projection; no engine evaluations, internal reasons or private owner notes. |
+| POST /api/demo/message | Contextual quote replies or the existing collection workflow; preserves takeover behavior. |
+| POST /api/demo/reset | Clears Lead, pricing/review history, quotes, acceptance, coordination, pending questions and handoff state. |
+| GET /api/demo/owner | Current calculation, decisions/quotes, pending review information, coordination and backend-calculated actions. |
+| POST /api/demo/owner/action | Validated APPROVE, ADJUST_PRICE, REQUEST_MORE_INFO or TAKE_OVER_CONVERSATION. |
+| POST /api/demo/owner/pricing | Prepares/recalculates a recommendation; does not approve or send it. |
+| POST /api/demo/owner/sample | Replaces the session with the synthetic fridge/15-box owner sample. |
+
+REQUEST_MORE_INFO retains the actual owner question, makes old approval unavailable and requires
+recalculation after the reply. TAKE_OVER_CONVERSATION preserves the existing human-handoff behavior.
+Customer responses expose only safe quote fields (identity/version, final amount, scope, sent time,
+status and acceptance); evaluation references, owner reasons, confidence and internal pricing notes
+stay owner-only, including in debug data.
+
+### Reproducible offline browser demonstration
+
+From the repository root, build both applications and launch the opt-in fixture server:
+
+    npm run build
+    npm run demo:quote --workspace server
+
+Open `http://127.0.0.1:3101`. The server injects a fixed reference date, 2026-10-07, and the exact
+synthetic messages in `server/src/demo/quoteFixture.ts`; it makes no OpenAI calls and needs no API key.
+Send these four messages in the customer view, responding to the successive questions:
+
+1. `צריך להעביר מקרר גדול, שידה קטנה וכ-15 ארגזים מרמת גן לתל אביב. האיסוף ברחוב הדגמה 11, קומה 2 בלי מעלית.`
+2. `הפריקה ברחוב הדגמה 22, קומה 1 בלי מעלית.`
+3. `8/11` (stored as 2026-11-08).
+4. `אין לי כרגע` when asked for the refrigerator photo.
+
+Switch to **בעל העסק**. The real deterministic engine calculates a **950 ILS partial subtotal**:
+refrigerator 425 + 15 boxes 150 + pickup stairs 250 + dropoff stairs 125. Dresser transport/access and
+route distance remain unpriced; the synthetic addresses intentionally do not select a registered distance.
+Open **השלם ואשר מחיר סופי**, enter **1,200**, confirm the final whole-job scope/omitted costs and
+the decision to proceed without the photo, then explicitly send the quote. These confirmations
+are never preselected. The 950 engine subtotal remains distinct from the 1,200 approved total.
+
+Switch to **לקוח** and reply `כן` to the current quote's acceptance question. Both views should show
+the accepted **1,200 ILS** and pending manual coordination. The owner sees the coordination summary;
+neither view claims that the requested move date has been booked. Reset clears the entire flow.
+
+The fixture additionally understands only the documented synthetic changes in quoteFixture.ts,
+plus the existing narrow date/photo/acceptance paths. Other free-form messages can fail without
+changing stored state. This is reproducible workflow verification, not a language model or proof
+of live Hebrew extraction accuracy. The ordinary development server still uses its configured extractor.
+The owner sample loader remains available for a complete 900 ILS calculation, with explicit owner
+approval and any pending-photo acknowledgement still required.
+
+Everything remains in memory in a local, single-session demo. Browser tabs share state and a
+restart clears it. Switching views is not authentication; anyone with server access can use owner
+endpoints. There is no database, WhatsApp/external delivery, payments, maps, availability check,
+calendar, crew assignment or scheduling. View switches/actions refresh state; there is no live
+cross-tab subscription. No public deployment is part of this milestone.

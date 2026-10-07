@@ -8,6 +8,7 @@ export const ITEM_PATTERNS: Record<SupportedItemType, string> = {
   washing_machine: 'מכונת\\s+כביסה',
   wardrobe: 'ארון',
   bed: 'מיטה',
+  dresser: 'שידה',
 };
 
 export const REFRIGERATOR_SIZES: Record<string, RefrigeratorSize> = {

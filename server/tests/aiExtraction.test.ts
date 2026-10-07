@@ -59,7 +59,7 @@ test('structured output converts all supported fields to the existing partial pa
   fridge.dimensions = { width: set(90), height: set(180), depth: set(75) };
   fridge.requiresDisassembly = set(false);
   fridge.requiresAssembly = set(true);
-  data.items = [fridge, { ...item('box'), quantity: set(20) }, item('washing_machine'), item('wardrobe'), item('bed')];
+  data.items = [fridge, { ...item('box'), quantity: set(20) }, item('washing_machine'), item('wardrobe'), item('bed'), item('dresser')];
   data.pickup = { city: set('רמת גן'), address: set('ביאליק 20'), floor: set(0), elevator: set(false) };
   data.dropoff = { city: set('תל אביב'), address: set('הרצל 10'), floor: set(3), elevator: set(true) };
   data.requestedDate = set('2028-02-29');
@@ -69,7 +69,7 @@ test('structured output converts all supported fields to the existing partial pa
   assert.deepEqual(extraction, { moveDetails: {
     items: [{ type: 'refrigerator', quantity: 2, sizeCategory: 'FOUR_DOOR',
       dimensions: { width: 90, height: 180, depth: 75 }, requiresDisassembly: false, requiresAssembly: true },
-    { type: 'box', quantity: 20 }, { type: 'washing_machine' }, { type: 'wardrobe' }, { type: 'bed' }],
+    { type: 'box', quantity: 20 }, { type: 'washing_machine' }, { type: 'wardrobe' }, { type: 'bed' }, { type: 'dresser' }],
     pickup: { city: 'רמת גן', address: 'ביאליק 20', floor: 0, elevator: false },
     dropoff: { city: 'תל אביב', address: 'הרצל 10', floor: 3, elevator: true },
     requestedDate: '2028-02-29', requestedTime: '18:00', specialAccessNotes: 'מעבר צר בכניסה',

@@ -70,6 +70,28 @@ test('known pickup floor and elevator never appear in the next question', () => 
   assert.doesNotMatch(question!.text, /קומה|מעלית/);
 });
 
+test('pickup and dropoff floor/elevator collection stays independent with unsupported inventory', () => {
+  for (const side of ['pickup', 'dropoff'] as const) {
+    const lead = completeLead();
+    lead.moveDetails.items.push(createMoveItem('dresser'));
+    lead.moveDetails[side].floor = null;
+    lead.moveDetails[side].elevator = null;
+    const other = side === 'pickup' ? 'dropoff' : 'pickup';
+    const otherBefore = structuredClone(lead.moveDetails[other]);
+    assert.deepEqual(evaluateRequirements(lead).nextQuestion?.requirements, [
+      { id: `${side}.floor` }, { id: `${side}.elevator` },
+    ]);
+    lead.moveDetails[side].floor = 0;
+    assert.deepEqual(evaluateRequirements(lead).nextQuestion?.requirements, [{ id: `${side}.elevator` }]);
+    lead.moveDetails[side].elevator = false;
+    assert.deepEqual(evaluateRequirements(lead).nextQuestion?.requirements, [{ id: 'item.photo', itemIndex: 0 }]);
+    assert.deepEqual(lead.moveDetails[other], otherBefore);
+    assert.equal(result(lead, `${side}.floor`).status, 'SATISFIED');
+    assert.equal(result(lead, `${side}.elevator`).status, 'SATISFIED');
+    assert.equal(evaluateRequirements(lead).readyForPricing, false, 'Unsupported transport remains an owner issue');
+  }
+});
+
 test('partial dimensions request only missing axes, then satisfy size without a category', () => {
   const lead = completeLead();
   const item = lead.moveDetails.items[0];
@@ -108,6 +130,25 @@ test('required photos remain pending review without blocking initial pricing rea
   assert.deepEqual(evaluation.pendingReview.map(entry => entry.id), ['item.photo']);
   assert.equal(evaluation.pendingReview[0].status, 'MISSING');
   assert.deepEqual(evaluation.nextQuestion?.requirements, [{ id: 'item.photo', itemIndex: 0 }]);
+});
+
+test('unsupported dresser pricing does not suppress a required refrigerator photo or invent dresser services', () => {
+  const lead = completeLead();
+  lead.moveDetails.items.push({ ...createMoveItem('dresser'), sizeCategory: 'SMALL' });
+  const before = structuredClone(lead);
+  const evaluation = evaluateRequirements(lead);
+  assert.deepEqual(evaluation.nextQuestion?.requirements, [{ id: 'item.photo', itemIndex: 0 }]);
+  assert.equal(evaluation.readyForPricing, false);
+  assert.deepEqual(evaluation.missingRequired.map(requirement => [requirement.id, requirement.itemIndex]), [['item.support', 1]]);
+  for (const id of ['item.disassembly', 'item.assembly'] as const) {
+    assert.equal(result(lead, id, {}, 1).status, 'NOT_APPLICABLE');
+    assert.equal(result(lead, id, { items: { 1: { disassemblyRelevant: true, assemblyRelevant: true } } }, 1).status, 'MISSING');
+  }
+  assert.deepEqual(lead, before);
+  lead.moveDetails.items[0].photoStatus = 'NOT_AVAILABLE';
+  assert.equal(evaluateRequirements(lead).nextQuestion, null);
+  assert.equal(result(lead, 'item.photo', {}, 0).status, 'MISSING');
+  assert.equal(result(lead, 'item.support', {}, 1).status, 'MISSING');
 });
 
 test('received and not-applicable photos are distinguished and never requested', () => {
@@ -237,7 +278,7 @@ test('item references keep known and missing quantities separate across multiple
 });
 
 test('future item profiles express conditional needs but cannot silently become ready', () => {
-  for (const type of ['wardrobe', 'bed', 'washing_machine', 'piano', 'constructor']) {
+  for (const type of ['wardrobe', 'bed', 'piano', 'constructor']) {
     const lead = completeLead();
     lead.moveDetails.items = [createMoveItem(type)];
     assert.equal(result(lead, 'item.type', {}, 0).status, 'SATISFIED');
@@ -277,4 +318,11 @@ test('whitespace does not count as an answered required text field', () => {
   const lead = completeLead();
   lead.moveDetails.pickup.address = '   ';
   assert.equal(result(lead, 'pickup.address').status, 'MISSING');
+});
+
+test('washing machine is now supported for pricing readiness with known job facts', () => {
+  const lead = completeLead();
+  lead.moveDetails.items = [{ ...createMoveItem('washing_machine'), quantity: 1 }];
+  assert.equal(result(lead, 'item.support', {}, 0).status, 'SATISFIED');
+  assert.equal(evaluateRequirements(lead).readyForPricing, true);
 });
