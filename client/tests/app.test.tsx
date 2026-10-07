@@ -284,10 +284,12 @@ for (const finalAmount of [950, 1234]) {
     assert.equal(evaluation.completeness, 'PARTIAL_RECOMMENDATION');
     const container = await mount(t, transport.fetch);
     assert.match(element(container, '.message-area').textContent!, /תמונה/);
+    assert.doesNotMatch(container.textContent!, /\u2014/u);
     await draft(container, 'טיוטה לפני בדיקת הבעלים');
     await buttonNamed(container, 'בעל העסק');
     assert.equal([...container.querySelectorAll('button')].some(button => button.textContent === 'אשר ושלח הצעת מחיר'), false);
     await buttonNamed(container, 'השלם ואשר מחיר סופי');
+    assert.doesNotMatch(container.textContent!, /\u2014/u);
     assert.match(element(container, '.calculated-subtotal').textContent!, /סכום הרכיבים שתומחרו.*950/);
     assert.match(element(container, '.finalization-omissions').textContent!, /שידה.*הובלה דורשת תמחור ידני/);
     assert.match(element(container, '.finalization-omissions').textContent!, /מרחק/);
@@ -320,6 +322,7 @@ for (const finalAmount of [950, 1234]) {
     assert.match(element(container, '.pricing-card').textContent!, /המחיר הסופי נקבע ואושר בנפרד/);
     assert.equal(element(container, '.review-badge').textContent, 'הצעת המחיר נשלחה');
     assert.match(element(container, '.photo-decisions').textContent!, /אישר להמשיך ללא תמונה.*התמונה לא התקבלה/);
+    assert.doesNotMatch(container.textContent!, /\u2014/u);
     await buttonNamed(container, 'לקוח');
     assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה לפני בדיקת הבעלים');
     assert.match(element(container, '.next-card > p').textContent!, /ממתינים לתשובת הלקוח/);
@@ -336,6 +339,7 @@ for (const finalAmount of [950, 1234]) {
     assert.doesNotMatch(element(container, '.next-card').textContent!, /ממתינים לתשובת הלקוח/);
     assert.match(element(container, '.conversation-header .status-label').textContent!, /הלקוח אישר את המחיר/);
     assert.match(element(container, '.message-area').textContent!, /עדיין לא שוריין/);
+    assert.doesNotMatch(container.textContent!, /\u2014/u);
     const accepted = structuredClone(transport.current.customer.quote!.acceptance);
     await draft(container, 'מאשר');
     await click(container, '.send-button');
@@ -351,6 +355,7 @@ for (const finalAmount of [950, 1234]) {
     assert.match(summary.textContent!, /2026-11-08.*נדרש תיאום סופי/);
     assert.match(summary.textContent!, /לא נמסרו שירותי פירוק או הרכבה שנדרשים במפורש/);
     assert.match(summary.textContent!, /התמונה עדיין חסרה/);
+    assert.doesNotMatch(container.textContent!, /\u2014/u);
     assert.equal(container.querySelectorAll('.coordination-summary').length, 1);
     assert.equal(element<HTMLButtonElement>(container, '.approve-button').disabled, true);
     await buttonNamed(container, 'איפוס הדגמה');
@@ -380,6 +385,8 @@ test('manual pricing starts empty and invalid final totals cannot be submitted',
   await buttonNamed(container, 'הזן ואשר מחיר סופי');
   assert.equal(element<HTMLInputElement>(container, '#approved-amount').value, '');
   assert.match(element(container, '.calculated-subtotal').textContent!, /המחיר ייקבע על ידי בעל העסק/);
+  assert.doesNotMatch(container.textContent!, /\u2014/u);
+  assert.match(element(container, '.price-metrics').textContent!, /לא זמין/);
   await click(container, '#scope-confirmation');
   for (const invalid of ['', '0', '-10', '1.234', 'Infinity']) {
     await fill(container, '#approved-amount', invalid);
@@ -425,9 +432,9 @@ test('explicit dresser disassembly is shown without claiming unknown assembly is
   Object.assign(state, generatePricing(state, new Date('2026-10-07T09:00:00Z')));
   const container = await mount(t, transport.fetch);
   await buttonNamed(container, 'בעל העסק');
-  assert.match(element(container, '.omitted-list').textContent!, /פירוק של השידה — נדרש תמחור ידני/);
+  assert.match(element(container, '.omitted-list').textContent!, /פירוק של השידה: נדרש תמחור ידני/);
   assert.doesNotMatch(element(container, '.omitted-list').textContent!, /הרכבה/);
-  assert.match(element(container, '.review-reasons').textContent!, /שידה — פירוק: נדרש תמחור ידני/);
+  assert.match(element(container, '.review-reasons').textContent!, /שידה: נדרש תמחור ידני עבור פירוק/);
   assert.equal(state.customer.lead.moveDetails.items[1].requiresAssembly, null);
 });
 
@@ -442,9 +449,9 @@ test('unknown relevant wardrobe services remain a clarification rather than a de
   Object.assign(state, generatePricing(state, new Date('2026-10-07T09:00:00Z')));
   const container = await mount(t, transport.fetch);
   await buttonNamed(container, 'בעל העסק');
-  assert.match(element(container, '.omitted-list').textContent!, /צורך בפירוק \/ הרכבה של הארון — נדרש בירור/);
-  assert.doesNotMatch(element(container, '.omitted-list').textContent!, /פירוק והרכבה של הארון — נדרש תמחור ידני/);
-  assert.match(element(container, '.review-reasons').textContent!, /ארון — צורך בפירוק או בהרכבה טרם הובהר/);
+  assert.match(element(container, '.omitted-list').textContent!, /צורך בפירוק \/ הרכבה של הארון: נדרש בירור/);
+  assert.doesNotMatch(element(container, '.omitted-list').textContent!, /פירוק והרכבה של הארון: נדרש תמחור ידני/);
+  assert.match(element(container, '.review-reasons').textContent!, /ארון: צורך בפירוק או בהרכבה טרם הובהר/);
 });
 
 test('complete recommendation with its photo received is sent only after the explicit owner click', async t => {
@@ -528,17 +535,17 @@ test('reported large refrigerator and 15 boxes show a current full recommendatio
   assert.match(element(container, '.price-metrics').textContent!, /950.*1,350.*60%/);
   assert.equal(container.querySelector('.stale-banner'), null);
   assert.match(element(container, '.pricing-card').textContent!, /המלצה מלאה/);
-  assert.match(element(container, '.pricing-card').textContent!, /מרחק הדגמה סינתטי: 20 ק״מ — נתון זמני, לא מדידת מפה/);
+  assert.match(element(container, '.pricing-card').textContent!, /מרחק הדגמה סינתטי: 20 ק״מ \(נתון זמני, לא מדידת מפה\)/);
   const rows = [...container.querySelectorAll('.price-breakdown > li')];
   assert.equal(rows.length, 5);
   assert.deepEqual(rows.map(row => row.querySelector('strong')!.textContent), [
-    'מקרר גדול', '15 ארגזים', 'מרחק המסלול', 'קומות ללא מעלית — איסוף', 'קומות ללא מעלית — פריקה',
+    'מקרר גדול', '15 ארגזים', 'מרחק המסלול', 'קומות ללא מעלית באיסוף', 'קומות ללא מעלית בפריקה',
   ]);
   assert.deepEqual(rows.map(row => row.querySelector('b')!.textContent!.replace(/[^\d]/g, '')), ['425', '150', '75', '250', '250']);
   assert.equal(container.querySelectorAll('.omitted-list > li').length, 0);
   const reviewText = element(container, '.review-reasons').textContent!;
   assert.match(reviewText, /התמחור מניח מקרר אחד/);
-  assert.match(reviewText, /מקרר — חסרים צילום או מידות מלאות/);
+  assert.match(reviewText, /מקרר: חסרים צילום או מידות מלאות/);
   assert.doesNotMatch(reviewText, /כמות הפריט חסרה|כמות המקררים חסרה|צורך בפירוק או בהרכבה טרם הובהר/);
   const actionButtons = [...container.querySelectorAll<HTMLButtonElement>('.action-grid button')];
   assert.equal(actionButtons.length, 4);
@@ -568,8 +575,8 @@ test('owner review wording merges equivalent notes but preserves distinct item i
   assert.equal(notes.length, 3);
   assert.deepEqual(notes.map(note => note.textContent), [
     'נדרש אישור לתנאי ההובלההפחתה בציון: 5',
-    'מקרר — חסרים צילום או מידות מלאותהפחתה בציון: 4',
-    'ארגזים — חסרים צילום או מידות מלאותהפחתה בציון: 6',
+    'מקרר: חסרים צילום או מידות מלאותהפחתה בציון: 4',
+    'ארגזים: חסרים צילום או מידות מלאותהפחתה בציון: 6',
   ]);
   assert.match(element(container, '.price-metrics').textContent!, /85%/);
   assert.equal(evaluation.reviewReasons.length, 4);
@@ -634,22 +641,22 @@ for (const assembly of [null, true]) {
     ]);
     const rows = [...container.querySelectorAll('.price-breakdown > li')];
     assert.deepEqual(rows.map(row => row.querySelector('strong')!.textContent), [
-      'מקרר גדול', '15 ארגזים', 'מרחק המסלול', 'קומות ללא מעלית — איסוף',
+      'מקרר גדול', '15 ארגזים', 'מרחק המסלול', 'קומות ללא מעלית באיסוף',
     ]);
     assert.deepEqual(rows.map(row => row.querySelector('b')!.textContent!.replace(/[^\d]/g, '')), ['425', '150', '75', '250']);
     assert.match(element(container, '.pricing-scope').textContent!, /תמחור המדרגות כולל את הפריטים שתומחרו בלבד/);
     assert.match(pricing.textContent!, /מרחק הדגמה סינתטי: 20 ק״מ/);
     const omitted = element(container, '.omitted-list').textContent!;
-    assert.match(omitted, /ארון — הובלה דורשת תמחור ידני/);
-    assert.match(omitted, assembly ? /פירוק והרכבה של הארון — נדרש תמחור ידני/ : /פירוק של הארון — נדרש תמחור ידני/);
-    assert.match(omitted, /מידות הארון — נדרשת השלמה או בדיקה/);
-    assert.match(omitted, /נשיאה וגישה עבור הארון — דורשות בדיקה ותמחור ידני/);
+    assert.match(omitted, /ארון: הובלה דורשת תמחור ידני/);
+    assert.match(omitted, assembly ? /פירוק והרכבה של הארון: נדרש תמחור ידני/ : /פירוק של הארון: נדרש תמחור ידני/);
+    assert.match(omitted, /מידות הארון: נדרשת השלמה או בדיקה/);
+    assert.match(omitted, /נשיאה וגישה עבור הארון: דורשות בדיקה ותמחור ידני/);
     assert.doesNotMatch(pricing.textContent!, /REFRIGERATOR|UNSUPPORTED_ITEM|ASSEMBLY_DISASSEMBLY|ITEM_DIMENSIONS/);
     const review = element(container, '.review-reasons').textContent!;
     assert.match(review, /התמחור מניח מקרר אחד וארון אחד/);
     assert.doesNotMatch(review, /כמות הפריט חסרה|כמות המקררים חסרה|לא ידוע אם הפריט נכנס במעלית/);
     const wardrobeNotes = [...container.querySelectorAll('.review-reasons li')]
-      .map(note => note.firstChild!.textContent).filter(label => label?.startsWith('ארון —'));
+      .map(note => note.firstChild!.textContent).filter(label => label?.startsWith('ארון:'));
     assert.equal(wardrobeNotes.length, 3);
     assert.equal(new Set(wardrobeNotes).size, 3);
     assert.deepEqual(state.reviews, []);
@@ -670,7 +677,7 @@ test('omitted refrigerator uses a Hebrew label even when no appliance price can 
   const container = await mount(t, transport.fetch);
   await buttonNamed(container, 'בעל העסק');
   const omitted = element(container, '.omitted-list').textContent!;
-  assert.match(omitted, /מקרר — נדרש בירור לתמחור/);
+  assert.match(omitted, /מקרר: נדרש בירור לתמחור/);
   assert.doesNotMatch(omitted, /REFRIGERATOR/);
 });
 
@@ -688,9 +695,9 @@ test('owner sees unavailable wardrobe dimensions as unresolved alongside both re
   await buttonNamed(container, 'בעל העסק');
   assert.match(element(container, '.items-list').textContent!, /מידות לא זמינות כרגע.*ממתינות להשלמה/);
   assert.match(element(container, '.items-list').textContent!, /פירוק: כן.*הרכבה: כן/);
-  assert.match(element(container, '.missing-list').textContent!, /מידות הארון — לא זמינות כרגע/);
+  assert.match(element(container, '.missing-list').textContent!, /מידות הארון: לא זמינות כרגע/);
   assert.doesNotMatch(element(container, '.missing-card').textContent!, /בדיקת תמחור/);
-  assert.match(element(container, '.owner-review-card').textContent!, /ארון — דורש בדיקת תמחור/);
+  assert.match(element(container, '.owner-review-card').textContent!, /ארון: דורש בדיקת תמחור/);
   assert.doesNotMatch(container.textContent!, /בדיקת תמיכה בסוג הפריט/);
   assert.match(element(container, '.review-reasons').textContent!, /הלקוח אינו יכול למסור את כל המידות כרגע/);
   assert.match(element(container, '.pricing-card').textContent!, /המלצה חלקית/);
@@ -760,6 +767,8 @@ test('owner information request reaches customer; stale recommendation cannot be
   await fill(container, '#owner-question', 'האם יש קושי בחניה?');
   await buttonNamed(container, 'שלח שאלה ללקוח');
   assert.equal(transport.current.reviews[0].decision, 'REQUEST_MORE_INFO');
+  assert.match(element(container, '.owner-history').textContent!, /אושר: טרם אושר/);
+  assert.doesNotMatch(container.textContent!, /\u2014/u);
   assert.match(element(container, '.stale-banner').textContent!, /אינה עדכנית/);
   assert.equal(element<HTMLButtonElement>(container, '.approve-button').disabled, true);
   await buttonNamed(container, 'לקוח');

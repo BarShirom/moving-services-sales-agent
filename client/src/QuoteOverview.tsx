@@ -17,7 +17,7 @@ export function QuoteOverview({ owner }: { owner: OwnerSnapshot }) {
       <p className="muted">הצעה {quote.version} · המועד המבוקש אינו מועד משוריין.</p>
       {quote.omittedCostsAcknowledged && <p>בעל העסק אישר שהמחיר הסופי מכסה גם את הרכיבים שלא תומחרו במנוע.</p>}
       {!!quote.reviewedPhotoItemIndices.length && <ul className="photo-decisions">{quote.reviewedPhotoItemIndices.map(index => <li key={index}>
-        {itemLabel(quote.scope.items, index)} — בעל העסק אישר להמשיך ללא תמונה. התמונה לא התקבלה.
+        {itemLabel(quote.scope.items, index)}: בעל העסק אישר להמשיך ללא תמונה. התמונה לא התקבלה.
       </li>)}</ul>}
     </section>}
     {summary && <section className="card coordination-summary" aria-labelledby="coordination-heading">
@@ -25,7 +25,7 @@ export function QuoteOverview({ owner }: { owner: OwnerSnapshot }) {
       <p>מחיר שהלקוח אישר: <strong>{money(summary.acceptedAmount)}</strong></p>
       <p className="muted">טרם שוריינו מועד או צוות להובלה.</p>
       <h3>הפריטים שאושרו בהצעה</h3>
-      <ul>{summary.scope.items.map((item, index) => <li key={index}>{itemLabel(summary.scope.items, index)} — כמות: {item.quantity ?? 'טרם צוינה'}
+      <ul>{summary.scope.items.map((item, index) => <li key={index}>{itemLabel(summary.scope.items, index)} · כמות: {item.quantity ?? 'טרם צוינה'}
         {item.sizeCategory ? ` · גודל: ${sizes[item.sizeCategory] ?? item.sizeCategory}` : ''}
       </li>)}</ul>
       <h3>מסלול וגישה</h3>
@@ -33,7 +33,7 @@ export function QuoteOverview({ owner }: { owner: OwnerSnapshot }) {
         {side === 'pickup' ? 'איסוף' : 'פריקה'}: {[summary.scope[side].address, summary.scope[side].city].filter(Boolean).join(', ') || 'כתובת טרם נמסרה'}
         {` · קומה: ${summary.scope[side].floor ?? 'טרם צוינה'} · מעלית: ${yesNo(summary.scope[side].elevator)}`}
       </li>)}</ul>
-      <p>מועד מבוקש: {[summary.scope.requestedDate, summary.scope.requestedTime].filter(Boolean).join(' · ') || 'טרם נמסר'} — נדרש תיאום סופי.</p>
+      <p>מועד מבוקש: {[summary.scope.requestedDate, summary.scope.requestedTime].filter(Boolean).join(' · ') || 'טרם נמסר'}. נדרש תיאום סופי.</p>
       {summary.scope.specialAccessNotes && <p>פרטי גישה: {summary.scope.specialAccessNotes}</p>}
       <h3>שירותים שנכללו במפורש</h3>
       {summary.scope.items.some(item => item.requiresDisassembly || item.requiresAssembly) ? <ul>{summary.scope.items.flatMap((item, index) => [
@@ -43,7 +43,7 @@ export function QuoteOverview({ owner }: { owner: OwnerSnapshot }) {
       {!!summary.unresolvedDetails.length && <><h3>פרטים שעדיין דורשים בירור</h3><ul>{summary.unresolvedDetails.map((detail, index) => <li key={index}>{detail}</li>)}</ul></>}
       <h3>אישורי בעל העסק</h3>
       <ul><li>{summary.omittedCostsAcknowledged ? 'אושר שהמחיר הסופי מכסה את הרכיבים שלא תומחרו במנוע.' : 'אושרה הצעת המחיר על בסיס החישוב המלא.'}</li>
-        {summary.reviewedPhotoItemIndices.map(index => <li key={index}>{itemLabel(summary.scope.items, index)} — אושר להמשיך ללא תמונה; התמונה עדיין חסרה.</li>)}
+        {summary.reviewedPhotoItemIndices.map(index => <li key={index}>{itemLabel(summary.scope.items, index)}: אושר להמשיך ללא תמונה; התמונה עדיין חסרה.</li>)}
       </ul>
     </section>}
   </>;

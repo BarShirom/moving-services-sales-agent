@@ -14,7 +14,7 @@ if (!Number.isInteger(port) || port < 1 || port > 65535) {
 }
 
 const server = app.listen(port, '127.0.0.1', () => {
-  console.log(`Moving Services Sales Agent for Rick & GO listening at http://localhost:${port}`);
+  console.log(`Moving Services Sales Agent listening at http://localhost:${port}`);
 });
 
 server.on('error', (error) => {

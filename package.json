@@ -1,5 +1,6 @@
 {
   "name": "moving-services-sales-agent",
+  "description": "Human-in-the-loop AI sales agent for moving services with structured lead extraction, deterministic pricing, owner approval and eval-driven workflows.",
   "version": "0.1.0",
   "private": true,
   "workspaces": [

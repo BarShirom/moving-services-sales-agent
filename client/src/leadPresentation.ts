@@ -29,7 +29,7 @@ export function itemLabel(items: MoveItem[], index: number, definite = false): s
 export function itemPricingReviewLabel(items: MoveItem[], index: number): string {
   const type = items[index]?.type;
   const verb = type === 'box' ? 'דורשים' : ['dresser', 'bed', 'washing_machine'].includes(type ?? '') ? 'דורשת' : 'דורש';
-  return `${itemLabel(items, index)} — ${verb} בדיקת תמחור`;
+  return `${itemLabel(items, index)}: ${verb} בדיקת תמחור`;
 }
 
 export function highBoxVolumeLabel(items: MoveItem[]): string | undefined {
@@ -37,7 +37,7 @@ export function highBoxVolumeLabel(items: MoveItem[]): string | undefined {
   if (boxes.some(item => item.quantity === null)) return undefined;
   const quantity = boxes.reduce((sum, item) => sum + item.quantity!, 0);
   // Reuse the existing review threshold; this is only a label, never a price calculation.
-  return quantity > pricingRules.review.maxBoxes ? `נפח גבוה — ${quantity} ארגזים — דורש בדיקה` : undefined;
+  return quantity > pricingRules.review.maxBoxes ? `נפח גבוה: ${quantity} ארגזים, נדרשת בדיקה` : undefined;
 }
 
 /** Display grouping only. Backend requirements, readiness and pricing remain unchanged. */
@@ -51,23 +51,23 @@ export function presentRequirements(state: DemoSnapshot): { customerMissing: str
   for (const requirement of missing) {
     const index = requirement.itemIndex;
     if (requirement.id === 'item.support') {
-      ownerReview.push(index === undefined ? 'פריט — דורש בדיקת תמחור' : itemPricingReviewLabel(items, index));
+      ownerReview.push(index === undefined ? 'פריט: דורש בדיקת תמחור' : itemPricingReviewLabel(items, index));
     } else if (index !== undefined && dimensionIds.includes(requirement.id)) {
       if (dimensions.has(index)) continue;
       dimensions.add(index);
       const group = missing.filter(entry => entry.itemIndex === index && dimensionIds.includes(entry.id));
       const unavailable = group.some(entry => entry.availability === 'TEMPORARILY_UNAVAILABLE');
       const label = unavailable || group.some(entry => entry.id !== 'item.size') ? 'מידות' : 'גודל';
-      customerMissing.push(`${label} ${itemLabel(items, index, true)}${unavailable ? ' — לא זמינות כרגע' : ''}`);
+      customerMissing.push(`${label} ${itemLabel(items, index, true)}${unavailable ? ': לא זמינות כרגע' : ''}`);
     } else if (requirement.id === 'item.photo' && index !== undefined && items[index]?.photoStatus === 'NOT_AVAILABLE') {
-      ownerReview.push(`${itemLabel(items, index)} — בדיקה ללא תמונה`);
+      ownerReview.push(`${itemLabel(items, index)}: בדיקה ללא תמונה`);
     } else {
-      customerMissing.push(`${requirementLabels[requirement.id] ?? 'פרט להשלמה'}${index === undefined ? '' : ` — ${itemLabel(items, index)}`}`);
+      customerMissing.push(`${requirementLabels[requirement.id] ?? 'פרט להשלמה'}${index === undefined ? '' : ` (${itemLabel(items, index)})`}`);
     }
   }
   const volume = highBoxVolumeLabel(items);
   if (volume) ownerReview.push(volume);
-  if (state.unappliedItems.length) ownerReview.push('פריטים דומים — נדרשת הבהרה לאיזה פריט שייך העדכון');
+  if (state.unappliedItems.length) ownerReview.push('פריטים דומים: נדרשת הבהרה לאיזה פריט שייך העדכון');
   return { customerMissing, ownerReview };
 }
 

@@ -71,7 +71,7 @@ export function createDemoRouter(extractor: MessageExtractor = extractMessageWit
         code: missingKey ? 'AI_NOT_CONFIGURED' : 'EXTRACTION_FAILED',
         message: missingKey
           ? 'חיבור ה-AI עדיין לא הוגדר. יש להוסיף מפתח OpenAI תקין לקובץ ‎.env של השרת ולהפעיל אותו מחדש.'
-          : 'לא הצלחנו לעבד את ההודעה כרגע. המידע הקודם נשמר — אפשר לנסות שוב.',
+          : 'לא הצלחנו לעבד את ההודעה כרגע. המידע הקודם נשמר. אפשר לנסות שוב.',
       } });
     } finally { busy = false; }
   });

@@ -50,8 +50,8 @@ function unresolvedDetails(state: OwnerDemoState): string[] {
     FLOORS: 'עבודת המדרגות לא חושבה', BOXES: 'נפח הארגזים דורש תמחור ידני', SPECIAL_DIFFICULTY: 'קשיי גישה דורשים בדיקה', EXTRA_STOP_ACCESS: 'גישה בנקודות נוספות דורשת בדיקה' };
   return [...new Set([
     ...[...state.customer.requirements.missingRequired, ...state.customer.requirements.pendingReview]
-      .map(requirement => `${itemName(requirement.itemIndex)} — ${titles[requirement.id] ?? 'פרטים דורשים בדיקת בעל העסק'}`),
-    ...(state.pricingEvaluation?.omittedComponents ?? []).map(part => `${itemName(part.itemIndex)} — ${omitted[part.code] ?? 'רכיב דורש תמחור ידני'}`),
+      .map(requirement => `${itemName(requirement.itemIndex)}: ${titles[requirement.id] ?? 'פרטים דורשים בדיקת בעל העסק'}`),
+    ...(state.pricingEvaluation?.omittedComponents ?? []).map(part => `${itemName(part.itemIndex)}: ${omitted[part.code] ?? 'רכיב דורש תמחור ידני'}`),
   ])];
 }
 function isStale(state: OwnerDemoState): boolean {

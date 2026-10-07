@@ -65,18 +65,24 @@ function renderState(state: DemoSnapshot) {
   return new JSDOM(renderToStaticMarkup(<AgentState state={state} />)).window.document;
 }
 
+test('customer review copy uses natural punctuation without em dashes', () => {
+  const document = renderState(complexSnapshot());
+  assert.doesNotMatch(document.body.textContent!, /\u2014/u);
+  assert.match(document.querySelector('.items-list')!.textContent!, /מידות לא זמינות כרגע, ממתינות להשלמה/);
+});
+
 test('complex lead separates pending customer dimensions from business review without changing backend state', () => {
   const state = complexSnapshot();
   const before = structuredClone(state);
   const document = renderState(state);
   assert.equal(document.querySelector('.missing-card h2')?.textContent, 'מה עדיין חסר מהלקוח');
-  assert.deepEqual([...document.querySelectorAll('.missing-list li')].map(node => node.textContent), ['מידות הארון — לא זמינות כרגע']);
+  assert.deepEqual([...document.querySelectorAll('.missing-list li')].map(node => node.textContent), ['מידות הארון: לא זמינות כרגע']);
   const review = document.querySelector('.owner-review-card')!;
   assert.equal(review.querySelector('h2')?.textContent, 'נושאים לבדיקה אצל בעל העסק');
-  assert.match(review.textContent!, /ארון — דורש בדיקת תמחור/);
-  assert.match(review.textContent!, /שידה — דורשת בדיקת תמחור/);
-  assert.match(review.textContent!, /נפח גבוה — 40 ארגזים — דורש בדיקה/);
-  assert.match(review.textContent!, /מקרר — בדיקה ללא תמונה/);
+  assert.match(review.textContent!, /ארון: דורש בדיקת תמחור/);
+  assert.match(review.textContent!, /שידה: דורשת בדיקת תמחור/);
+  assert.match(review.textContent!, /נפח גבוה: 40 ארגזים, נדרשת בדיקה/);
+  assert.match(review.textContent!, /מקרר: בדיקה ללא תמונה/);
   assert.doesNotMatch(review.textContent!, /מידות הארון/);
   assert.doesNotMatch(document.body.textContent!, /בדיקת תמיכה בסוג הפריט|supported item type/);
   assert.equal(document.querySelector('.next-card > p')?.textContent, 'המשך לבדיקת בעל העסק ולתמחור.');
@@ -95,7 +101,7 @@ for (const [quantities, expected] of [
     state.requirements = evaluateRequirements(state.lead);
     const document = renderState(state);
     assert.equal(document.body.textContent!.includes('נפח גבוה'), expected);
-    if (expected) assert.match(document.querySelector('.owner-review-card')!.textContent!, /ארגזים — דורש בדיקה/);
+    if (expected) assert.match(document.querySelector('.owner-review-card')!.textContent!, /ארגזים, נדרשת בדיקה/);
   });
 }
 

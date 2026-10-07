@@ -8,11 +8,11 @@ import type { MoveItem } from '../../server/src/domain/lead';
 
 const money = (value: number) => new Intl.NumberFormat('he-IL', { style: 'currency', currency: 'ILS', minimumFractionDigits: 0, maximumFractionDigits: 2 }).format(value);
 const sizes: Record<string, string> = { SMALL: 'קטן', REGULAR: 'רגיל', LARGE: 'גדול', FOUR_DOOR: 'ארבע דלתות' };
-const omittedLabels: Record<string, string> = { BOXES: 'ארגזים — כמות לא ידועה או נפח חריג', DISTANCE: 'מרחק — טרם נמסר מרחק מספרי', SPECIAL_DIFFICULTY: 'קושי גישה — נדרשת בדיקה', EXTRA_STOP_ACCESS: 'גישה בנקודות נוספות',
-  REFRIGERATOR: 'מקרר — נדרש בירור לתמחור', WASHING_MACHINE: 'מכונת כביסה — נדרש בירור לתמחור',
-  FLOORS: 'קומות — נדרשת בדיקה', ASSEMBLY_DISASSEMBLY: 'פירוק והרכבה — דורשים תמחור ידני', UNSUPPORTED_ITEM: 'הובלת פריט ללא תעריף',
-  ITEM_DIMENSIONS: 'מידות הפריט — נדרשת השלמה או בדיקה', UNSUPPORTED_ITEM_ACCESS: 'נשיאה וגישה — דורשות בדיקה ותמחור ידני',
-  SERVICE_REQUIREMENTS: 'צורך בפירוק / הרכבה — נדרש בירור',
+const omittedLabels: Record<string, string> = { BOXES: 'ארגזים: כמות לא ידועה או נפח חריג', DISTANCE: 'מרחק: טרם נמסר מרחק מספרי', SPECIAL_DIFFICULTY: 'קושי גישה: נדרשת בדיקה', EXTRA_STOP_ACCESS: 'גישה בנקודות נוספות',
+  REFRIGERATOR: 'מקרר: נדרש בירור לתמחור', WASHING_MACHINE: 'מכונת כביסה: נדרש בירור לתמחור',
+  FLOORS: 'קומות: נדרשת בדיקה', ASSEMBLY_DISASSEMBLY: 'פירוק והרכבה: דורשים תמחור ידני', UNSUPPORTED_ITEM: 'הובלת פריט ללא תעריף',
+  ITEM_DIMENSIONS: 'מידות הפריט: נדרשת השלמה או בדיקה', UNSUPPORTED_ITEM_ACCESS: 'נשיאה וגישה: דורשות בדיקה ותמחור ידני',
+  SERVICE_REQUIREMENTS: 'צורך בפירוק / הרכבה: נדרש בירור',
   WORKERS: 'צוות', TIME: 'משך העבודה' };
 const decisions = { APPROVED: 'המחיר אושר ונשלח', ADJUSTED: 'המחיר עודכן ונשלח', REQUEST_MORE_INFO: 'נשלחה בקשת מידע', HUMAN_HANDOFF: 'השיחה הועברה לנציג' };
 function requestedServices(item?: MoveItem): string | null {
@@ -24,14 +24,14 @@ function omittedLabel(component: OmittedComponent, owner: OwnerSnapshot): string
     const items = owner.pricingEvaluation?.inputSnapshot.moveDetails.items ?? owner.customer.lead.moveDetails.items;
     const label = itemLabel(items, component.itemIndex);
     const definite = itemLabel(items, component.itemIndex, true);
-    if (component.code === 'UNSUPPORTED_ITEM') return `${label} — הובלה דורשת תמחור ידני`;
-    if (component.code === 'ASSEMBLY_DISASSEMBLY') return `${requestedServices(items[component.itemIndex]) ?? 'שירותים'} של ${definite} — נדרש תמחור ידני`;
-    if (component.code === 'SERVICE_REQUIREMENTS') return `צורך בפירוק / הרכבה של ${definite} — נדרש בירור`;
-    if (component.code === 'ITEM_DIMENSIONS') return `מידות ${definite} — נדרשת השלמה או בדיקה`;
-    if (component.code === 'UNSUPPORTED_ITEM_ACCESS') return `נשיאה וגישה עבור ${definite} — דורשות בדיקה ותמחור ידני`;
-    if (component.code === 'REFRIGERATOR' || component.code === 'WASHING_MACHINE') return `${label} — נדרש בירור לתמחור`;
+    if (component.code === 'UNSUPPORTED_ITEM') return `${label}: הובלה דורשת תמחור ידני`;
+    if (component.code === 'ASSEMBLY_DISASSEMBLY') return `${requestedServices(items[component.itemIndex]) ?? 'שירותים'} של ${definite}: נדרש תמחור ידני`;
+    if (component.code === 'SERVICE_REQUIREMENTS') return `צורך בפירוק / הרכבה של ${definite}: נדרש בירור`;
+    if (component.code === 'ITEM_DIMENSIONS') return `מידות ${definite}: נדרשת השלמה או בדיקה`;
+    if (component.code === 'UNSUPPORTED_ITEM_ACCESS') return `נשיאה וגישה עבור ${definite}: דורשות בדיקה ותמחור ידני`;
+    if (component.code === 'REFRIGERATOR' || component.code === 'WASHING_MACHINE') return `${label}: נדרש בירור לתמחור`;
   }
-  return omittedLabels[component.code] ?? 'רכיב נוסף — דורש תמחור ידני';
+  return omittedLabels[component.code] ?? 'רכיב נוסף: דורש תמחור ידני';
 }
 function reasonLabel(reason: ReviewReason, owner: OwnerSnapshot): string {
   const items = owner.pricingEvaluation?.inputSnapshot.moveDetails.items ?? owner.customer.lead.moveDetails.items;
@@ -42,7 +42,7 @@ function reasonLabel(reason: ReviewReason, owner: OwnerSnapshot): string {
     const assumptions = owner.pricingEvaluation!.inputSnapshot.assumptions;
     const labels = [...assumptions.singularRefrigeratorQuantity, ...assumptions.singularWardrobeQuantity]
       .sort((a, b) => a - b).map(index => `${itemLabel(items, index)} אחד`);
-    return `התמחור מניח ${labels.join(' ו')} לפי רשימת הפריטים — יש לאשר את ${labels.length > 1 ? 'הכמויות' : 'הכמות'}`;
+    return `התמחור מניח ${labels.join(' ו')} לפי רשימת הפריטים. יש לאשר את ${labels.length > 1 ? 'הכמויות' : 'הכמות'}`;
   }
   const labels: Record<string, string> = {
     PROVISIONAL_BOX_RATE: 'תעריף נפח הארגזים הוא הנחת עבודה זמנית', PROVISIONAL_DISTANCE_RATE: 'תעריף המרחק הוא הנחת עבודה זמנית',
@@ -55,23 +55,23 @@ function reasonLabel(reason: ReviewReason, owner: OwnerSnapshot): string {
     HIGH_VOLUME: 'נפח ההובלה דורש בדיקה', MULTIPLE_POINTS: 'מספר נקודות איסוף או פריקה דורש בדיקה',
     SPECIAL_ACCESS: 'קושי גישה דורש בדיקה', ACCESS_UNKNOWN: 'תנאי הגישה טרם אושרו', NO_ITEMS: 'טרם נמסרו פריטים',
     REFRIGERATOR_QUANTITY: 'כמות המקררים חסרה או מעבר לתחום התמחור', FLOOR_COMPOSITION: 'שילוב תעריף המקרר והקומות דורש בדיקה',
-    SINGULAR_REFRIGERATOR_QUANTITY: 'התמחור מניח מקרר אחד לפי רשימת הפריטים — יש לאשר את הכמות',
-    SINGULAR_WARDROBE_QUANTITY: 'הבדיקה מתייחסת לארון אחד לפי רשימת הפריטים — יש לאשר את הכמות',
+    SINGULAR_REFRIGERATOR_QUANTITY: 'התמחור מניח מקרר אחד לפי רשימת הפריטים. יש לאשר את הכמות',
+    SINGULAR_WARDROBE_QUANTITY: 'הבדיקה מתייחסת לארון אחד לפי רשימת הפריטים. יש לאשר את הכמות',
     WORKERS_RATE_UNAVAILABLE: 'אין תעריף מוגדר לצוות', TIME_RATE_UNAVAILABLE: 'אין תעריף מוגדר למשך העבודה',
   };
   if (labels[reason.code]) return labels[reason.code];
   const suffixes: Record<string, string> = { BOX_RATE: 'אין עדיין תעריף לארגזים', QUANTITY: 'כמות הפריט חסרה',
-    DIMENSIONS_UNAVAILABLE: 'הלקוח אינו יכול למסור את כל המידות כרגע — נדרשת השלמה או בדיקה',
+    DIMENSIONS_UNAVAILABLE: 'הלקוח אינו יכול למסור את כל המידות כרגע. נדרשת השלמה או בדיקה',
     SERVICE_COMPLEXITY: 'מורכבות הפירוק או ההרכבה דורשת בדיקה', SERVICES_UNKNOWN: 'צורך בפירוק או בהרכבה טרם הובהר', SERVICES: 'פירוק או הרכבה דורשים תמחור ידני', SERVICES_MANUAL: 'פירוק / הרכבה דורשים בירור ותמחור ידני',
     UNSUPPORTED: 'פריט שאינו נתמך בתמחור הנוכחי', VISUAL_EVIDENCE: 'חסרים צילום או מידות מלאות', SIZE: 'גודל המקרר חסר או אינו נתמך',
     LOCATION: 'כתובת או עיר חסרה', FLOOR: 'הקומה אינה ידועה', ELEVATOR: 'זמינות המעלית אינה ידועה',
-    ELEVATOR_FIT_UNKNOWN: 'לא ידוע אם הפריט נכנס במעלית', ELEVATOR_DOES_NOT_FIT: 'הפריט לא נכנס במעלית — נדרשת בדיקת נשיאה',
+    ELEVATOR_FIT_UNKNOWN: 'לא ידוע אם הפריט נכנס במעלית', ELEVATOR_DOES_NOT_FIT: 'הפריט לא נכנס במעלית. נדרשת בדיקת נשיאה',
     BASEMENT: 'גישה לקומת מרתף דורשת בדיקה', FLOOR_RULE_NOT_APPLIED: 'תמחור המדרגות לא נכלל בשל מורכבות ההובלה' };
   const suffix = reason.code.replace(/^(ITEM_\d+|pickup|dropoff)_/, '');
   const side = reason.code.startsWith('pickup_') ? 'באיסוף: ' : reason.code.startsWith('dropoff_') ? 'בפריקה: ' : '';
   const item = /^ITEM_(\d+)_/.exec(reason.code);
-  if (item && suffix === 'SERVICES_MANUAL') return `${itemLabel(items, Number(item[1]))} — ${requestedServices(items[Number(item[1])]) ?? 'שירותים'}: נדרש תמחור ידני`;
-  return (item ? `${itemLabel(items, Number(item[1]))} — ` : side) + (suffixes[suffix] ?? reason.message);
+  if (item && suffix === 'SERVICES_MANUAL') return `${itemLabel(items, Number(item[1]))}: נדרש תמחור ידני עבור ${requestedServices(items[Number(item[1])]) ?? 'שירותים'}`;
+  return (item ? `${itemLabel(items, Number(item[1]))}: ` : side) + (suffixes[suffix] ?? reason.message);
 }
 function reviewNotes(owner: OwnerSnapshot) {
   const notes = new Map<string, { label: string; confidenceDeduction: number }>();
@@ -92,7 +92,7 @@ function componentLabel(component: PricingComponent, owner: OwnerSnapshot): stri
     if (boxes.length && boxes.every(item => item.quantity !== null)) return `${boxes.reduce((sum, item) => sum + item.quantity!, 0)} ארגזים`;
   }
   if (component.code !== 'FLOORS') return ({ WASHING_MACHINE: 'מכונת כביסה', BOXES: 'נפח ארגזים', DISTANCE: 'מרחק המסלול', ASSEMBLY_DISASSEMBLY: 'פירוק / הרכבה', EXTRA_STOP: 'נקודות נוספות', WAITING: 'המתנה', DISCOUNT: 'הנחת סטודנט' } as Record<string, string>)[component.code] ?? component.label;
-  return 'קומות ללא מעלית — ' + (component.label.startsWith('pickup') ? 'איסוף' : 'פריקה');
+  return 'קומות ללא מעלית ' + (component.label.startsWith('pickup') ? 'באיסוף' : 'בפריקה');
 }
 export function OwnerView({ owner, onChange, onBusy, onReset, disabled = false }: {
   disabled?: boolean; owner: OwnerSnapshot; onChange: (value: OwnerSnapshot) => void; onBusy: (value: boolean) => void; onReset: () => Promise<void>;
@@ -162,10 +162,10 @@ export function OwnerView({ owner, onChange, onBusy, onReset, disabled = false }
       <div className="card-heading"><h2 id="pricing-heading">{finalized ? 'חישוב המנוע ששימש לבדיקה' : 'מחיר מומלץ'}</h2><span className="review-badge">{quoteAccepted ? 'הלקוח אישר את המחיר' : quoteSent ? 'הצעת המחיר נשלחה' : 'נדרש אישור בעל העסק'}</span></div>
       {!evaluation ? <p className="muted">ההמלצה תופיע לאחר השלמת הפרטים הדרושים לתמחור.</p> : <>
         {owner.pricingStale && <p className="stale-banner" role="status">ההמלצה אינה עדכנית. יש להשלים את המידע ולחשב מחדש לפני אישור.</p>}
-        <div className="price-hero"><strong className="suggested-price">{evaluation.suggestedAmount === null ? 'נדרש תמחור ידני' : money(evaluation.suggestedAmount)}</strong><span>{evaluation.completeness === 'COMPLETE_RECOMMENDATION' ? 'המלצה מלאה להובלה לפי הכללים הזמניים' : evaluation.completeness === 'CANNOT_PRICE' ? 'אין המלצה מספרית' : 'המלצה חלקית — רכיבים חסרים בתמחור'}</span></div>
-        <div className="price-metrics"><div><span>{evaluation.completeness === 'COMPLETE_RECOMMENDATION' ? 'טווח מומלץ להובלה' : 'טווח לרכיבים שתומחרו'}</span><strong dir="ltr">{evaluation.priceRange ? `${money(evaluation.priceRange.min)}–${money(evaluation.priceRange.max)}` : '—'}</strong></div><div><span>ציון שלמות ומידע</span><strong>{evaluation.confidence}%</strong><small>אינו מדד לדיוק סטטיסטי</small></div></div>
+        <div className="price-hero"><strong className="suggested-price">{evaluation.suggestedAmount === null ? 'נדרש תמחור ידני' : money(evaluation.suggestedAmount)}</strong><span>{evaluation.completeness === 'COMPLETE_RECOMMENDATION' ? 'המלצה מלאה להובלה לפי הכללים הזמניים' : evaluation.completeness === 'CANNOT_PRICE' ? 'אין המלצה מספרית' : 'המלצה חלקית: רכיבים חסרים בתמחור'}</span></div>
+        <div className="price-metrics"><div><span>{evaluation.completeness === 'COMPLETE_RECOMMENDATION' ? 'טווח מומלץ להובלה' : 'טווח לרכיבים שתומחרו'}</span><strong dir="ltr">{evaluation.priceRange ? `${money(evaluation.priceRange.min)}–${money(evaluation.priceRange.max)}` : 'לא זמין'}</strong></div><div><span>ציון שלמות ומידע</span><strong>{evaluation.confidence}%</strong><small>אינו מדד לדיוק סטטיסטי</small></div></div>
         <p className="pricing-explanation">{finalized ? 'זהו החישוב המקורי של המנוע. המחיר הסופי שאושר מוצג בנפרד.' : 'המלצה דטרמיניסטית לפי כללים זמניים.'} {complete ? 'רכיבי המחיר חושבו; תנאים תפעוליים שטרם הושלמו עדיין דורשים בדיקה.' : <>רכיבים שלא תומחרו אינם כלולים בסכום או בטווח. {finalized ? 'המחיר הסופי נקבע ואושר בנפרד.' : 'בעל העסק נדרש לקבוע ולאשר מחיר סופי להובלה המתוארת.'}</>}</p>
-        {owner.demoDistanceKm !== null && <p className="pricing-explanation">מרחק הדגמה סינתטי: {owner.demoDistanceKm} ק״מ — נתון זמני, לא מדידת מפה.</p>}
+        {owner.demoDistanceKm !== null && <p className="pricing-explanation">מרחק הדגמה סינתטי: {owner.demoDistanceKm} ק״מ (נתון זמני, לא מדידת מפה).</p>}
         <h3>תומחר</h3>
         <ul className="price-breakdown">{evaluation.breakdown.map((part, index) => <li key={index}><div><strong>{componentLabel(part, owner)}</strong><b>{money(part.amount)}</b></div><p>טווח ייחוס לרכיב: {money(part.range.min)}–{money(part.range.max)}</p>{part.code === 'FLOORS' && evaluation.omittedComponents.some(omitted => omitted.code === 'UNSUPPORTED_ITEM_ACCESS') && <p className="pricing-scope">תמחור המדרגות כולל את הפריטים שתומחרו בלבד. נשיאת הפריטים ללא תעריף ותנאי הגישה שלהם דורשים תמחור ידני נפרד.</p>}<details><summary>בסיס החישוב</summary><p dir="auto">{part.basis}</p></details></li>)}</ul>
         {!evaluation.breakdown.length && <p className="muted">אין רכיבים שניתן לחשב לפי הכללים הנוכחיים.</p>}
@@ -186,7 +186,7 @@ export function OwnerView({ owner, onChange, onBusy, onReset, disabled = false }
       </div>
       {(form === 'adjust' || form === 'approve') && evaluation && <form className="owner-form finalization-form" onSubmit={event => { event.preventDefault(); submitFinalization(); }}>
         <h3>{form === 'approve' ? 'בדיקת התנאים לפני שליחת ההצעה' : 'אישור מחיר סופי להובלה המתוארת'}</h3>
-        <div className="calculated-subtotal"><strong>{complete ? 'הסכום שחושב במנוע' : 'סכום הרכיבים שתומחרו'}</strong><p>{evaluation.suggestedAmount === null ? 'אין סכום מחושב — המחיר ייקבע על ידי בעל העסק.' : money(evaluation.suggestedAmount)}</p>
+        <div className="calculated-subtotal"><strong>{complete ? 'הסכום שחושב במנוע' : 'סכום הרכיבים שתומחרו'}</strong><p>{evaluation.suggestedAmount === null ? 'אין סכום מחושב. המחיר ייקבע על ידי בעל העסק.' : money(evaluation.suggestedAmount)}</p>
           {evaluation.priceRange && <p>טווח הרכיבים: {money(evaluation.priceRange.min)}–{money(evaluation.priceRange.max)}</p>}</div>
         {!!evaluation.omittedComponents.length && <><h4>רכיבים שלא תומחרו</h4><ul className="finalization-omissions">{evaluation.omittedComponents.map((part, index) => <li key={index}>{omittedLabel(part, owner)}</li>)}</ul></>}
         {!!evaluation.reviewReasons.length && <details className="finalization-conditions" open><summary>פרטים ותנאים לבדיקה</summary><ul>{reviewNotes(owner).map(note => <li key={note.key}>{note.label}</li>)}</ul></details>}
@@ -205,7 +205,7 @@ export function OwnerView({ owner, onChange, onBusy, onReset, disabled = false }
       {form && <button type="button" className="cancel-action" disabled={pending} onClick={() => setForm(null)}>ביטול</button>}
     </section>
     {owner.reviews.length > 0 && <section className="card owner-history"><h2>היסטוריית החלטות</h2><ul>{[...owner.reviews].reverse().map(review => <li key={review.id}><strong>{decisions[review.decision]}</strong><time dateTime={review.createdAt}>{new Date(review.createdAt).toLocaleString('he-IL')}</time>
-      <p>המלצה: {review.suggestedAmount === null ? 'לא זמינה' : money(review.suggestedAmount)} · אושר: {review.approvedAmount === null ? '—' : money(review.approvedAmount)}</p>
+      <p>המלצה: {review.suggestedAmount === null ? 'לא זמינה' : money(review.suggestedAmount)} · אושר: {review.approvedAmount === null ? 'טרם אושר' : money(review.approvedAmount)}</p>
       {review.internalReason && <p>סיבה פנימית: {review.internalReason}</p>}{review.customerQuestion && <p>{review.customerQuestion}</p>}
     </li>)}</ul></section>}
   </div>;

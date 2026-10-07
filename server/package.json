@@ -1,5 +1,6 @@
 {
   "name": "@moving-services-sales-agent/server",
+  "description": "Express API, structured extraction, deterministic pricing and owner-controlled quote workflow for Moving Services Sales Agent.",
   "version": "0.1.0",
   "private": true,
   "type": "module",

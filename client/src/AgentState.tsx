@@ -34,7 +34,7 @@ export function AgentState({ state }: { state: DemoSnapshot | null }) {
               ...(['width', 'height', 'depth'] as const).map(axis => item.dimensions[axis] !== null && `${labels[`item.${axis}`]}: ${item.dimensions[axis]} ס״מ`),
               item.requiresDisassembly !== null && `פירוק: ${answer(item.requiresDisassembly)}`,
               item.requiresAssembly !== null && `הרכבה: ${answer(item.requiresAssembly)}`,
-              item.dimensionsAvailable === false && Object.values(item.dimensions).some(value => value === null) && 'מידות לא זמינות כרגע — ממתינות להשלמה',
+              item.dimensionsAvailable === false && Object.values(item.dimensions).some(value => value === null) && 'מידות לא זמינות כרגע, ממתינות להשלמה',
               item.photoStatus === 'REQUIRED' && 'ממתינים לתמונה',
               item.photoStatus === 'NOT_APPLICABLE' && 'תמונה אינה נדרשת',
               item.photoStatus === 'NOT_AVAILABLE' && 'תמונה לא זמינה כרגע',

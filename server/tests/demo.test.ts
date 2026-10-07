@@ -21,7 +21,7 @@ async function demo(t: TestContext, extractor: MessageExtractor, now?: () => Dat
   return { root, get, post };
 }
 
-test('demo initializes from requirements and preserves the existing health endpoint', async t => {
+test('demo initializes from requirements and reports the product identity in health', async t => {
   const api = await demo(t, () => { assert.fail('GET must not call extraction'); });
   const response = await api.get();
   assert.equal(response.status, 200);
@@ -31,7 +31,7 @@ test('demo initializes from requirements and preserves the existing health endpo
   assert.deepEqual(state.nextQuestion, state.requirements.nextQuestion);
   assert.equal(state.nextQuestion?.requirements[0].id, 'items');
   assert.deepEqual(await (await fetch(`${api.root}/api/health`)).json(), {
-    status: 'ok', service: 'Rick & GO Sales Agent', version: '0.1',
+    status: 'ok', service: 'Moving Services Sales Agent', version: '0.1',
   });
 });
 

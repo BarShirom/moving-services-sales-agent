@@ -1,5 +1,6 @@
 {
   "name": "@moving-services-sales-agent/client",
+  "description": "Hebrew RTL customer and owner React demo for Moving Services Sales Agent.",
   "version": "0.1.0",
   "private": true,
   "type": "module",

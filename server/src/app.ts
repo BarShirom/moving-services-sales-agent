@@ -5,7 +5,7 @@ import type { MessageExtractor } from './domain/conversation/processCustomerMess
 export function createApp(options: { extractor?: MessageExtractor; now?: () => Date } = {}) {
   const app = express();
   app.get('/api/health', (_request, response) => {
-    response.json({ status: 'ok', service: 'Rick & GO Sales Agent', version: '0.1' });
+    response.json({ status: 'ok', service: 'Moving Services Sales Agent', version: '0.1' });
   });
   app.use('/api/demo', createDemoRouter(options.extractor, options.now));
   return app;

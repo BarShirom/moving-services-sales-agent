@@ -1,0 +1,13 @@
+warning: in the working copy of 'AGENTS.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'README.md', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'client/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'client/src/AgentState.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'client/src/QuoteOverview.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'client/src/leadPresentation.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'client/tests/response.test.tsx', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/package.json', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/src/app.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/src/demo/router.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/src/server.ts', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'server/tests/demo.test.ts', LF will be replaced by CRLF the next time Git touches it
