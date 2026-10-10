@@ -7,7 +7,7 @@ Current implementation reference for the [portfolio README](../README.md). This 
 | Area | Responsibility |
 | --- | --- |
 | `client/src/` | Customer conversation, lead presentation, owner finalization and coordination views |
-| `server/src/app.ts` / `server.ts` | Express app creation separate from the loopback listener |
+| `server/src/app.ts` / `server.ts` | Express app creation separate from the listener (loopback locally, all interfaces in production) |
 | `server/src/domain/` | Lead factories, extraction patches, requirements, pricing and quote types |
 | `server/src/integrations/openai/` | Bounded context, prompt, wire schema, provider boundary and domain conversion |
 | `server/src/demo/` | Single-session orchestration, owner actions, quote lifecycle and explicit distance adapter |
@@ -36,12 +36,16 @@ For real extraction, copy root `.env.example` to `.env`, set `OPENAI_API_KEY`, t
 | `OPENAI_API_KEY` | Required only for a real provider request; missing/placeholder keys fail explicitly |
 | `OPENAI_MODEL` | Optional override; default is centralized in [openai.ts](../server/src/config/openai.ts), not a benchmarked model-selection claim |
 | `PORT` | Backend port, default 3001; changing it also requires updating the Vite dev proxy target |
+| `NODE_ENV` | `production` binds to `0.0.0.0` for containers; otherwise binds to `127.0.0.1` |
+| `CLIENT_ORIGIN` | Optional exact CORS origin; blank/unset keeps the existing same-origin/proxy behavior |
 
 The server and CLI load the root `.env`; existing environment variables take precedence. `.env` files are ignored except `.env.example`. Never put secrets in the client or `VITE_` variables. Configuration is lazy, so health checks, offline tests and imports need no API key.
 
 The optional `npm run demo:ai -- "customer message"` CLI exercises one real extraction workflow and prints structured results. It does not approve or send a quote and is separate from tests/evals. Use synthetic messages when demonstrating it.
 
 `npm run build` writes `client/dist` and `server/dist`. `npm start` runs the compiled backend only. `npm run preview --workspace client` previews the client build; the backend must run for API interactions. The combined offline fixture is simpler for portfolio review. None of these commands is a production deployment.
+
+See [backend Docker preparation](DEPLOYMENT.md) for runtime environment injection, Linux image verification and the future ECR/ECS boundary.
 
 ### Offline demo walkthrough
 

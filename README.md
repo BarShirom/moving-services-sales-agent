@@ -163,6 +163,9 @@ Open **http://localhost:5173** (or Vite's reported port). Customer messages can 
 requests. See the [engineering guide](docs/ENGINEERING_GUIDE.md#running-and-configuration)
 for configuration, API routes, validation commands and build details.
 
+For local backend container verification, see the [Docker deployment guide](docs/DEPLOYMENT.md).
+It covers production image packaging and future ECR/ECS preparation; no cloud deployment is included.
+
 ## Current limitations
 
 - In-memory, single-session demo; resetting or restarting clears its state.

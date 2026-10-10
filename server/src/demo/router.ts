@@ -14,7 +14,7 @@ const messageBody = z.object({
 }).strict().refine(value => (value.quoteId === undefined) === (value.quoteVersion === undefined), 'Quote identity and version must be supplied together.');
 export function createDemoRouter(extractor: MessageExtractor = extractMessageWithAI, now: () => Date = () => new Date()) {
   const router = express.Router();
-  // One loopback-only in-memory demo. Views are separated, not authenticated identities.
+  // One in-memory demo. Views are separated, not authenticated identities.
   let state = freshOwnerState();
   let busy = false;
   router.use(express.json({ limit: '32kb' }));
