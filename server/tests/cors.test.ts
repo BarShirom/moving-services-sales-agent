@@ -18,7 +18,7 @@ async function api(t: TestContext, clientOrigin?: string) {
 test('default same-origin API behavior adds no CORS permissions', async t => {
   const root = await api(t);
   const response = await fetch(`${root}/api/demo`, { headers: { Origin: 'http://localhost:5173' } });
-  assert.equal(response.status, 200);
+  assert.equal(response.status, 403);
   assert.equal(response.headers.get('access-control-allow-origin'), null);
 });
 
@@ -27,15 +27,17 @@ test('configured exact origin supports JSON preflight and API responses', async 
   const root = await api(t, origin);
   const response = await fetch(`${root}/api/demo/message`, {
     method: 'OPTIONS', headers: { Origin: origin, 'Access-Control-Request-Method': 'POST',
-      'Access-Control-Request-Headers': 'content-type' },
+      'Access-Control-Request-Headers': 'content-type,x-demo-request' },
   });
   assert.equal(response.status, 204);
   assert.equal(response.headers.get('access-control-allow-origin'), origin);
   assert.equal(response.headers.get('access-control-allow-methods'), 'GET, POST, OPTIONS');
-  assert.equal(response.headers.get('access-control-allow-headers'), 'Content-Type');
+  assert.equal(response.headers.get('access-control-allow-headers'), 'Content-Type, X-Demo-Request');
   assert.equal(response.headers.get('vary'), 'Origin');
-  assert.equal(response.headers.get('access-control-allow-credentials'), null);
-  const actual = await fetch(`${root}/api/demo/reset`, { method: 'POST', headers: { Origin: origin } });
+  assert.equal(response.headers.get('access-control-allow-credentials'), 'true');
+  const bootstrap = await fetch(`${root}/api/demo`, { headers: { Origin: origin, 'X-Demo-Request': '1' } });
+  const cookie = bootstrap.headers.get('set-cookie')!.split(';')[0];
+  const actual = await fetch(`${root}/api/demo/reset`, { method: 'POST', headers: { Origin: origin, Cookie: cookie, 'X-Demo-Request': '1' } });
   assert.equal(actual.status, 200);
   assert.equal(actual.headers.get('access-control-allow-origin'), origin);
 });

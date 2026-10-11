@@ -1,0 +1,12 @@
+	linux-vdso.so.1 (0x000070610e3de000)
+	libdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x000070610e3d0000)
+	libstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x000070610e16a000)
+	libm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x000070610e07a000)
+	libgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x000070610e04d000)
+	libpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x000070610e046000)
+	libc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x000070610de52000)
+	/lib64/ld-linux-x86-64.so.2 (0x000070610e3e0000)
+Pod::Text ABSENT
+Archive::Tar ABSENT
+/usr/bin/infocmp
+# UNCONFIGURED FSTAB FOR BASE SYSTEM

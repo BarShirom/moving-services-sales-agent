@@ -168,7 +168,13 @@ It covers production image packaging and future ECR/ECS preparation; no cloud de
 
 ## Current limitations
 
-- In-memory, single-session demo; resetting or restarting clears its state.
+- Temporary, cookie-isolated browser sessions in memory; reset affects only that browser.
+  Sessions expire after 30 minutes, and a server restart clears all sessions. Tabs in
+  the same browser profile share a session. See [session limits and security](docs/DEPLOYMENT.md#temporary-demo-sessions).
+- Server-side HTTP/session-creation limits, two concurrent AI calls by default and
+  conservative daily request/token reservations protect the demo. Limits reset on
+  process restart and are not a provider billing guarantee; see
+  [configuration and monitoring](docs/DEPLOYMENT.md#traffic-limits-and-ai-usage-cutoff).
 - No persistent database or authentication.
 - No WhatsApp integration yet.
 - Provisional pricing; unsupported furniture may require manual pricing.

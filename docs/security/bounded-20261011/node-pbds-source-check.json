@@ -1,0 +1,29 @@
+﻿{
+  "source": "https://nodejs.org/dist/v22.23.3/node-v22.23.3.tar.xz",
+  "sha256": "bd97093e1a1e9243338950c174a693a64d4e0926a9c6ce259962bc58d5e96909",
+  "officialSHASUMS256Match": true,
+  "scope": "All matching C/C++ source/header and GYP files in official archive, including bundled dependencies and tests; no extraction or build",
+  "suffixes": [
+    ".c",
+    ".cc",
+    ".cpp",
+    ".cxx",
+    ".h",
+    ".hh",
+    ".hpp",
+    ".hxx",
+    ".inl",
+    ".inc",
+    ".gyp",
+    ".gypi"
+  ],
+  "tokens": [
+    "__gnu_pbds",
+    "ext/pb_ds",
+    "pb_ds/"
+  ],
+  "filesRead": 11776,
+  "bytesRead": 235004789,
+  "matches": [],
+  "limitation": "Text import/namespace check plus separately inspected native symbols; not full machine-code reachability proof"
+}

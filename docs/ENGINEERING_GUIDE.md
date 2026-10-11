@@ -124,7 +124,7 @@ Acceptance checks the current quote, active question, owner decision and commerc
 | `GET /api/health` | Product identity and health; no extraction |
 | `GET /api/demo` | Customer-safe Lead/conversation and quote snapshot |
 | `POST /api/demo/message` | Customer message; optional paired quote ID/version from the client |
-| `POST /api/demo/reset` | Clear the entire in-memory session |
+| `POST /api/demo/reset` | Clear only the current browser's in-memory session |
 | `GET /api/demo/owner` | Pricing, reviews, quote history, available actions and coordination summary |
 | `POST /api/demo/owner/sample` | Replace the session with a synthetic owner-review sample |
 | `POST /api/demo/owner/pricing` | Prepare/recalculate a recommendation, without sending a quote |
@@ -132,7 +132,26 @@ Acceptance checks the current quote, active question, owner decision and commerc
 
 Body validation is strict: 32 KB JSON limit, 4,000-character nonblank customer messages, safe positive final amounts and explicit action tokens. Concurrent mutations while extraction is running return `409 BUSY`; stale owner/quote actions return conflict responses. Missing AI configuration returns 503, extraction failures 502; the client retains its draft and previous state. Raw provider errors and internal owner reasons are not exposed in customer responses.
 
-The router owns one process-local session. It is not tenant isolation, authentication or a distributed lock. Anyone with access to the demo server can access owner routes; keep it local. Switching views/actions refreshes snapshots, not a live subscription.
+The router uses bounded process-local browser sessions. Every demo request sends
+`X-Demo-Request: 1` and browser credentials; only initial GETs can create a session.
+The server issues an opaque HttpOnly cookie, and state, reset and busy guards are
+scoped to that cookie. Owner routes are demo roles within the same visitor session,
+not business-owner authentication. Tabs sharing cookies share a session. See
+[session limits, expiry and CSRF policy](DEPLOYMENT.md#temporary-demo-sessions).
+Switching views/actions refreshes snapshots, not a live subscription. This is not
+durable tenant storage or a distributed lock. Server-side rate and AI reservation
+controls now protect the HTTP demo; see [limits and monitoring](DEPLOYMENT.md#traffic-limits-and-ai-usage-cutoff).
+Public release still needs a reviewed HTTPS ingress and operator/provider budget
+monitoring. Direct mode ignores forwarding headers. The optional Caddy mode uses
+only one dedicated header overwritten by Caddy, admitted from its exact configured
+private socket IP; Express proxy trust stays disabled. See the
+[topology, Compose template and local spoof tests](DEPLOYMENT.md#caddy-and-lightsail-deployment-template).
+
+HTTP throttling occurs before body parsing/session creation. Extraction admission
+occurs only when the existing workflow calls the extractor, immediately before
+provider transport; deterministic pricing and quote handling do not spend AI quota.
+Protection errors are curated 429/503 responses with Retry-After, leaving state and
+client drafts intact. No automatic retries or request queue are introduced.
 
 `GET /api/health` returns `status: "ok"`, `service: "Moving Services Sales Agent"`, `version: "0.1"`. There are no payments, crew allocation or image uploads/analysis. Relative dates, ambiguous same-type item identity, removal services and some additive/clearing updates remain limited or unsupported. Offline checks do not establish live extraction accuracy, latency, cost or commercial impact.
 

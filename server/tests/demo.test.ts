@@ -1,3 +1,4 @@
+import { browser } from './browser.js';
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
 import type { AddressInfo } from 'node:net';
@@ -14,11 +15,13 @@ async function demo(t: TestContext, extractor: MessageExtractor, now?: () => Dat
     server.closeAllConnections();
   }));
   const root = `http://127.0.0.1:${(server.address() as AddressInfo).port}`;
-  const get = () => fetch(`${root}/api/demo`);
-  const post = (path: string, body: unknown = {}) => fetch(`${root}/api/demo/${path}`, {
+  const visit = browser();
+  await visit(root.split('/api/demo')[0] + '/api/demo');
+  const get = () => visit(`${root}/api/demo`);
+  const post = (path: string, body: unknown = {}) => visit(`${root}/api/demo/${path}`, {
     method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
   });
-  return { root, get, post };
+  return { root, get, post, visit };
 }
 
 test('demo initializes from requirements and reports the product identity in health', async t => {
@@ -30,7 +33,7 @@ test('demo initializes from requirements and reports the product identity in hea
   assert.equal(state.lead.messages.length, 0);
   assert.deepEqual(state.nextQuestion, state.requirements.nextQuestion);
   assert.equal(state.nextQuestion?.requirements[0].id, 'items');
-  assert.deepEqual(await (await fetch(`${api.root}/api/health`)).json(), {
+  assert.deepEqual(await (await api.visit(`${api.root}/api/health`)).json(), {
     status: 'ok', service: 'Moving Services Sales Agent', version: '0.1',
   });
 });
@@ -130,10 +133,10 @@ for (const [date, expected] of [
     assert.equal(before.lead.moveDetails.dropoff.elevator, false);
 
     // A genuine invalid date must fail, retaining every previous fact and message.
-    const ownerBefore = await (await fetch(`${api.root}/api/demo/owner`)).json();
+    const ownerBefore = await (await api.visit(`${api.root}/api/demo/owner`)).json();
     assert.equal((await api.post('message', { message: '31/02' })).status, 502);
     assert.deepEqual(await (await api.get()).json(), before);
-    assert.deepEqual(await (await fetch(`${api.root}/api/demo/owner`)).json(), ownerBefore);
+    assert.deepEqual(await (await api.visit(`${api.root}/api/demo/owner`)).json(), ownerBefore);
     const requestsBeforeDate = requests;
 
     const response = await api.post('message', { message: date });
@@ -146,7 +149,7 @@ for (const [date, expected] of [
     assert.doesNotMatch(after.responseText, /באיזה תאריך/);
     assert.equal(after.lead.status, 'AWAITING_REVIEW');
     assert.deepEqual(await (await api.get()).json(), after);
-    const owner = await (await fetch(`${api.root}/api/demo/owner`)).json() as { pricingEvaluation: { humanApprovalRequired: boolean; inputSnapshot: { moveDetails: { requestedDate: string } } }; reviews: unknown[] };
+    const owner = await (await api.visit(`${api.root}/api/demo/owner`)).json() as { pricingEvaluation: { humanApprovalRequired: boolean; inputSnapshot: { moveDetails: { requestedDate: string } } }; reviews: unknown[] };
     assert.equal(owner.pricingEvaluation.inputSnapshot.moveDetails.requestedDate, expected);
     assert.equal(owner.pricingEvaluation.humanApprovalRequired, true);
     assert.deepEqual(owner.reviews, []);
@@ -169,7 +172,7 @@ test('invalid messages and caller-supplied Lead state are rejected without extra
     assert.equal((await api.post('message', body)).status, 400);
   }
   for (const body of ['{ invalid json', JSON.stringify({ message: 'x'.repeat(40_000) })]) {
-    const response = await fetch(`${api.root}/api/demo/message`, {
+    const response = await api.visit(`${api.root}/api/demo/message`, {
       method: 'POST', headers: { 'Content-Type': 'application/json' }, body,
     });
     assert.equal(response.status, 400);

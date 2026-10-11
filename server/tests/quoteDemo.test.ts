@@ -1,3 +1,4 @@
+import { browser } from './browser.js';
 import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
 import type { AddressInfo } from 'node:net';
@@ -13,9 +14,11 @@ async function api(t: TestContext, extractor: MessageExtractor = quoteFixtureExt
   await new Promise<void>(resolve => server.once('listening', resolve));
   t.after(() => new Promise<void>(resolve => { server.close(() => resolve()); server.closeAllConnections(); }));
   const root = `http://127.0.0.1:${(server.address() as AddressInfo).port}/api/demo`;
-  const post = (path: string, body: unknown = {}) => fetch(root + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
-  const owner = async () => await (await fetch(root + '/owner')).json() as OwnerSnapshot;
-  const customer = async () => await (await fetch(root)).json() as DemoSnapshot;
+  const visit = browser();
+  await visit(root.split('/api/demo')[0] + '/api/demo');
+  const post = (path: string, body: unknown = {}) => visit(root + path, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+  const owner = async () => await (await visit(root + '/owner')).json() as OwnerSnapshot;
+  const customer = async () => await (await visit(root)).json() as DemoSnapshot;
   return { post, owner, customer };
 }
 type Api = Awaited<ReturnType<typeof api>>;

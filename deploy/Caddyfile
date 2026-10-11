@@ -1,0 +1,46 @@
+{
+	admin off
+	log default {
+		format filter {
+			wrap json
+			fields {
+				request delete
+			}
+		}
+	}
+	servers {
+		timeouts {
+			read_header 10s
+			read_body 15s
+			write 45s
+			idle 60s
+		}
+	}
+}
+
+{$DEMO_DOMAIN} {
+	# Caddy is the first HTTP hop. No trusted_proxies or PROXY protocol.
+	handle /api/* {
+		request_body {
+			max_size 32KB
+		}
+		reverse_proxy backend:3001 {
+			# Replace, never append: remote.host is Caddy's TCP socket peer.
+			header_up X-Demo-Client-IP {http.request.remote.host}
+			header_up -Forwarded
+			header_up -X-Real-IP
+			# Caddy also replaces untrusted incoming X-Forwarded-* by default.
+			# Express does not use any of them for identity, cookies or origin.
+			transport http {
+				dial_timeout 3s
+				response_header_timeout 40s
+			}
+		}
+	}
+	handle {
+		root * /srv
+		try_files {path} /index.html
+		file_server
+	}
+	# No access/debug logs; runtime error logs omit the structured request object.
+}

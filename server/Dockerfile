@@ -16,7 +16,18 @@ RUN rm -rf server/dist/evals server/dist/scripts server/dist/demo/quoteFixture.j
 FROM packages AS production-dependencies
 RUN npm ci --workspace server --include-workspace-root=false --omit=dev
 
-FROM node:22-bookworm-slim AS runtime
+# Pin the official Trixie base for a reproducible runtime-only comparison.
+FROM node:22-trixie-slim@sha256:154ba2f4d6fec323d28e4f4bb86bba4677f1223391a1979cf521304e03a98dfa AS runtime
+# DSA-6549-1 / GHSA-5qpq-xqfv-j9pg is newer than this pinned base.
+RUN apt-get update \
+  && apt-get install -y --no-install-recommends --only-upgrade liblzma5 \
+  && rm -rf /var/lib/apt/lists/*
+# Runtime starts Node directly; package installation belongs only in build stages.
+# Remove complete unused tools (including their dependencies), not scan metadata.
+RUN rm -rf /usr/local/lib/node_modules/npm /usr/local/lib/node_modules/corepack \
+      /opt/yarn-v1.22.22 \
+  && rm -f /usr/local/bin/npm /usr/local/bin/npx /usr/local/bin/corepack \
+      /usr/local/bin/yarn /usr/local/bin/yarnpkg
 WORKDIR /app
 COPY --from=production-dependencies /app/node_modules ./node_modules
 COPY --from=production-dependencies /app/server ./server

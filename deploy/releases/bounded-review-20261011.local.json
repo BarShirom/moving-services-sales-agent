@@ -1,0 +1,626 @@
+{
+  "schemaVersion": 1,
+  "release": "bounded-review-20261011",
+  "reviewDate": "2026-10-11",
+  "status": "READY_PENDING_EXPLICIT_RISK_APPROVAL",
+  "approval": "PENDING",
+  "published": false,
+  "awsMutations": false,
+  "images": {
+    "backend": {
+      "localTag": "moving-services-sales-agent-server:bounded-review-20261011",
+      "index": "sha256:89a66baf7c1aead4aea6275de3931955130481861b5fa19fbbd78a244203150f",
+      "runtimeManifest": "sha256:77e90d04522a86ed72a717b96936d591b7d65f1cd34b1a454161b1ab9fdffbd1",
+      "config": "sha256:c778368b199bb3062c53696a667b3fdbe5deb12bdea782c1281b904c8729a384",
+      "attestationManifest": "sha256:d3ed74431ecb63ebbc51367eedd4c1904d00a1b1094a0fc0aa09fe5973978f58",
+      "attestationBlobs": [
+        "sha256:dcd467a084e8d00796e69372b145ed67b75297e4b5330ab09fee2e4c0c5a30ee"
+      ],
+      "bytes": 369151985,
+      "architecture": "linux/amd64",
+      "provenance": {
+        "builder": {
+          "id": ""
+        },
+        "buildType": "https://mobyproject.org/buildkit@v1",
+        "materials": [
+          {
+            "uri": "pkg:docker/node@22-bookworm?platform=linux%2Famd64",
+            "digest": {
+              "sha256": "0e5f906573693feaa1e21057ebdcfdb5bd5021f050b2dc7c9deceb629c7da2a8"
+            }
+          },
+          {
+            "uri": "pkg:docker/node@22-trixie-slim?digest=sha256:154ba2f4d6fec323d28e4f4bb86bba4677f1223391a1979cf521304e03a98dfa&platform=linux%2Famd64",
+            "digest": {
+              "sha256": "154ba2f4d6fec323d28e4f4bb86bba4677f1223391a1979cf521304e03a98dfa"
+            }
+          }
+        ],
+        "invocation": {
+          "configSource": {
+            "entryPoint": "Dockerfile"
+          },
+          "parameters": {
+            "frontend": "dockerfile.v0",
+            "locals": [
+              {
+                "name": "context"
+              },
+              {
+                "name": "dockerfile"
+              }
+            ],
+            "root": {
+              "configSource": {
+                "path": "Dockerfile"
+              },
+              "request": {
+                "args": {
+                  "vcs:localdir:context": ".",
+                  "vcs:localdir:dockerfile": "server",
+                  "vcs:revision": "1a7821210094c2bb314e8d038358fab82ca1e8e6",
+                  "vcs:source": "https://github.com/BarShirom/moving-services-sales-agent.git"
+                }
+              }
+            },
+            "compatibilityVersion": 30
+          },
+          "environment": {
+            "dockerfileVersion": "1.27.0",
+            "platform": "linux/amd64"
+          }
+        }
+      },
+      "rawReportSha256": "5ea8aefa5af8a544485c20e81d7dd833788d0ce94a3e13a09c31276322fcc702",
+      "scanArchiveManifest": "sha256:9b881c7a53c86d1a017047224a852a71b58cda72f61deda37f178c0d332740d1",
+      "counts": {
+        "Critical": 0,
+        "High": 54,
+        "Medium": 47,
+        "Low": 10,
+        "Negligible": 46,
+        "Unknown": 0
+      },
+      "uniqueAdvisories": 67,
+      "uniqueHighAdvisories": 14
+    },
+    "caddy": {
+      "localTag": "moving-services-sales-agent-caddy:bounded-review-20261011",
+      "index": "sha256:2dcec600792dbe19d3bb5f08cd09b51b802290f3651eb4d3197f317d74e2609b",
+      "runtimeManifest": "sha256:b4c930b2f04e2aba0f5af5d4e91a9914d3999b8b802d5cce25dc9e98e809644f",
+      "config": "sha256:0ca2d84bc0d93f4fe1d52eb7523d8854de1e0b71dbf3172a7df4c0c5386a45f7",
+      "attestationManifest": "sha256:6fccd8354bd13034891a418d602758b18aa46b5b3960b9c7fd681342d755dd7c",
+      "attestationBlobs": [
+        "sha256:e1df5a98bb2107deeaa6bd02dc01ded7f005e1c3212c3bef221ed500d03ea7ac"
+      ],
+      "bytes": 172226772,
+      "architecture": "linux/amd64",
+      "provenance": {
+        "builder": {
+          "id": ""
+        },
+        "buildType": "https://mobyproject.org/buildkit@v1",
+        "materials": [
+          {
+            "uri": "pkg:docker/caddy@2.11.7-alpine?digest=sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f&platform=linux%2Famd64",
+            "digest": {
+              "sha256": "d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f"
+            }
+          },
+          {
+            "uri": "pkg:docker/golang@1.26.9-alpine3.23?digest=sha256:6750308561953d451210ed1a8086d36c8c8bdcbf672d38d9d0d424b8a7a0216c&platform=linux%2Famd64",
+            "digest": {
+              "sha256": "6750308561953d451210ed1a8086d36c8c8bdcbf672d38d9d0d424b8a7a0216c"
+            }
+          }
+        ],
+        "invocation": {
+          "configSource": {
+            "entryPoint": "Dockerfile"
+          },
+          "parameters": {
+            "frontend": "dockerfile.v0",
+            "args": {
+              "target": "runtime"
+            },
+            "locals": [
+              {
+                "name": "context"
+              },
+              {
+                "name": "dockerfile"
+              }
+            ],
+            "root": {
+              "configSource": {
+                "path": "Dockerfile"
+              },
+              "request": {
+                "args": {
+                  "target": "runtime",
+                  "vcs:localdir:context": "deploy\\caddy",
+                  "vcs:localdir:dockerfile": "deploy\\caddy",
+                  "vcs:revision": "1a7821210094c2bb314e8d038358fab82ca1e8e6",
+                  "vcs:source": "https://github.com/BarShirom/moving-services-sales-agent.git"
+                }
+              }
+            },
+            "compatibilityVersion": 30
+          },
+          "environment": {
+            "dockerfileVersion": "1.27.0",
+            "platform": "linux/amd64"
+          }
+        }
+      },
+      "rawReportSha256": "89d21a2f0ecbfd288f6cda15e1e0a9d6cce9b1f9e22d889ea15a94195dab40d6",
+      "scanArchiveManifest": "sha256:cc562ff0273d74a47df4eb090afd40a4d872717e7ef54834422018dd98784a99",
+      "counts": {
+        "Critical": 0,
+        "High": 0,
+        "Medium": 4,
+        "Low": 0,
+        "Negligible": 0,
+        "Unknown": 0
+      },
+      "uniqueAdvisories": 2,
+      "uniqueHighAdvisories": 0
+    }
+  },
+  "inputs": [
+    {
+      "path": ".dockerignore",
+      "sha256": "a72d1f2a52e63339d3a6696fb83e49f584469ab3192b07ba2d96f1bd2c08e4cf"
+    },
+    {
+      "path": "client/index.html",
+      "sha256": "e6134fbd41d21fe2245d1a91636b518979b24765dd579afeb177d496d67bde0a"
+    },
+    {
+      "path": "client/package.json",
+      "sha256": "504203ce8f4062eb26c3a3c9cac0f657c3f17059457fccdfa4f77592a28b6765"
+    },
+    {
+      "path": "client/src/AgentState.tsx",
+      "sha256": "f3ee7dfcb4dcdfc5c0fe47b60a361e5fcb72bc6f3977c852abfb29fbcd0bed00"
+    },
+    {
+      "path": "client/src/api.ts",
+      "sha256": "c7ee8126a7e400bbb5ca26f2f891e72b54cb8c3cee6651e48af817c5759d0bd2"
+    },
+    {
+      "path": "client/src/App.tsx",
+      "sha256": "0a1642cbe47ce14bb4def62c05e8d485d570002badb0e5753c032b4f953dcbf2"
+    },
+    {
+      "path": "client/src/ConversationMessages.tsx",
+      "sha256": "3d788cf3e0bfe17a33032c66d418b288e5dd20b6b08537f6510eb0adc2ee2455"
+    },
+    {
+      "path": "client/src/Icon.tsx",
+      "sha256": "25328b69f689b37299096ef6b82740c1e76b06e456e454e2b748af22476960cc"
+    },
+    {
+      "path": "client/src/leadPresentation.ts",
+      "sha256": "60a031d8e7e7da3ec4538cb763173e21c7fb4fd22ee4415d27517f58f12b936b"
+    },
+    {
+      "path": "client/src/main.tsx",
+      "sha256": "055735c1f2a805ceeca8a1376b884c7a8ae1b9d69ad42753b2d23b4e277bfebb"
+    },
+    {
+      "path": "client/src/OwnerView.tsx",
+      "sha256": "b946b79113b3c2778a293078721f6232b54bcf330b42df05edf962f8b176bfeb"
+    },
+    {
+      "path": "client/src/QuoteOverview.tsx",
+      "sha256": "f02cc72b2ec80a42ddbff4af9695f01d2649ed55370780f5a72accf25f02153c"
+    },
+    {
+      "path": "client/src/styles.css",
+      "sha256": "e8aa27bdc87b5ea7801c2fb1fde7cb60ee6801bd073064dedbb8b6b926d5199c"
+    },
+    {
+      "path": "client/tsconfig.json",
+      "sha256": "85d64822e3a7740f97d4a386ca6ecf6610d471f8e18ce9793e8988fc107f5aee"
+    },
+    {
+      "path": "client/vite.config.ts",
+      "sha256": "930f1378bc8a1b72150801b3402481b679770720a0c13d8fe78f90b08392a154"
+    },
+    {
+      "path": "deploy/caddy/.dockerignore",
+      "sha256": "968671aff002076ef6d16a66c2dac09493ef05d454a5aae781ffd87df6b470a2"
+    },
+    {
+      "path": "deploy/caddy/Dockerfile",
+      "sha256": "30473047096e3ea7cc9563a1cd0a5d42ea9673406672ae5cec611517db75ac8e"
+    },
+    {
+      "path": "deploy/caddy/go.mod",
+      "sha256": "d173eceee6ce678584bf2f5d2e219aade323ccfb93e578c0b48bc83295e8a59a"
+    },
+    {
+      "path": "deploy/caddy/go.sum",
+      "sha256": "6af3a164233778b8a67386362356bfb312d26888ccee645b7180f07fc27e8574"
+    },
+    {
+      "path": "deploy/caddy/main.go",
+      "sha256": "375fa4ad4692e7ed8e58f7fc1f93a165948866e18b562656652bec0c18e07d92"
+    },
+    {
+      "path": "deploy/caddy/prepare-lock.sh",
+      "sha256": "7a5d5c2da8dc03770914bad0cc3634b8e3a2bcf31ec66a38c266a8c467145ef7"
+    },
+    {
+      "path": "deploy/Caddyfile",
+      "sha256": "d0fe0178d958d639ae611278c3368403ce4cb6fc976e34546d26670dcf893d2f"
+    },
+    {
+      "path": "deploy/compose.yaml",
+      "sha256": "eaff414c7be3310916c4817ef4de2d140ee9bd9c697712827de7b3a5f0572245"
+    },
+    {
+      "path": "package-lock.json",
+      "sha256": "4055cc4ad5cd97d1359f354a90f411fba988779d4f3e18acf4eee062e3abac4f"
+    },
+    {
+      "path": "package.json",
+      "sha256": "3b492d31b040a96f9f8632f25c9c6793f302b0e8dfef71163090eff07ad0cb61"
+    },
+    {
+      "path": "server/Dockerfile",
+      "sha256": "e8e9c0188508927dae8390f06d4f0a314d4f4e0431bbabdd975fc0365d148e05"
+    },
+    {
+      "path": "server/package.json",
+      "sha256": "d856b60b178197ad4ecacc8dbe6ca31da8da21bd994e2a7fbacb1fffa9e636d8"
+    },
+    {
+      "path": "server/src/app.ts",
+      "sha256": "7ec3c13a982dbfa5e3e75afef248b113225f4e307fbe2bfa6e4a51e0a61487ac"
+    },
+    {
+      "path": "server/src/config/demoLimits.ts",
+      "sha256": "10c376b3d4489cca2ba87918dfba574b87e693e68a53cb6ae9dd5fdcc66c7e51"
+    },
+    {
+      "path": "server/src/config/openai.ts",
+      "sha256": "beb1c767853a6391d73ab086498c589636c01022099ccb5e84905237c69054a6"
+    },
+    {
+      "path": "server/src/config/referenceDate.ts",
+      "sha256": "bb517e2067b0fd2a5172c0c284e73a93840dda7476c02cc526d01053959947d7"
+    },
+    {
+      "path": "server/src/demo/clientIdentity.ts",
+      "sha256": "70751ceca235a8810f529799aea97d2990e5ade174ef85ad4ce05a9df5c09802"
+    },
+    {
+      "path": "server/src/demo/distanceAdapter.ts",
+      "sha256": "fe3ae4e63409f64477621c20acbce2026aed8436742f079bca735f47eef27d92"
+    },
+    {
+      "path": "server/src/demo/ownerTypes.ts",
+      "sha256": "9146f00c8987b6d37f6b09ff58f21fb56dfaf3bc51ecc665bef3b33912e956ef"
+    },
+    {
+      "path": "server/src/demo/ownerWorkflow.ts",
+      "sha256": "493d2deb8fddf4089958f186144c6e7128bc26c3bb62fba34740fa1fa7955017"
+    },
+    {
+      "path": "server/src/demo/protection.ts",
+      "sha256": "4e10b876d90e0ec486a8ddad4807201a1af24856e9ff75fb17f336629fc303a0"
+    },
+    {
+      "path": "server/src/demo/quoteFixture.ts",
+      "sha256": "fb85835ce071572395c60da7d9a0301506394ca1bd1fc8832b0cc8c6c4181979"
+    },
+    {
+      "path": "server/src/demo/router.ts",
+      "sha256": "a055005831039ab050e85b9ae84f0876efe56005370726913d673552c362af0c"
+    },
+    {
+      "path": "server/src/demo/sessions.ts",
+      "sha256": "5f3fdc40ec44fc63bec31941c6963f259a230acaf46d083100390f2740b07eff"
+    },
+    {
+      "path": "server/src/demo/types.ts",
+      "sha256": "6f1b797166087e18e68289ed17f4b0af5cc746bfe9a9a54154a0b6c5fa52b412"
+    },
+    {
+      "path": "server/src/domain/conversation/buildConversationResponse.ts",
+      "sha256": "85efc05e68eba7f0b97e165af8298c1265b3087dc10cc8a10d4d7afd7f4157e2"
+    },
+    {
+      "path": "server/src/domain/conversation/conversationEvents.ts",
+      "sha256": "03746befccf9a5d5e23b301dfbf5c8d8357fd6d9a346fdf3a06c6b2cdde8927b"
+    },
+    {
+      "path": "server/src/domain/conversation/dateReply.ts",
+      "sha256": "b259d43455346f6c6007bcd2959a1e576662b14155fcf8ba45fa11b393ca3d7f"
+    },
+    {
+      "path": "server/src/domain/conversation/photoReply.ts",
+      "sha256": "225a9e63031dd2c7b3c51b8f097e4aab483808622ed57d06aee66b3f69efbdd4"
+    },
+    {
+      "path": "server/src/domain/conversation/processCustomerMessage.ts",
+      "sha256": "04a6e028031a32cd17fb82a0a83f13b6c090473e893a592cafef08dce3ec5f32"
+    },
+    {
+      "path": "server/src/domain/createLead.ts",
+      "sha256": "b4960027f12207e147639723afff939a7b7b91fd974e3f69201482628168162f"
+    },
+    {
+      "path": "server/src/domain/createMoveItem.ts",
+      "sha256": "2bf4e447e502af9d8430f7e3279e2bf03b777ebda4fb71272ad311aba126c81f"
+    },
+    {
+      "path": "server/src/domain/extraction/extractMessage.ts",
+      "sha256": "afe0353bfbd75ac3572106d63e67d387cc8083bdbe2029b2eccaef4932cddcad"
+    },
+    {
+      "path": "server/src/domain/extraction/mergeExtraction.ts",
+      "sha256": "2f40f0c73819d09f202e7391e9b9dccd7fe1b72b4f0cc84c6fb9e3d058360f41"
+    },
+    {
+      "path": "server/src/domain/extraction/normalizeRequestedDate.ts",
+      "sha256": "0d92617fafd4ad90fba4064b3d51a29720ecb73af4abc1b8200b247c4d51c36f"
+    },
+    {
+      "path": "server/src/domain/extraction/patterns.ts",
+      "sha256": "360411b29ea317b43986e37ed7f375c945681de8d22eb4a81fbcf639f471e9a2"
+    },
+    {
+      "path": "server/src/domain/extraction/types.ts",
+      "sha256": "c9459cee4e0ee783df8f08c5a544f26d0f9a6e4d11b2a45cf00ce80a610bd349"
+    },
+    {
+      "path": "server/src/domain/lead.ts",
+      "sha256": "2b0c3ece9936241f9c68c2a78afac51e1cdb66eb770ddc572cfee7fc8622b1f2"
+    },
+    {
+      "path": "server/src/domain/ownerReview/types.ts",
+      "sha256": "c03185d7cf298744d158e7908bdbec55fec848de9a564e8c5339b2e2a36486ad"
+    },
+    {
+      "path": "server/src/domain/pricing/buildPricingInput.ts",
+      "sha256": "10fd1e4f94091a6932c66cb33c7c53dcf06f1e340779556d0ca2798ea9981d4d"
+    },
+    {
+      "path": "server/src/domain/pricing/calculatePrice.ts",
+      "sha256": "3d9cf81e4f6cfd6cfa4519aae916f6ef833656bf31b7c9402cda2766aaa7858e"
+    },
+    {
+      "path": "server/src/domain/pricing/evaluateLeadPricing.ts",
+      "sha256": "c6b2188f262df8aaa72476c9d377cf293498cad3f37e18768ffbe2b46ff7ea12"
+    },
+    {
+      "path": "server/src/domain/pricing/pricingRules.ts",
+      "sha256": "2962638ff5ea622f7e700e50e6c4fb247e548e92e970e323501a3f66990f0d16"
+    },
+    {
+      "path": "server/src/domain/pricing/types.ts",
+      "sha256": "a44f2bd6870d60e1b617f82dc0323ca7adbdb0578743dcd2c89d1fffaae6c9d5"
+    },
+    {
+      "path": "server/src/domain/quote/quoteScope.ts",
+      "sha256": "4ae825949e11dc40e58e2a9c05aff1263a21da4c895c08c0f39dc2d278038ea3"
+    },
+    {
+      "path": "server/src/domain/quote/types.ts",
+      "sha256": "4d2447de77db7820ee2986c18ffdcb7bb49fd6ae55f65496eb2cbff177eea287"
+    },
+    {
+      "path": "server/src/domain/requirements/evaluateRequirements.ts",
+      "sha256": "96e2f3300180e531b59fd5f7d8dd1511a8ddf7fea14184654b620b31a40a2eae"
+    },
+    {
+      "path": "server/src/domain/requirements/nextQuestion.ts",
+      "sha256": "d429ace8d13e74359f2ebf97aded84cbd508d6458b633659edfdde2d14ca70da"
+    },
+    {
+      "path": "server/src/domain/requirements/types.ts",
+      "sha256": "c4009eb7a5023a726d512cffbeeaed296fba8a0823db15ee1cfb061cc7033245"
+    },
+    {
+      "path": "server/src/evals/conversationAssertions.ts",
+      "sha256": "2d0efe59e65b735e74bfc44d839ed75b7005cd5d264edd8087f8a22f295e5744"
+    },
+    {
+      "path": "server/src/evals/conversationFixtures.ts",
+      "sha256": "09c5916a3dd0a49e9edaed69aaad15bb1bd0b07d366aa55f586eab1baa539ecd"
+    },
+    {
+      "path": "server/src/evals/formatEvalReport.ts",
+      "sha256": "2d3e1c76b5744ad1842c9b33fa7711e3c2dee69628f4bc21e9814aa6e67cc027"
+    },
+    {
+      "path": "server/src/evals/hydrateEvalLead.ts",
+      "sha256": "c64d95be3b66c9368c2326df38c1bc76e255d1d79e408ac416c394cdd14833ff"
+    },
+    {
+      "path": "server/src/evals/hydratePricingLead.ts",
+      "sha256": "8566f6bd61f46c785658c53df67bd525dab5612dfb7aef485c8487b0954d9415"
+    },
+    {
+      "path": "server/src/evals/loadEvalCases.ts",
+      "sha256": "029f2b0be8c6b1bfbf040b8e8c0506e056da1380320f4597e0f5d9b92375ca74"
+    },
+    {
+      "path": "server/src/evals/loadPricingEvidence.ts",
+      "sha256": "ba33b9bffe047021e777c04c4bafa8c9669b90422a18f2737fbfedf3cfb373f8"
+    },
+    {
+      "path": "server/src/evals/runConversationEvals.ts",
+      "sha256": "a63d2f88ebe98f095b1bd6b6b4267104ae909a890b922e20193a859b29e21854"
+    },
+    {
+      "path": "server/src/evals/runEvals.ts",
+      "sha256": "2d122ac5b6bb31e0a6f96b543c0f953a25e310f667dca70234f57d2dcb0be15a"
+    },
+    {
+      "path": "server/src/evals/runPricingEvals.ts",
+      "sha256": "69b8126e76b93e5e8887f98e0a7c1ac37f467c6ef0febb68824e61a4cf3bb89d"
+    },
+    {
+      "path": "server/src/evals/types.ts",
+      "sha256": "8180d72f416f5d701a744149a20554dce285225faa3d801b56edf9f9ed1f8cc5"
+    },
+    {
+      "path": "server/src/integrations/openai/context.ts",
+      "sha256": "03b0ac2512cbe542b239e0c43cc14f6899c270cdb90c5659d1aff5698266b775"
+    },
+    {
+      "path": "server/src/integrations/openai/convertExtraction.ts",
+      "sha256": "5176d8329af7dbb98f939fc6fe55d1d3fe57bf827ccbea17c8fb6a99aef76216"
+    },
+    {
+      "path": "server/src/integrations/openai/errors.ts",
+      "sha256": "4360962f21c34890113c790ab8d949d847702afff0ab79fb4060588e913e22f4"
+    },
+    {
+      "path": "server/src/integrations/openai/extractMessageWithAI.ts",
+      "sha256": "dfa4a100f1f7c954644868b3baee1701a8a1f7eb39244263292358ef17ff122e"
+    },
+    {
+      "path": "server/src/integrations/openai/prompt.ts",
+      "sha256": "9d672ddc42fff0816b366e8373d1ea5ce4f5f5a70ab10b8913be08ac5c75673b"
+    },
+    {
+      "path": "server/src/integrations/openai/schema.ts",
+      "sha256": "002773e409c846b24592854a6c4bfb4e4dcc40b35caae88ae0fbcfb1b4cbb39b"
+    },
+    {
+      "path": "server/src/scripts/demoAIExtraction.ts",
+      "sha256": "fd44e840e6d7883dd84aef852787703fdfbdd8c107f52f1bc55e3cc1f7ff08cb"
+    },
+    {
+      "path": "server/src/scripts/demoQuoteFixture.ts",
+      "sha256": "d5417e1711ce078428604ab633cc0ca8b41e62c5bc82b5b956f053921abeccf6"
+    },
+    {
+      "path": "server/src/server.ts",
+      "sha256": "b454bd8f6b40a65e3002d79f43135f34d8dd25928024ebb50efcd84eaed035bb"
+    },
+    {
+      "path": "server/tsconfig.json",
+      "sha256": "24f996d6e390037445f1e2921acb3372ef8b46786dc34defe8f56fd902add24b"
+    }
+  ],
+  "frontendAssets": [
+    {
+      "path": "client/dist/assets/index-BETzEhSh.css",
+      "sha256": "aff8edb291707273ecdd14cd5b9622e8b129f3ae10bcae5024907f665e9ddead"
+    },
+    {
+      "path": "client/dist/assets/index-vB7Q1tr4.js",
+      "sha256": "702abab0a99ca44d7e0d8869143b3157cb2c90bd766169049b53f412e374aa1d"
+    },
+    {
+      "path": "client/dist/index.html",
+      "sha256": "54a884edc9541cec57d070e0318cadae177fe7571c8435af333baab4f27c50ca"
+    }
+  ],
+  "validation": {
+    "tests": {
+      "server": 422,
+      "client": 45,
+      "failures": 0,
+      "retries": 0
+    },
+    "typecheck": "PASS",
+    "build": "PASS",
+    "offlineEval": "PASS implemented checks; 24 conversation cases, 2 future cases not run, 6 pricing cases, 0 invalid; manual checks unscored",
+    "npmAudit": {
+      "full": 0,
+      "production": 0
+    },
+    "integration": "PASS; no host ports or live AI",
+    "memoryMiB": {
+      "backend": 28.44,
+      "caddy": 16.18,
+      "combined": 44.62,
+      "capacityBenchmark": false
+    }
+  },
+  "source": {
+    "baseCommit": "1a7821210094c2bb314e8d038358fab82ca1e8e6",
+    "uncommitted": true,
+    "identity": "input file SHA256 records, not Git HEAD alone"
+  },
+  "riskExceptions": [
+    {
+      "id": "Z",
+      "advisory": "CVE-2026-85091",
+      "owner": "Bar Shirom",
+      "approval": "PENDING",
+      "reviewBy": "2026-10-25",
+      "conditions": "docs/FINAL_RELEASE_REVIEW.md exception Z"
+    },
+    {
+      "id": "O",
+      "advisory": "CVE-2026-35189",
+      "owner": "Bar Shirom",
+      "approval": "PENDING",
+      "reviewBy": "2026-10-18",
+      "conditions": "docs/FINAL_RELEASE_REVIEW.md exception O"
+    }
+  ],
+  "evidence": [
+    {
+      "path": "docs/security/bounded-20261011/backend-baseline-runtime.json",
+      "sha256": "b868ea302a758fb5aabf4f9803e3dd5b3c155b12e20cfcfc80412702d4aee261"
+    },
+    {
+      "path": "docs/security/bounded-20261011/backend-final-runtime.json",
+      "sha256": "e05f5e427e24c3e852c3b2fee1a6f3d633f4ecfdc183d7546548b76500ac8493"
+    },
+    {
+      "path": "docs/security/bounded-20261011/backend.grype.json",
+      "sha256": "5ea8aefa5af8a544485c20e81d7dd833788d0ce94a3e13a09c31276322fcc702"
+    },
+    {
+      "path": "docs/security/bounded-20261011/caddy.grype.json",
+      "sha256": "89d21a2f0ecbfd288f6cda15e1e0a9d6cce9b1f9e22d889ea15a94195dab40d6"
+    },
+    {
+      "path": "docs/security/bounded-20261011/comparison.json",
+      "sha256": "61730274f2286f0cfc5fb01118a491e068d69b929a05e96833bfa039858011c9"
+    },
+    {
+      "path": "docs/security/bounded-20261011/grouped-findings.json",
+      "sha256": "386245c28144fdb7d58d506461189e592fd76ce5c5fea8aa4b4a59903139bc03"
+    },
+    {
+      "path": "docs/security/bounded-20261011/native-node-review.txt",
+      "sha256": "311bce2e7e5e2594e68532d58c103f30ec8c76c1b60fc291e70029909c0d0544"
+    },
+    {
+      "path": "docs/security/bounded-20261011/native-symbol-evidence.txt",
+      "sha256": "1f2becf8d0c04d25602dbaebce74b273a44d362fb7f446bf11184dbf93524c8f"
+    },
+    {
+      "path": "docs/security/bounded-20261011/node-pbds-source-check.json",
+      "sha256": "3d513822fefb90721a5d30adef89258f8117782ba91c2a0a3a8330853d1353ad"
+    },
+    {
+      "path": "docs/security/bounded-20261011/npm-audit-production.json",
+      "sha256": "64518fc203ed7b5daa5a5985968d2cb4a320b4e8fb7c811bd86c717e1e0d215f"
+    },
+    {
+      "path": "docs/security/bounded-20261011/npm-audit.json",
+      "sha256": "64518fc203ed7b5daa5a5985968d2cb4a320b4e8fb7c811bd86c717e1e0d215f"
+    },
+    {
+      "path": "docs/security/bounded-20261011/runtime-presence-evidence.txt",
+      "sha256": "798ded3ea7f336b2a6e593e7cceb2b40ae790bdeac6fb135d0e4bf70091af692"
+    },
+    {
+      "path": "docs/security/bounded-20261011/verification.txt",
+      "sha256": "48a10cef0a4ac6bb589a300537ed21ed0b3778a4eae22e38978936f4d881dc4b"
+    }
+  ]
+}

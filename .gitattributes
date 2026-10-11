@@ -1,0 +1,4 @@
+# Preserve security evidence and recorded report hashes across platforms.
+# Some captured output uses CRLF; recognize that terminator without rewriting it.
+docs/security/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
+deploy/releases/*.json -text

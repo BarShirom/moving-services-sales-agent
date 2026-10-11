@@ -9,7 +9,7 @@
     "typecheck": "tsc --noEmit",
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host 127.0.0.1",
-    "test": "tsx --test tests/response.test.tsx tests/app.test.tsx"
+    "test": "tsx --test tests/response.test.tsx tests/app.test.tsx tests/api.test.ts"
   },
   "dependencies": {
     "react": "^19.0.0",

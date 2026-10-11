@@ -9,8 +9,10 @@ async function request<T>(path: string, method: 'GET' | 'POST', body?: unknown):
   try {
     response = await fetch(`/api/demo${path}`, {
       method,
+      credentials: 'include',
+      headers: { 'X-Demo-Request': '1', ...(body === undefined ? {} : { 'Content-Type': 'application/json' }) },
       ...(body === undefined ? {} : {
-        headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+        body: JSON.stringify(body),
       }),
     });
   } catch {
@@ -19,15 +21,24 @@ async function request<T>(path: string, method: 'GET' | 'POST', body?: unknown):
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     // Render only the demo API's curated errors, never proxy/provider error bodies.
-    const knownCodes = ['BUSY', 'INVALID_MESSAGE', 'AI_NOT_CONFIGURED', 'EXTRACTION_FAILED', 'INVALID_REQUEST', 'INVALID_OWNER_ACTION', 'STALE_REVIEW', 'ACTION_UNAVAILABLE'];
+    const knownCodes = ['BUSY', 'INVALID_MESSAGE', 'AI_NOT_CONFIGURED', 'EXTRACTION_FAILED', 'INVALID_REQUEST', 'INVALID_OWNER_ACTION', 'STALE_REVIEW', 'ACTION_UNAVAILABLE', 'SESSION_EXPIRED', 'SESSION_CAPACITY', 'SESSION_FULL', 'REQUEST_FORBIDDEN', 'RATE_LIMITED', 'SESSION_RATE_LIMITED', 'AI_RATE_LIMITED', 'AI_BUSY', 'AI_BUDGET_EXHAUSTED', 'AI_INPUT_LIMIT', 'PROTECTION_CAPACITY'];
+    const retrySeconds = Number(response.headers.get('Retry-After'));
+    const retryHint = [429, 503].includes(response.status) && Number.isSafeInteger(retrySeconds) && retrySeconds > 0 && retrySeconds <= 86400
+      ? ` אפשר לנסות שוב בעוד ${retrySeconds} שניות.` : '';
     throw new Error(knownCodes.includes(body?.error?.code) && typeof body.error.message === 'string'
-      ? body.error.message : 'השרת אינו זמין כרגע. נסו שוב בעוד רגע.');
+      ? body.error.message + retryHint : 'השרת אינו זמין כרגע. נסו שוב בעוד רגע.');
   }
   try { return await response.json(); }
   catch { throw new Error('התקבלה תשובה לא תקינה מהשרת. נסו שוב בעוד רגע.'); }
 }
 
+let pendingRead: Promise<DemoSnapshot> | undefined;
 export function demoRequest(path = '', message?: string, quote?: { id: string; version: number }): Promise<DemoSnapshot> {
+  // Coalesce the initial React StrictMode reads so one tab does not create two cookies.
+  if (!path) {
+    pendingRead ??= request<DemoSnapshot>('', 'GET').finally(() => { pendingRead = undefined; });
+    return pendingRead;
+  }
   return request(path, path ? 'POST' : 'GET', message === undefined ? undefined : {
     message, ...(quote ? { quoteId: quote.id, quoteVersion: quote.version } : {}),
   });

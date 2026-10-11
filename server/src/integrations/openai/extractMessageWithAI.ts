@@ -19,14 +19,23 @@ export interface AIExtractorOptions {
   request?: StructuredResponseRequest;
 }
 
-export type AIExtractor = (input: MessageExtractionInput) => Promise<ExtractionResult>;
+export type AIAdmission = (request: ResponseParseParams, run: () => Promise<StructuredResponse>) => Promise<StructuredResponse>;
+export type AIExtractor = (input: MessageExtractionInput, admission?: AIAdmission) => Promise<ExtractionResult>;
+
+export function buildExtractionRequest(input: MessageExtractionInput, model = DEFAULT_OPENAI_MODEL): ResponseParseParams {
+  return {
+    model, instructions: EXTRACTION_INSTRUCTIONS,
+    input: [{ role: 'user', content: JSON.stringify(buildExtractionContext(input)) }],
+    text: { format: extractionTextFormat }, store: false, max_output_tokens: 4_000,
+  };
+}
 
 export function createAIExtractor(options: AIExtractorOptions = {}): AIExtractor {
   // Lazily configured so importing the module never requires a key or opens a connection.
   let configured: { model: string; request: StructuredResponseRequest } | undefined;
-  return async (input: MessageExtractionInput) => {
+  return async (input: MessageExtractionInput, admission?: AIAdmission) => {
     const snapshot = structuredClone(input);
-    const context = buildExtractionContext(snapshot);
+    const request = buildExtractionRequest(snapshot);
     if (!configured) {
       if (options.request) {
         // The fake transport owns authentication; a real client always checks the API key.
@@ -40,23 +49,20 @@ export function createAIExtractor(options: AIExtractorOptions = {}): AIExtractor
         configured = { model, request: request => client.responses.parse(request) };
       }
     }
-    let response: StructuredResponse;
-    try {
-      response = await configured.request({
-        model: configured.model,
-        instructions: EXTRACTION_INSTRUCTIONS,
-        input: [{ role: 'user', content: JSON.stringify(context) }],
-        text: { format: extractionTextFormat },
-        store: false,
-        max_output_tokens: 4_000,
-      });
-    } catch (error) {
-      if (error instanceof ZodError || error instanceof SyntaxError) {
-        throw new AIExtractionError('INVALID_EXTRACTION', 'OpenAI returned an invalid structured extraction.');
+    request.model = configured.model;
+    const transport = configured.request;
+    const run = async () => {
+      try { return await transport(request); }
+      catch (error) {
+        if (error instanceof ZodError || error instanceof SyntaxError) {
+          throw new AIExtractionError('INVALID_EXTRACTION', 'OpenAI returned an invalid structured extraction.');
+        }
+        // Do not include raw SDK errors: they can contain request data or provider details.
+        throw new AIExtractionError('REQUEST_FAILED', 'OpenAI extraction request failed. Check connectivity, credentials, and model access.');
       }
-      // Do not include raw SDK errors: they can contain request data or provider details.
-      throw new AIExtractionError('REQUEST_FAILED', 'OpenAI extraction request failed. Check connectivity, credentials, and model access.');
-    }
+    };
+    // Admission errors remain typed; budget/concurrency rejection never calls transport.
+    const response = await (admission ? admission(request, run) : run());
     const refused = response.output.some(item => item.type === 'message'
       && item.content.some(part => part.type === 'refusal'));
     if (response.status === 'failed') {
@@ -70,4 +76,4 @@ export function createAIExtractor(options: AIExtractorOptions = {}): AIExtractor
 }
 
 const defaultExtractor = createAIExtractor();
-export const extractMessageWithAI: AIExtractor = input => defaultExtractor(input);
+export const extractMessageWithAI: AIExtractor = (input, admission) => defaultExtractor(input, admission);

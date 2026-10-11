@@ -1,0 +1,810 @@
+{
+  "backend": {
+    "removedMatches": 21,
+    "removedUniqueAdvisories": [
+      "GHSA-rgw5-rvv9-x895",
+      "GHSA-mh99-v99m-4gvg",
+      "GHSA-mwp4-54f8-5fhr",
+      "GHSA-ch52-4w7c-c8xp",
+      "GHSA-c2c7-rcm5-vvqj",
+      "GHSA-f886-m6hf-6m8v",
+      "GHSA-v2v4-37r5-5v8g",
+      "GHSA-qhr7-859c-m2p7",
+      "GHSA-6j4f-fj2g-mc7p",
+      "GHSA-w4pp-8pjf-rmxw",
+      "GHSA-3v7f-55p6-f55p",
+      "GHSA-3jxr-9vmj-r5cp",
+      "GHSA-rpw4-54j3-4h4q",
+      "GHSA-rj75-hqrm-r3gf",
+      "GHSA-j6r3-76f7-8jcv",
+      "GHSA-w9m9-85wc-3x92",
+      "GHSA-h3mg-xc3c-68pw",
+      "GHSA-q2hr-2g5m-vwhr",
+      "GHSA-52v5-jr5w-gjxr",
+      "GHSA-jfc7-64v2-mr8c"
+    ],
+    "addedMatches": [],
+    "removed": [
+      {
+        "id": "GHSA-rgw5-rvv9-x895",
+        "aliases": [
+          "CVE-2026-69152"
+        ],
+        "severity": "High",
+        "package": "brace-expansion",
+        "version": "2.0.2",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/brace-expansion/package.json"
+        ],
+        "fixedVersions": [
+          "2.1.4"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-rgw5-rvv9-x895"
+      },
+      {
+        "id": "GHSA-mh99-v99m-4gvg",
+        "aliases": [
+          "CVE-2026-14257"
+        ],
+        "severity": "High",
+        "package": "brace-expansion",
+        "version": "2.0.2",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/brace-expansion/package.json"
+        ],
+        "fixedVersions": [
+          "2.1.3"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-mh99-v99m-4gvg"
+      },
+      {
+        "id": "GHSA-mwp4-54f8-5fhr",
+        "aliases": [
+          "CVE-2026-69192"
+        ],
+        "severity": "High",
+        "package": "ip-address",
+        "version": "10.1.0",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/ip-address/package.json"
+        ],
+        "fixedVersions": [
+          "10.3.1"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-mwp4-54f8-5fhr"
+      },
+      {
+        "id": "GHSA-ch52-4w7c-c8xp",
+        "aliases": [
+          "CVE-2026-93748"
+        ],
+        "severity": "High",
+        "package": "http-cache-semantics",
+        "version": "4.2.0",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/http-cache-semantics/package.json"
+        ],
+        "fixedVersions": [],
+        "fixState": "not-fixed",
+        "source": "https://github.com/advisories/GHSA-ch52-4w7c-c8xp"
+      },
+      {
+        "id": "GHSA-c2c7-rcm5-vvqj",
+        "aliases": [
+          "CVE-2026-33671"
+        ],
+        "severity": "High",
+        "package": "picomatch",
+        "version": "4.0.3",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/picomatch/package.json"
+        ],
+        "fixedVersions": [
+          "4.0.4"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-c2c7-rcm5-vvqj"
+      },
+      {
+        "id": "GHSA-f886-m6hf-6m8v",
+        "aliases": [
+          "CVE-2026-33750"
+        ],
+        "severity": "Medium",
+        "package": "brace-expansion",
+        "version": "2.0.2",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/brace-expansion/package.json"
+        ],
+        "fixedVersions": [
+          "2.0.3"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-f886-m6hf-6m8v"
+      },
+      {
+        "id": "GHSA-v2v4-37r5-5v8g",
+        "aliases": [
+          "CVE-2026-42338"
+        ],
+        "severity": "Medium",
+        "package": "ip-address",
+        "version": "10.1.0",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/ip-address/package.json"
+        ],
+        "fixedVersions": [
+          "10.1.1"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-v2v4-37r5-5v8g"
+      },
+      {
+        "id": "GHSA-qhr7-859c-m2p7",
+        "aliases": [
+          "CVE-2026-102278"
+        ],
+        "severity": "High",
+        "package": "brace-expansion",
+        "version": "2.0.2",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/brace-expansion/package.json"
+        ],
+        "fixedVersions": [
+          "2.1.6"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-qhr7-859c-m2p7"
+      },
+      {
+        "id": "GHSA-6j4f-fj2g-mc7p",
+        "aliases": [
+          "CVE-2026-102276"
+        ],
+        "severity": "High",
+        "package": "brace-expansion",
+        "version": "2.0.2",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/brace-expansion/package.json"
+        ],
+        "fixedVersions": [
+          "2.1.5"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-6j4f-fj2g-mc7p"
+      },
+      {
+        "id": "GHSA-w4pp-8pjf-rmxw",
+        "aliases": [
+          "CVE-2026-9496"
+        ],
+        "severity": "High",
+        "package": "pacote",
+        "version": "19.0.2",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/pacote/package.json"
+        ],
+        "fixedVersions": [
+          "21.5.1"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-w4pp-8pjf-rmxw"
+      },
+      {
+        "id": "GHSA-w4pp-8pjf-rmxw",
+        "aliases": [
+          "CVE-2026-9496"
+        ],
+        "severity": "High",
+        "package": "pacote",
+        "version": "20.0.1",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/@npmcli/metavuln-calculator/node_modules/pacote/package.json"
+        ],
+        "fixedVersions": [
+          "21.5.1"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-w4pp-8pjf-rmxw"
+      },
+      {
+        "id": "GHSA-3v7f-55p6-f55p",
+        "aliases": [
+          "CVE-2026-33672"
+        ],
+        "severity": "Medium",
+        "package": "picomatch",
+        "version": "4.0.3",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/picomatch/package.json"
+        ],
+        "fixedVersions": [
+          "4.0.4"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-3v7f-55p6-f55p"
+      },
+      {
+        "id": "GHSA-3jxr-9vmj-r5cp",
+        "aliases": [
+          "CVE-2026-13149"
+        ],
+        "severity": "High",
+        "package": "brace-expansion",
+        "version": "2.0.2",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/brace-expansion/package.json"
+        ],
+        "fixedVersions": [
+          "2.1.2"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-3jxr-9vmj-r5cp"
+      },
+      {
+        "id": "GHSA-rpw4-54j3-4h4q",
+        "aliases": [
+          "CVE-2026-101913"
+        ],
+        "severity": "Medium",
+        "package": "ip-address",
+        "version": "10.1.0",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/ip-address/package.json"
+        ],
+        "fixedVersions": [
+          "10.5.1"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-rpw4-54j3-4h4q"
+      },
+      {
+        "id": "GHSA-rj75-hqrm-r3gf",
+        "aliases": [
+          "CVE-2026-104844"
+        ],
+        "severity": "Medium",
+        "package": "postcss-selector-parser",
+        "version": "7.1.1",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/postcss-selector-parser/package.json"
+        ],
+        "fixedVersions": [
+          "7.1.6"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-rj75-hqrm-r3gf"
+      },
+      {
+        "id": "GHSA-j6r3-76f7-8jcv",
+        "aliases": [
+          "CVE-2026-101912"
+        ],
+        "severity": "Medium",
+        "package": "ip-address",
+        "version": "10.1.0",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/ip-address/package.json"
+        ],
+        "fixedVersions": [
+          "10.7.1"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-j6r3-76f7-8jcv"
+      },
+      {
+        "id": "GHSA-w9m9-85wc-3x92",
+        "aliases": [
+          "CVE-2026-9358"
+        ],
+        "severity": "Low",
+        "package": "postcss-selector-parser",
+        "version": "7.1.1",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/postcss-selector-parser/package.json"
+        ],
+        "fixedVersions": [
+          "7.1.3"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-w9m9-85wc-3x92"
+      },
+      {
+        "id": "GHSA-h3mg-xc3c-68pw",
+        "aliases": [
+          "CVE-2026-101911"
+        ],
+        "severity": "Medium",
+        "package": "ip-address",
+        "version": "10.1.0",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/ip-address/package.json"
+        ],
+        "fixedVersions": [
+          "10.7.1"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-h3mg-xc3c-68pw"
+      },
+      {
+        "id": "GHSA-q2hr-2g5m-vwhr",
+        "aliases": [
+          "CVE-2026-102277"
+        ],
+        "severity": "Medium",
+        "package": "brace-expansion",
+        "version": "2.0.2",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/brace-expansion/package.json"
+        ],
+        "fixedVersions": [
+          "2.1.7"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-q2hr-2g5m-vwhr"
+      },
+      {
+        "id": "GHSA-52v5-jr5w-gjxr",
+        "aliases": [
+          "CVE-2026-48815"
+        ],
+        "severity": "High",
+        "package": "sigstore",
+        "version": "3.1.0",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/sigstore/package.json"
+        ],
+        "fixedVersions": [
+          "4.1.1"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-52v5-jr5w-gjxr"
+      },
+      {
+        "id": "GHSA-jfc7-64v2-mr8c",
+        "aliases": [
+          "CVE-2026-48758"
+        ],
+        "severity": "Medium",
+        "package": "@sigstore/core",
+        "version": "2.0.0",
+        "ecosystem": "npm",
+        "locations": [
+          "/usr/local/lib/node_modules/npm/node_modules/@sigstore/core/package.json"
+        ],
+        "fixedVersions": [
+          "3.2.1"
+        ],
+        "fixState": "fixed",
+        "source": "https://github.com/advisories/GHSA-jfc7-64v2-mr8c"
+      }
+    ]
+  },
+  "caddy": {
+    "removedMatches": 27,
+    "removedUniqueAdvisories": [
+      "CVE-2026-54873",
+      "CVE-2026-84782",
+      "CVE-2026-84784",
+      "CVE-2026-85091",
+      "CVE-2026-72897",
+      "CVE-2026-75806",
+      "CVE-2026-75804",
+      "CVE-2026-42772",
+      "CVE-2026-35189",
+      "CVE-2026-35191",
+      "CVE-2026-75805",
+      "CVE-2026-54875",
+      "CVE-2026-54872",
+      "CVE-2026-77696"
+    ],
+    "addedMatches": [],
+    "removed": [
+      {
+        "id": "CVE-2026-54873",
+        "aliases": [],
+        "severity": "High",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-54873"
+      },
+      {
+        "id": "CVE-2026-54873",
+        "aliases": [],
+        "severity": "High",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-54873"
+      },
+      {
+        "id": "CVE-2026-84782",
+        "aliases": [],
+        "severity": "High",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-84782"
+      },
+      {
+        "id": "CVE-2026-84782",
+        "aliases": [],
+        "severity": "High",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-84782"
+      },
+      {
+        "id": "CVE-2026-84784",
+        "aliases": [],
+        "severity": "High",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-84784"
+      },
+      {
+        "id": "CVE-2026-84784",
+        "aliases": [],
+        "severity": "High",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-84784"
+      },
+      {
+        "id": "CVE-2026-85091",
+        "aliases": [
+          "CVE-2026-85091"
+        ],
+        "severity": "High",
+        "package": "zlib",
+        "version": "1.3.2-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [
+          "1.3.2-r1"
+        ],
+        "fixState": "fixed",
+        "source": "https://security.alpinelinux.org/vuln/CVE-2026-85091"
+      },
+      {
+        "id": "CVE-2026-72897",
+        "aliases": [],
+        "severity": "High",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-72897"
+      },
+      {
+        "id": "CVE-2026-72897",
+        "aliases": [],
+        "severity": "High",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-72897"
+      },
+      {
+        "id": "CVE-2026-75806",
+        "aliases": [],
+        "severity": "Medium",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-75806"
+      },
+      {
+        "id": "CVE-2026-75806",
+        "aliases": [],
+        "severity": "Medium",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-75806"
+      },
+      {
+        "id": "CVE-2026-75804",
+        "aliases": [],
+        "severity": "Medium",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-75804"
+      },
+      {
+        "id": "CVE-2026-75804",
+        "aliases": [],
+        "severity": "Medium",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-75804"
+      },
+      {
+        "id": "CVE-2026-42772",
+        "aliases": [],
+        "severity": "Medium",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-42772"
+      },
+      {
+        "id": "CVE-2026-42772",
+        "aliases": [],
+        "severity": "Medium",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-42772"
+      },
+      {
+        "id": "CVE-2026-35189",
+        "aliases": [],
+        "severity": "Medium",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-35189"
+      },
+      {
+        "id": "CVE-2026-35189",
+        "aliases": [],
+        "severity": "Medium",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-35189"
+      },
+      {
+        "id": "CVE-2026-35191",
+        "aliases": [],
+        "severity": "Low",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-35191"
+      },
+      {
+        "id": "CVE-2026-35191",
+        "aliases": [],
+        "severity": "Low",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-35191"
+      },
+      {
+        "id": "CVE-2026-75805",
+        "aliases": [],
+        "severity": "Medium",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-75805"
+      },
+      {
+        "id": "CVE-2026-75805",
+        "aliases": [],
+        "severity": "Medium",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-75805"
+      },
+      {
+        "id": "CVE-2026-54875",
+        "aliases": [],
+        "severity": "Low",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-54875"
+      },
+      {
+        "id": "CVE-2026-54875",
+        "aliases": [],
+        "severity": "Low",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-54875"
+      },
+      {
+        "id": "CVE-2026-54872",
+        "aliases": [],
+        "severity": "Low",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-54872"
+      },
+      {
+        "id": "CVE-2026-54872",
+        "aliases": [],
+        "severity": "Low",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-54872"
+      },
+      {
+        "id": "CVE-2026-77696",
+        "aliases": [],
+        "severity": "Low",
+        "package": "libcrypto3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-77696"
+      },
+      {
+        "id": "CVE-2026-77696",
+        "aliases": [],
+        "severity": "Low",
+        "package": "libssl3",
+        "version": "3.5.8-r0",
+        "ecosystem": "apk",
+        "locations": [
+          "/lib/apk/db/installed"
+        ],
+        "fixedVersions": [],
+        "fixState": "unknown",
+        "source": "https://nvd.nist.gov/vuln/detail/CVE-2026-77696"
+      }
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+UTC=2026-10-11T16:24:30.9972242Z
+Image=moving-services-sales-agent-server:bounded-review-20261011
+ID=sha256:89a66baf7c1aead4aea6275de3931955130481861b5fa19fbbd78a244203150f OS=linux Architecture=amd64 User=node
+{
+  "node": "v22.23.3",
+  "arch": "x64",
+  "openssl": "3.5.8",
+  "shared": false,
+  "quic": false,
+  "dtlsBuiltin": false,
+  "quicBuiltin": false,
+  "dtlsMethod": "ERR_TLS_INVALID_PROTOCOL_METHOD",
+  "nativeAddonPaths": []
+}
+Measured on final bounded-review candidate; no network in inspection container; no live provider calls.
+Previous baseline image produced identical Node/OpenSSL/DTLS/QUIC/native-addon values.
+
+Authoritative sources:
+https://openssl-library.org/news/secadv/20260929.txt
+https://nodejs.org/dist/index.json
+https://raw.githubusercontent.com/nodejs/node/v22.23.3/src/crypto/crypto_context.cc
+https://raw.githubusercontent.com/nodejs/node/v22.23.3/src/crypto/crypto_tls.cc
+
+Node official release index checked 2026-10-11: latest22=v22.23.3, date2026-09-23, OpenSSL3.5.8, npm10.9.9. No22 release with OpenSSL3.5.9 found.
+Corrected prior vendor severity: CVE-2026-84782 is OpenSSL HIGH; the prior blanket 'four Highs rated Low by vendor' statement is incorrect.
+
+Deployment-specific applicability:
+CVE-2026-84782/75806: DTLS API unavailable in measured Node22 build; no native addons; application uses HTTP/TCP.
+CVE-2026-54873/84784/35191/42772/75804: no QUIC builtin, openssl_quic=false; app has no QUIC transport.
+CVE-2026-72897: Node source does contain SSL_set_SSL_CTX in SelectSNIContextCallback; application creates HTTP server, no TLS/SNI server, Caddy handles incoming TLS.
+CVE-2026-54875: amd64 runtime does not meet affected ARM64/RISC-V architecture condition.
+CVE-2026-84783: upstream specifically excludes OpenSSL3.5.
+CVE-2026-54872/77696/75805: no app signing/SM2/CMP operations; no native addon. Not a claim OpenSSL library itself is patched.
+
+CVE-2026-35189 manual residual:
+Upstream Low; crafted certificate extension processing in client TLS can consume substantial memory. OpenSSL3.5.9 fixes it; installed static3.5.8 remains unchanged. Grype OS package matching is not coverage of this static copy.
+Known impact for demo: backend memory exhaustion/restart and loss of all in-memory sessions. Not evidence of attacker code execution. Certificate verification must not be claimed to prevent all processing before verification.
+Concrete public visitor route does not accept a network destination: server/src/config/openai.ts supplies apiKey/model/timeout30000/maxRetries0. server/src/integrations/openai/extractMessageWithAI.ts passes message text as request data, not URLs. OpenAI SDK server/node_modules/openai/client.mjs defaults to https://api.openai.com/v1 but honors operator OPENAI_BASE_URL. No visitor-selected baseURL exists in application.
+Verified controls in code/config: default global AI concurrency2; conservative request/token/day budgets; bounded per-client/session requests; Compose backend512m/no extra swap; HTTP-only unpublished backend port; Caddy TLS edge. These narrow likelihood or host blast radius, not memory-safety fixes.
+Proposed classification: PROPOSED_TIME_BOUND_RISK_EXCEPTION (approval PENDING), owner Bar Shirom, review2026-10-18. Release env must leave OPENAI_BASE_URL unset/default and not add TLS validation bypass/custom CA/proxy/native-addon changes without review. No claim future host environment has already been validated.
+Reopen immediately on supported Node22 OpenSSL fix, endpoint/TLS/native-addon change, unexplained TLS/OOM failure, or changed vendor severity/reachability information. Smallest supported action is official Node22 patched binary/base, not custom Node source build.
+This is a known narrow outbound TLS risk requiring explicit owner decision, not automatically a new public ingress blocker or a clean scan. If destination/configuration assumptions cannot be verified before deployment, exception conditions fail and deployment remains blocked.
