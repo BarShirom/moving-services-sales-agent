@@ -1,6 +1,88 @@
 ﻿# Final release review — bounded pass, 2026-10-11
 
-## Decision: READY_PENDING_EXPLICIT_RISK_APPROVAL
+## Two-CVE evidence review — 2026-10-12
+
+**Current recommendation: BLOCK release pending zlib applicability clarification.**
+This supersedes the readiness recommendation in the historical review below;
+neither pending exception has been approved. Review scope is exactly
+CVE-2026-85091 and CVE-2026-35189. Stop here rather than infer a vendor adjudication.
+
+Checkpoint `35ac99562213d1fff2091f3b290909bbd6be9947` was verified with a clean
+working tree. Read-only inspection of the existing backend image (OCI index
+`sha256:89a66baf7c1aead4aea6275de3931955130481861b5fa19fbbd78a244203150f`)
+confirmed Linux/amd64, Node 22.23.3, bundled OpenSSL 3.5.8, bundled zlib
+1.3.1-e00f703 and Debian zlib1g `1:1.3.dfsg+really1.3.1-1+b1`.
+Node's dynamic dependencies include neither OS libz nor libssl/libcrypto.
+The installed libz.so.1.3.1 SHA-256 is
+`85590dd58edf5445e18bc7193e5ebc01ac5841f1ae187e97705a662e90c6421e`.
+
+### CVE-2026-85091: applicability unresolved; recommendation BLOCK
+
+The exact Debian [gzwrite.c source](https://sources.debian.org/src/zlib/1:1.3.dfsg%2Breally1.3.1-1/gzwrite.c/)
+does not contain `gz_vacate`. Its older `gz_comp` sets Z_ERRNO on write failure,
+and subsequent writes reject that error. This supports absence of the narrowly
+described 1.3.1.2–1.3.2 nonblocking retry path, but not a complete exemption:
+[gzclearerr](https://sources.debian.org/src/zlib/1:1.3.dfsg%2Breally1.3.1-1/gzlib.c/)
+clears the error without repairing the write pointers. Those older operations
+exist in the installed source version.
+
+The [upstream discussion](https://github.com/madler/zlib/issues/1292) reports an
+older-version crash after write failure, gzclearerr and another write; its
+October 4 question about whether this belongs to the same CVE remains unanswered.
+That report concerns older zlib, not an independently reproduced exploit against
+this candidate. [Debian](https://security-tracker.debian.org/tracker/CVE-2026-85091)
+still marks Trixie vulnerable/unfixed despite the narrower description.
+The preserved Grype report agrees: High, Debian namespace, exact-indirect package
+match, no fixed version. This is package classification, not execution evidence.
+Upstream identifies fix commit
+[`df84af25dc1942490e1d1c899a07619152a46148`](https://github.com/madler/zlib/commit/df84af25dc1942490e1d1c899a07619152a46148);
+no supported Trixie fixed package is listed. No patch or suppression was applied.
+
+Potential impact is heap corruption/crash if the required gzip-file write/error
+recovery sequence is reached. No such application workflow, native addon or OS
+libz linkage was identified; ordinary HTTP decompression is a different path.
+Practical application exposure therefore appears low, but authoritative evidence
+does not resolve package applicability. Missing `gz_vacate` alone is insufficient
+for NOT_APPLICABLE. Obtain Debian/upstream clarification covering the exact source
+and older recovery path, or a supported fixed package with later verification,
+before reconsidering exception Z. Its previous approval remains PENDING.
+
+### CVE-2026-35189: applicable client-TLS surface; ACCEPT_WITH_CONDITIONS proposed
+
+The [OpenSSL advisory](https://openssl-library.org/news/secadv/20260929.txt)
+rates this Low: crafted relative CRL distribution points can amplify certificate
+processing into hundreds of MiB during TLS handshakes. The installed 3.5.8 is
+affected; 3.5.9 fixes this branch. Normal outbound HTTPS can reach this behavior.
+Caddy terminating inbound TLS does not protect Node's outbound connections;
+updating Debian's OpenSSL cannot repair Node's bundled copy. Certificate
+validation is not evidence that allocation before rejection cannot occur.
+
+The [official Node index](https://nodejs.org/dist/index.json) still lists 22.23.3
+with OpenSSL 3.5.8 as latest Node 22. Node 24.21.0 also lists 3.5.8.
+[Node 26.11.1 (Current)](https://nodejs.org/en/blog/release/v26.11.1) includes
+3.5.9: a fixed supported alternative exists, but changing major versions is
+outside this verified candidate and requires separate compatibility review.
+Prefer a supported Node 22 fix when available; no custom rebuild is proposed.
+
+Recommend only a time-limited exception through **2026-10-18**, explicitly
+approved by Bar Shirom: default OpenAI endpoint, no visitor-selected destinations,
+no custom CA/proxy/TLS bypass, reviewed AI concurrency/budgets or stricter, 30-second
+timeout, zero SDK retries, 512 MiB container limit, and OOM/restart monitoring.
+Verify actual host environment privately before release. Malicious endpoint or
+network interception remains a possible exposure; limits do not prevent a single
+handshake's allocation. Residual consequence is outage and loss of temporary
+sessions. Reopen on any TLS/OOM failure, endpoint change or supported fix.
+
+### Remaining gate and verification scope
+
+Resolve the zlib evidence gap first; exception O additionally needs explicit
+owner approval and verified host conditions, or a verified fixed runtime.
+No risk was accepted, no new scan/build/test run or provider call occurred, and
+no AWS, application, image, release manifest or historical scan artifact changed.
+The prior 467-test result is historical, not a new result. Only this review was
+updated; publication/provisioning/deployment still require separate authorization.
+
+## Historical decision, 2026-10-11: READY_PENDING_EXPLICIT_RISK_APPROVAL
 
 **Local verification is complete. Publication and deployment remain unapproved.**
 The supported Caddy library patches and removal of unused backend package managers
