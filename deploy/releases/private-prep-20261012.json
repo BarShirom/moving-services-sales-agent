@@ -1,0 +1,130 @@
+{
+  "schemaVersion": 1,
+  "release": "private-prep-20261012",
+  "preparedOn": "2026-10-12",
+  "status": "PREPARED_NOT_PUBLISHED",
+  "publicationApproval": "PENDING",
+  "deploymentDecision": "BLOCK_PENDING_ZLIB_CLARIFICATION",
+  "riskApproval": "PENDING",
+  "published": false,
+  "git": {
+    "repository": "https://github.com/BarShirom/moving-services-sales-agent.git",
+    "branch": "main",
+    "applicationCheckpoint": "35ac99562213d1fff2091f3b290909bbd6be9947",
+    "securityReviewCommit": "9cabc5e59acacd11c3097cd640ed25f4a5d0eab6",
+    "observedRemoteMain": "1a7821210094c2bb314e8d038358fab82ca1e8e6",
+    "imageProvenanceBaseCommit": "1a7821210094c2bb314e8d038358fab82ca1e8e6",
+    "mappingNote": "Images were built from pending work before checkpoint; all 101 recorded inputs/assets/evidence hashes match. Review and preparation commits change documentation/metadata only, not image bytes. Not a claim of a clean-checkout build or reproducible future rebuild."
+  },
+  "aws": {
+    "account": "438298964276",
+    "profile": "workload",
+    "region": "eu-north-1",
+    "identityVerified": true,
+    "registryScanning": "BASIC",
+    "backend": {
+      "exists": true,
+      "tagMutability": "MUTABLE",
+      "scanOnPush": true,
+      "encryption": "AES256",
+      "lifecyclePolicy": null,
+      "proposedTagAbsent": true
+    },
+    "caddy": {
+      "exists": false,
+      "proposedSettings": {
+        "tagMutability": "IMMUTABLE",
+        "scanOnPush": true,
+        "encryption": "AES256"
+      }
+    },
+    "mutationsPerformed": false
+  },
+  "images": {
+    "backend": {
+      "localTag": "moving-services-sales-agent-server:bounded-review-20261011",
+      "index": "sha256:89a66baf7c1aead4aea6275de3931955130481861b5fa19fbbd78a244203150f",
+      "runtimeManifest": "sha256:77e90d04522a86ed72a717b96936d591b7d65f1cd34b1a454161b1ab9fdffbd1",
+      "config": "sha256:c778368b199bb3062c53696a667b3fdbe5deb12bdea782c1281b904c8729a384",
+      "attestationManifest": "sha256:d3ed74431ecb63ebbc51367eedd4c1904d00a1b1094a0fc0aa09fe5973978f58",
+      "attestationBlobs": [
+        "sha256:dcd467a084e8d00796e69372b145ed67b75297e4b5330ab09fee2e4c0c5a30ee"
+      ],
+      "architecture": "linux/amd64",
+      "bytes": 369151985,
+      "repository": "moving-services-sales-agent-server",
+      "proposedTag": "v0.2.0-demo-rc1-20261012-9cabc5e",
+      "proposedTaggedReference": "438298964276.dkr.ecr.eu-north-1.amazonaws.com/moving-services-sales-agent-server:v0.2.0-demo-rc1-20261012-9cabc5e",
+      "expectedRegistryDigestReference": "438298964276.dkr.ecr.eu-north-1.amazonaws.com/moving-services-sales-agent-server@sha256:89a66baf7c1aead4aea6275de3931955130481861b5fa19fbbd78a244203150f",
+      "remoteDigestVerified": false
+    },
+    "caddy": {
+      "localTag": "moving-services-sales-agent-caddy:bounded-review-20261011",
+      "index": "sha256:2dcec600792dbe19d3bb5f08cd09b51b802290f3651eb4d3197f317d74e2609b",
+      "runtimeManifest": "sha256:b4c930b2f04e2aba0f5af5d4e91a9914d3999b8b802d5cce25dc9e98e809644f",
+      "config": "sha256:0ca2d84bc0d93f4fe1d52eb7523d8854de1e0b71dbf3172a7df4c0c5386a45f7",
+      "attestationManifest": "sha256:6fccd8354bd13034891a418d602758b18aa46b5b3960b9c7fd681342d755dd7c",
+      "attestationBlobs": [
+        "sha256:e1df5a98bb2107deeaa6bd02dc01ded7f005e1c3212c3bef221ed500d03ea7ac"
+      ],
+      "architecture": "linux/amd64",
+      "bytes": 172226772,
+      "repository": "moving-services-sales-agent-caddy",
+      "proposedTag": "2.11.7-patched-rc1-20261012-9cabc5e",
+      "proposedTaggedReference": "438298964276.dkr.ecr.eu-north-1.amazonaws.com/moving-services-sales-agent-caddy:2.11.7-patched-rc1-20261012-9cabc5e",
+      "expectedRegistryDigestReference": "438298964276.dkr.ecr.eu-north-1.amazonaws.com/moving-services-sales-agent-caddy@sha256:2dcec600792dbe19d3bb5f08cd09b51b802290f3651eb4d3197f317d74e2609b",
+      "remoteDigestVerified": false
+    }
+  },
+  "evidence": {
+    "originalManifest": "deploy/releases/bounded-review-20261011.local.json",
+    "originalManifestSha256": "0446d73296203e7791aae9619891095927c1090e7c8eb5924ede491a36f573e8",
+    "inputsAssetsEvidenceHashesMatched": 101,
+    "trackedFilesChecked": 157,
+    "imageLayersChecked": 19,
+    "fileRecordsChecked": 9876,
+    "ociBlobsVerified": 30,
+    "backendSecurityModuleHashesMatched": 8,
+    "caddyBinarySha256": "3b9ca9921cc0d5eac014383253799d83e64f19cb109e99f6e0c97cee31c00984",
+    "caddyBuildMetadata": {
+      "caddy": "2.11.7",
+      "go": "1.26.9",
+      "golang.org/x/net": "0.60.0",
+      "CGO_ENABLED": "0"
+    },
+    "secretsReview": "No actual secrets detected. Five pattern hits classified: one deliberately invalid test API-key placeholder and four npm private-key documentation templates containing X placeholders (14-26 characters), retained only in historical backend layers. No sensitive-path hits. Checked tracked files, image layer file bytes and config/history; not proof against unknown or encoded secrets. No workstation secret files read.",
+    "vulnerabilityScansRerun": false,
+    "testsRerun": false,
+    "historicalTestsPassed": 467,
+    "newEcrScan": "PENDING_PUBLICATION",
+    "futureBuildReproducibility": "Existing content-addressed artifacts verified; mutable builder tag/APT and timing prevent a byte-identical rebuild guarantee."
+  },
+  "frontendAssets": [
+    {
+      "path": "client/dist/assets/index-BETzEhSh.css",
+      "sha256": "aff8edb291707273ecdd14cd5b9622e8b129f3ae10bcae5024907f665e9ddead"
+    },
+    {
+      "path": "client/dist/assets/index-vB7Q1tr4.js",
+      "sha256": "702abab0a99ca44d7e0d8869143b3157cb2c90bd766169049b53f412e374aa1d"
+    },
+    {
+      "path": "client/dist/index.html",
+      "sha256": "54a884edc9541cec57d070e0318cadae177fe7571c8435af333baab4f27c50ca"
+    }
+  ],
+  "riskExceptions": [
+    {
+      "id": "CVE-2026-85091",
+      "recommendation": "BLOCK",
+      "approval": "PENDING",
+      "reason": "Debian/upstream applicability discrepancy remains unresolved."
+    },
+    {
+      "id": "CVE-2026-35189",
+      "recommendation": "ACCEPT_WITH_CONDITIONS",
+      "approval": "PENDING",
+      "proposedReviewDeadline": "2026-10-18"
+    }
+  ]
+}
