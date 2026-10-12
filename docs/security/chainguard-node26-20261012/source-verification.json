@@ -1,0 +1,21 @@
+{
+    "checkedAt":  "2026-10-12T17:19:52.5504473Z",
+    "zlib":  {
+                 "fix":  "df84af25dc1942490e1d1c899a07619152a46148",
+                 "source":  "767c4c947852e143f582c85f14cf573411df1b35",
+                 "status":  "ahead",
+                 "ahead":  23,
+                 "behind":  0,
+                 "mergeBase":  "df84af25dc1942490e1d1c899a07619152a46148"
+             },
+    "node":  {
+                 "source":  "364593d0631def13e3043dd84f77ebca2c767ce5",
+                 "file":  "deps/ncrypto/ncrypto.cc",
+                 "conversionGuards":  [
+                                          {
+                                              "line":  8332,
+                                              "text":  "  unsigned char* value_str;\n  int value_str_size = ASN1_STRING_to_UTF8(\u0026value_str, value);\n  if (value_str_size \u003c 0) [[unlikely]] {\n    return {{}, {}};\n  }\n\n  std::string out(reinterpret_cast\u003cconst char*\u003e(value_str), value_str_size);\n  OPENSSL_free(value_str);  // free after copy\n\n  return {std::move(name_str), std::move(out)};"
+                                          }
+                                      ]
+             }
+}

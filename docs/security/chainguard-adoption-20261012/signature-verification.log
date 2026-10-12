@@ -1,0 +1,12 @@
+docker :
+At line:2 char:252
++ ... 5fd742768'; docker run --rm --read-only --tmpfs /tmp:rw,nosuid,nodev, ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+Verification for cgr.dev/chainguard/node@sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - The code-signing certificate was verified using trusted certificate authority certificates

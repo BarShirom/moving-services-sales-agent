@@ -1,0 +1,5 @@
+{
+ "digest": "xxh64:642bae286e35b65d",
+ "source": "https://grype.anchore.io/databases/v6/vulnerability-db_v6.1.10_2026-10-11T00:37:11Z_1791700242.tar.zst?checksum=sha256%3Aa1e7eb21958172e46e2bb6db02e72d68eb4efd4b17d0c43fba5e56ae73d0a196",
+ "client_version": "v6.1.10"
+}

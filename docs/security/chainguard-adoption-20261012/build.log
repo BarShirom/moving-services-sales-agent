@@ -1,0 +1,806 @@
+docker : #0 building with "desktop-linux" instance using docker driver
+At line:2 char:224
++ ... verwrite'}; docker build --no-cache --platform linux/amd64 --progress ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (#0 building wit...g docker driver:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+#1 [internal] load build definition from Dockerfile
+#1 transferring dockerfile: 2.73kB 0.0s done
+#1 DONE 0.1s
+
+#2 [internal] load metadata for
+cgr.dev/chainguard/node@sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e
+#2 DONE 1.0s
+
+#3 [internal] load build context
+#3 DONE 0.0s
+
+#4 [packages 1/5] FROM cgr.dev/chainguard/node@sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e
+#4 resolve cgr.dev/chainguard/node@sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e 0.0s done
+#4 DONE 0.0s
+
+#5 [packages 2/5] WORKDIR /app
+#5 CACHED
+
+#6 [runtime 2/5] WORKDIR /app
+#6 CACHED
+
+#3 [internal] load build context
+#3 transferring context:
+#3 transferring context: 6.40kB 0.7s done
+#3 DONE 0.8s
+
+#7 [packages 3/5] COPY package.json package-lock.json ./
+#7 DONE 0.1s
+
+#8 [packages 4/5] COPY server/package.json ./server/package.json
+#8 DONE 0.1s
+
+#9 [packages 5/5] COPY client/package.json ./client/package.json
+#9 DONE 0.1s
+
+#10 [verification  1/11] RUN npm ci --no-audit --no-fund
+#10 6.880 npm warn deprecated whatwg-encoding@3.1.1: Use @exodus/bytes instead for a more spec-conformant and faster
+implementation
+#10 ...
+
+#11 [production-dependencies 1/1] RUN npm ci --workspace server --include-workspace-root=false --omit=dev --no-audit
+--no-fund
+#11 12.60
+#11 12.60 added 69 packages in 12s
+#11 DONE 13.0s
+
+#10 [verification  1/11] RUN npm ci --no-audit --no-fund
+#10 ...
+
+#12 [runtime 3/5] COPY --from=production-dependencies /app/node_modules ./node_modules
+#12 DONE 0.3s
+
+#10 [verification  1/11] RUN npm ci --no-audit --no-fund
+#10 ...
+
+#13 [runtime 4/5] COPY --from=production-dependencies /app/server ./server
+#13 DONE 0.5s
+
+#10 [verification  1/11] RUN npm ci --no-audit --no-fund
+#10 16.13
+#10 16.13 added 189 packages in 15s
+#10 16.14 npm warn install-scripts 2 packages had install scripts blocked because they are not covered by allowScripts:
+#10 16.14 npm warn install-scripts   esbuild@0.28.2 (postinstall: node install.js)
+#10 16.14 npm warn install-scripts   esbuild@0.25.12 (postinstall: node install.js)
+#10 16.14 npm warn install-scripts
+#10 16.14 npm warn install-scripts Run `npm install-scripts ls` to review, or `npm install-scripts approve <pkg>` to
+allow.
+#10 DONE 16.3s
+
+#14 [verification  2/11] COPY server/tsconfig*.json ./server/
+#14 DONE 0.1s
+
+#15 [verification  3/11] COPY server/src ./server/src
+#15 DONE 0.1s
+
+#16 [verification  4/11] COPY server/tests ./server/tests
+#16 DONE 0.1s
+
+#17 [verification  5/11] COPY client/tsconfig.json client/vite.config.ts client/index.html ./client/
+#17 DONE 0.1s
+
+#18 [verification  6/11] COPY client/src ./client/src
+#18 DONE 0.1s
+
+#19 [verification  7/11] COPY client/tests ./client/tests
+#19 DONE 0.1s
+
+#20 [verification  8/11] COPY data/evals ./data/evals
+#20 DONE 0.1s
+
+#21 [verification  9/11] RUN --network=none npm test && npm run typecheck && npm run build && npm run eval
+#21 0.369 npm notice run moving-services-sales-agent@0.1.0 test
+#21 0.371 npm notice run npm run test --workspace server && npm run test --workspace client
+#21 0.627 npm notice run @moving-services-sales-agent/server@0.1.0 test
+#21 0.627 npm notice run tsx --test tests/lead.test.ts tests/requirements.test.ts tests/extraction.test.ts
+tests/mergeExtraction.test.ts tests/conversation.test.ts tests/aiExtraction.test.ts tests/demo.test.ts
+tests/conversationReplies.test.ts tests/offScript.test.ts tests/evals.test.ts tests/evalRunner.test.ts
+tests/pricing.test.ts tests/ownerWorkflow.test.ts tests/quoteWorkflow.test.ts tests/quoteDemo.test.ts
+tests/pricingEvidence.test.ts tests/cors.test.ts tests/sessions.test.ts tests/protection.test.ts
+tests/clientIdentity.test.ts
+#21 3.734 ✔ strict SDK JSON Schema requires every property and disallows extras without null updates (42.7114ms)
+#21 3.742 ✔ structured output converts all supported fields to the existing partial patch contract (77.476499ms)
+#21 3.750 ✔ partial merge preserves known fields, dimensions, false, zero and input immutability (3.850714ms)
+#21 3.754 ✔ contextual answer 2 passes the actual question and maps the model fixture (11.044944ms)
+#21 3.758 ✔ contextual answer לא passes the actual question and maps the model fixture (5.288073ms)
+#21 3.759 ✔ contextual answer גדול passes the actual question and maps the model fixture (6.100198ms)
+#21 3.761 ✔ an explicit correction changes only its field, including correction to false and zero (4.01132ms)
+#21 3.764 ✔ set cannot overwrite a known fact, while an explicit repeated value is safe (6.174427ms)
+#21 3.771 ✔ ambiguous output with keep operations produces no invented facts (4.868797ms)
+#21 3.773 ✔ rejects invalid quantity 0 (3.665255ms)
+#21 3.777 ✔ rejects invalid quantity -1 (1.163381ms)
+#21 3.778 ✔ rejects invalid quantity 1.5 (0.747228ms)
+#21 3.784 ✔ rejects invalid quantity 9007199254740992 (0.550402ms)
+#21 3.786 ✔ rejects invalid dimension 0 (1.36104ms)
+#21 3.796 ✔ rejects invalid dimension -1 (0.722343ms)
+#21 3.797 ✔ rejects invalid dimension Infinity (7.049217ms)
+#21 3.798 ✔ rejects invalid dimension NaN (1.876691ms)
+#21 3.799 ✔ rejects invalid normalized date 2026-02-29 (1.205886ms)
+#21 3.801 ✔ rejects invalid normalized date 2026-04-31 (0.722063ms)
+#21 3.816 ✔ rejects invalid normalized date 0000-01-01 (1.398519ms)
+#21 3.816 ✔ rejects invalid normalized date 2026-13-01 (0.663446ms)
+#21 3.820 ✔ rejects invalid normalized date מחר (2.538918ms)
+#21 3.824 ✔ rejects invalid normalized date 31/04/2026 (0.629246ms)
+#21 3.832 ✔ rejects invalid normalized time 24:00 (1.394751ms)
+#21 3.833 ✔ rejects invalid normalized time 18:60 (0.439136ms)
+#21 3.834 ✔ rejects invalid normalized time 8:00 (0.570322ms)
+#21 3.835 ✔ rejects fractional floors, blank strings, nulls, unknown enums, extra fields and contradictory item
+patches (8.055425ms)
+#21 3.843 ✔ multiple existing items remain unapplied without choosing one (3.328501ms)
+#21 3.849 ✔ context uses a detached state snapshot and bounded whole messages without timestamps or workflow status
+(1.986302ms)
+#21 3.853 ✔ oversized current input is rejected before calling the provider (2.534312ms)
+#21 3.856 ✔ missing or blank API keys produce a clear lazy configuration error (3.803149ms)
+#21 3.858 ✔ provider failures are typed, do not leak raw errors, and leave the lead untouched (3.999297ms)
+#21 3.869 ✔ provider status incomplete never merges even with parsed data (3.032275ms)
+#21 3.871 ✔ provider status failed never merges even with parsed data (0.930066ms)
+#21 3.888 ✔ provider status cancelled never merges even with parsed data (1.969097ms)
+#21 3.890 ✔ refusal and missing structured output are clear failures (1.865504ms)
+#21 3.895 ✔ official SDK parses a strict schema through a fake HTTP transport with no network (181.444109ms)
+#21 3.896 ✔ SDK malformed JSON and schema-invalid output are mapped to invalid extraction errors (12.58866ms)
+#21 3.908 ✔ injected workflow preserves requirement context and isolates extractor mutation (2.310219ms)
+#21 3.908 ✔ relative-date fixture keeps a known date while correcting an explicit time (2.33766ms)
+#21 3.912 ✔ invalid AI output rejects the workflow atomically instead of merging valid siblings (1.308051ms)
+#21 3.924 ✔ obvious placeholder API keys fail locally with a setup instruction and no leaked value (6.629854ms)
+#21 3.926 ✔ exact reported live demo message preserves refrigerator AND 15 boxes through SDK parsing and workflow
+(11.591493ms)
+#21 3.926 ✔ multi-item fixture for בערך 15 ארגזים keeps the approximate supplied total (5.320164ms)
+#21 3.926 ✔ multi-item fixture for כ-15 ארגזים keeps the approximate supplied total (7.976898ms)
+#21 3.926 ✔ multi-item fixture for משהו כמו 15 ארגזים keeps the approximate supplied total (7.902036ms)
+#21 3.927 ✔ יש גם ארגזים includes boxes alongside a refrigerator without inventing quantity (6.620074ms)
+#21 3.929 ✔ adding boxes keeps an existing refrigerator and unrelated known item facts (8.204502ms)
+#21 3.933 ✔ unknown or incremental box totals keep existing quantities without dropping the refrigerator (23.174408ms)
+#21 3.934 ✔ negative and uncertain box fixtures do not copy boxes from the multi-item prompt example (8.660862ms)
+#21 4.182 ✔ IP validation rejects ambiguous input and canonicalizes IPv6 and mapped IPv4 (35.386673ms)
+#21 4.185 ✔ proxy configuration rejects ranges, names and insecure/cross-origin modes (31.468493ms)
+#21 4.192 ✔ direct mode ignores the dedicated header as well as standard forwarding headers (3.843426ms)
+#21 4.396 ✔ two clients behind the exact proxy have independent request limits; spoofed standard headers cannot rotate
+identities (306.148679ms)
+#21 4.518 ✔ proxy session creation limits isolate clients while global limits span them (106.017832ms)
+#21 4.805 ✔ per-client AI quotas follow the admitted visitor and rejected calls preserve state (301.82714ms)
+#21 4.871 ✔ untrusted direct peer cannot reach demo routes even with cookies and forged headers; health remains
+available (65.897865ms)
+#21 4.935 ✔ trusted peer with absent, malformed or duplicate identity fails closed before allocating clients
+(65.674927ms)
+#21 4.976 ✔ equivalent IPv6 and mapped addresses share client counters (40.476489ms)
+#21 5.019 ✔ proxy mode preserves secure host-only cookies and rejects cross-origin or simple requests regardless of
+forwarded host/proto (51.221247ms)
+#21 5.084 ✔ processes the initial request, records original text, and asks only missing details (78.258592ms)
+#21 5.084 ✔ latest access answers and existing known fields are not asked again (27.286907ms)
+#21 5.084 ✔ repeated messages append distinct history entries without duplicate items (8.273028ms)
+#21 5.084 ✔ unsupported text still appends the exact original message without altering move details (2.828596ms)
+#21 5.084 ✔ a multi-message flow reaches readiness with a pending review photo (18.900097ms)
+#21 5.084 ✔ requirement context is retained through evaluation and readiness updates (11.471217ms)
+#21 5.084 ✔ later lifecycle statuses are preserved (3.514207ms)
+#21 5.084 ✔ workflow surfaces item ambiguity without altering existing items (2.488442ms)
+#21 5.084 ✔ active date question accepts 10/10 without depending on an AI extraction (32.115948ms)
+#21 5.087 ✔ active date question accepts 10/10/2026 without depending on an AI extraction (5.524993ms)
+#21 5.087 ✔ active date question accepts 10.10 without depending on an AI extraction (9.820634ms)
+#21 5.087 ✔ active date question accepts 10.10.2026 without depending on an AI extraction (2.365375ms)
+#21 5.090 ✔ active date question accepts 06/10 without depending on an AI extraction (5.384401ms)
+#21 5.090 ✔ active date question accepts 07/10 without depending on an AI extraction (5.583681ms)
+#21 5.090 ✔ date shortcut leaves compound replies, corrections and other questions to extraction (9.042478ms)
+#21 5.091 ✔ active yearless date requires reference context; explicit year does not (2.302855ms)
+#21 5.093 ✔ invalid explicit dates and invalid reference dates fail without mutating any Lead information (7.648975ms)
+#21 5.095 ✔ 16/09 in a sentence normalizes through the AI boundary and progresses from date to photo (19.176149ms)
+#21 5.095 ✔ 16/09/2026 in a sentence normalizes through the AI boundary and progresses from date to photo (3.61106ms)
+#21 5.097 ✔ 16.09 in a sentence normalizes through the AI boundary and progresses from date to photo (2.191857ms)
+#21 5.101 ✔ 16.09.2026 in a sentence normalizes through the AI boundary and progresses from date to photo (4.999808ms)
+#21 5.101 ✔ date policy 16/09 relative to 2026-09-16 gives 2026-09-16 (0.823812ms)
+#21 5.101 ✔ date policy 16/09 relative to 2026-09-17 gives 2027-09-16 (0.297787ms)
+#21 5.101 ✔ date policy 01/01 relative to 2026-12-31 gives 2027-01-01 (0.222115ms)
+#21 5.101 ✔ date policy 31.12 relative to 2026-12-31 gives 2026-12-31 (0.186513ms)
+#21 5.101 ✔ date policy 16/09/2025 relative to 2026-09-15 gives 2025-09-16 (0.263234ms)
+#21 5.101 ✔ date policy 29/02 relative to 2027-03-01 gives 2028-02-29 (0.188133ms)
+#21 5.102 ✔ date policy 29.02.2028 relative to 2026-01-01 gives 2028-02-29 (0.217114ms)
+#21 5.103 ✔ date policy 2026-09-16 relative to 2026-09-15 gives 2026-09-16 (0.126049ms)
+#21 5.103 ✔ missing reference leaves a yearless date unresolved while explicit full dates work (1.477511ms)
+#21 5.104 ✔ invalid calendar dates, mixed separators, unsupported relative dates, and non-leap selected years are
+rejected (4.013696ms)
+#21 5.104 ✔ normalized date updates retain correction semantics (1.01745ms)
+#21 5.104 ✔ application reference date follows Jerusalem midnight rather than UTC or host locale (85.801048ms)
+#21 5.104 ✔ photo request followed by אין updates availability, acknowledges and never repeats (2.826413ms)
+#21 5.104 ✔ photo request followed by אין לי updates availability, acknowledges and never repeats (1.345186ms)
+#21 5.104 ✔ photo request followed by אין תמונה updates availability, acknowledges and never repeats (1.219633ms)
+#21 5.104 ✔ photo request followed by אין לי תמונה updates availability, acknowledges and never repeats (1.757527ms)
+#21 5.104 ✔ photo request followed by אין לי כרגע updates availability, acknowledges and never repeats (2.025485ms)
+#21 5.104 ✔ photo request followed by לא updates availability, acknowledges and never repeats (2.056611ms)
+#21 5.104 ✔ photo request followed by לא כרגע updates availability, acknowledges and never repeats (1.418079ms)
+#21 5.104 ✔ photo acknowledgement is combined with the next missing pricing question (2.18809ms)
+#21 5.105 ✔ photo acknowledgement advances to another pending item photo without changing it (1.828859ms)
+#21 5.105 ✔ a random לא outside the photo question never changes photo availability (1.457074ms)
+#21 5.106 ✔ uncertain, multi-fact, malformed-context and already-received photo replies are not forced into
+unavailable (0.701395ms)
+#21 5.107 ✔ later messages retain unavailable photo state and still receive a backend response (1.124773ms)
+#21 5.108 ✔ a blocked unsupported item still receives a human-review response when no question is available
+(1.430623ms)
+#21 5.110 ✔ default same-origin API behavior adds no CORS permissions (316.791493ms)
+#21 5.111 ✔ configured exact origin supports JSON preflight and API responses (150.592951ms)
+#21 5.112 ✔ other origins receive no CORS permission and same-origin calls still work (78.08542ms)
+#21 5.225 ✔ demo initializes from requirements and reports the product identity in health (364.468906ms)
+#21 5.225 ✔ message route retains facts, forwards the displayed question and records both sides (244.407932ms)
+#21 5.225 ✔ reset creates a fresh Lead with backend-derived requirements (66.809292ms)
+#21 5.225 ✔ HTTP browser regression: elevator no, then 10/10, with explicit October reference (288.461722ms)
+#21 5.225 ✔ HTTP browser regression: elevator no, then 10/10/2026, with explicit October reference (204.488249ms)
+#21 5.226 ✔ HTTP browser regression: elevator no, then 10.10, with explicit October reference (187.39043ms)
+#21 5.352 ✔ HTTP browser regression: elevator no, then 10.10.2026, with explicit October reference (120.267949ms)
+#21 5.491 ✔ HTTP browser regression: elevator no, then 06/10, with explicit October reference (145.083833ms)
+#21 5.588 ✔ HTTP browser regression: elevator no, then 07/10, with explicit October reference (95.577879ms)
+#21 5.648 ✔ invalid messages and caller-supplied Lead state are rejected without extraction (63.66008ms)
+#21 5.689 ✔ safe route error for MISSING_API_KEY preserves state (39.877291ms)
+#21 5.724 ✔ safe route error for REQUEST_FAILED preserves state (33.678913ms)
+#21 5.762 ✔ safe route error for INVALID_EXTRACTION preserves state (41.803502ms)
+#21 5.815 ✔ safe route error for unexpected failure preserves state (44.128234ms)
+#21 5.863 ✔ simultaneous sends and resets cannot race an in-flight extraction (52.071117ms)
+#21 5.964 ✔ reported conversation progresses through address, elevator, date and unavailable photo with a final
+response (97.636736ms)
+#21 6.019 ✔ HTTP demo persists a compound photo alternative and all three dimension question references (62.760916ms)
+#21 7.149 ✔ runner loads every public case and reports provisional partial pricing without claiming whole-job accuracy
+(413.327281ms)
+#21 7.149 ✔ an executable domain photo case passes without an extraction mock being consumed (4.942011ms)
+#21 7.150 ✔ fixture-based PASS is explicitly scoped and a wrong expected state produces FAIL (19.920209ms)
+#21 7.150 ✔ expected extraction is an assertion, not a source of mock execution output (22.193399ms)
+#21 7.150 ✔ future, missing-fixture, stale, unsupported-intent and unsupported-state cases are NOT_RUN (40.599712ms)
+#21 7.151 ✔ a corrupt fixture cannot authorize overwriting unrelated known false or inventing dimensions (26.93678ms)
+#21 7.151 ✔ mustNot checks detect repeated unavailable photos and already-known requirements (10.914605ms)
+#21 7.152 ✔ extraction comparisons match unique item types rather than incidental array ordering (0.990268ms)
+#21 7.155 ✔ wardrobe eval fails if unavailable size is re-requested or a service fact is lost (13.484989ms)
+#21 7.156 ✔ access-note assertions accept meaning-preserving phrasing and reject missing facts (2.796765ms)
+#21 7.157 ✔ invalid pricing evidence is INVALID and duplicate IDs are rejected in each runner (3.199509ms)
+#21 7.160 ✔ overall status and exit code distinguish passing, failing, invalid and empty runs (27.312873ms)
+#21 7.160 ✔ report ordering and contents remain deterministic despite runtime Lead IDs and timestamps (279.902226ms)
+#21 7.164 ✔ CLI JSON is machine-readable and returns nonzero for required failures (9.958686ms)
+#21 7.164 ✔ actual node CLI process propagates a failing report as exit status 1 (1295.933943ms)
+#21 7.164 ✔ root npm eval:json propagates the report exit code for CI and emits clean JSON with --silent
+(1897.541271ms)
+#21 7.250 ✔ offline runner performs no live fetch even with all extraction fixtures exercised (101.994144ms)
+#21 7.292 ✔ the reusable loader parses both datasets and preserves the supplied closed-job facts (8.785547ms)
+#21 7.292 ✔ optional conversation and pricing fields can be omitted (1.278238ms)
+#21 7.292 ✔ conversation required fields and nonempty intents are enforced (12.873938ms)
+#21 7.292 ✔ pricing required fields are enforced (7.662412ms)
+#21 7.292 ✔ duplicate conversation IDs are rejected instead of silently replacing a case (3.667717ms)
+#21 7.292 ✔ duplicate pricing IDs are rejected even when their prices differ (1.607579ms)
+#21 7.292 ✔ source quality and supported currency values are validated (9.649855ms)
+#21 7.292 ✔ closed jobs require a closed price and keep quote and closed amounts distinct (1.899812ms)
+#21 7.292 ✔ quoted-only and historical estimates cannot masquerade as closed-job evidence (3.66638ms)
+#21 7.292 ✔ invalid numeric values and calendar dates are rejected while unknowns stay unknown (9.711822ms)
+#21 7.292 ✔ all files in the public eval directory pass the privacy tripwire (187.438354ms)
+#21 7.292 ✔ privacy checks reject obvious phone formats without echoing private matches (3.091197ms)
+#21 7.292 ✔ privacy checks reject email addresses including in nested decoded JSON (1.786983ms)
+#21 7.292 ✔ privacy checks reject obvious raw chat export metadata (0.859211ms)
+#21 7.293 ✔ privacy checks accept synthetic dates, measurements, house numbers and prices (0.806057ms)
+#21 7.293 ✔ loader rejects malformed JSON and scans documentation from a supplied directory (31.640942ms)
+#21 7.293 ✔ historical job additions retain evidence limits instead of inventing quotes or outcomes (2.332702ms)
+#21 7.293 ✔ optional historical price ranges preserve bounds without requiring an invented point estimate (12.615848ms)
+#21 7.293 ✔ reference ranges cannot substitute for actual quoted or closed prices (4.538684ms)
+#21 7.293 ✔ all pricing amount fields are strictly positive and unknown quantities remain explicit (4.384099ms)
+#21 7.293 ✔ historical heuristic references stay in documentation rather than masquerading as closed jobs (16.191648ms)
+#21 7.293 ✔ initial refrigerator request extracts only identified items and route cities (97.225771ms)
+#21 7.293 ✔ recognizes supported item: refrigerator (מקרר) (8.791018ms)
+#21 7.294 ✔ recognizes supported item: box (ארגז) (7.783501ms)
+#21 7.294 ✔ recognizes supported item: box (ארגזים) (5.770648ms)
+#21 7.294 ✔ recognizes supported item: washing_machine (מכונת כביסה) (1.00744ms)
+#21 7.294 ✔ recognizes supported item: wardrobe (ארון) (0.713571ms)
+#21 7.294 ✔ recognizes supported item: bed (מיטה) (0.632371ms)
+#21 7.296 ✔ recognizes supported item: dresser (שידה) (0.600923ms)
+#21 7.296 ✔ all demo city pairs have deterministic pickup/dropoff direction (17.397707ms)
+#21 7.296 ✔ city phrase: איסוף מרמת גן (15.997554ms)
+#21 7.296 ✔ city phrase: איסוף בתל אביב (7.55311ms)
+#21 7.296 ✔ city phrase: פריקה בתל אביב (1.476346ms)
+#21 7.296 ✔ city phrase: לרמת גן (0.480184ms)
+#21 7.296 ✔ city phrase: מתל אביב לבת ים (5.41488ms)
+#21 7.296 ✔ city phrase: איסוף: גבעתיים ופריקה: חולון (1.495033ms)
+#21 7.296 ✔ city phrase: מרמת גן לתל אביב, איסוף בחולון (0.947609ms)
+#21 7.296 ✔ side-specific access details: איסוף קומה 2 בלי מעלית (5.123664ms)
+#21 7.296 ✔ side-specific access details: פריקה קומה 3 עם מעלית (0.62778ms)
+#21 7.296 ✔ side-specific access details: איסוף קומת קרקע אין מעלית (0.494683ms)
+#21 7.296 ✔ side-specific access details: פריקה קומה 0 יש מעלית (0.569299ms)
+#21 7.296 ✔ side-specific access details: איסוף קומה ראשונה (0.480276ms)
+#21 7.296 ✔ side-specific access details: פריקה קומה שנייה (0.385414ms)
+#21 7.297 ✔ side-specific access details: איסוף קומה שניה (4.800806ms)
+#21 7.297 ✔ side-specific access details: פריקה קומה שלישית (0.571729ms)
+#21 7.297 ✔ side-specific access details: איסוף קומה 2 בלי מעלית ופריקה קומה 3 עם מעלית (0.638909ms)
+#21 7.297 ✔ explicit refrigerator size: SMALL (מקרר קטן) (1.389603ms)
+#21 7.297 ✔ explicit refrigerator size: REGULAR (מקרר רגיל) (6.112588ms)
+#21 7.297 ✔ explicit refrigerator size: LARGE (המקרר גדול) (0.671589ms)
+#21 7.297 ✔ explicit refrigerator size: FOUR_DOOR (מקרר 4 דלתות) (0.43135ms)
+#21 7.297 ✔ explicit refrigerator size: FOUR_DOOR (מקרר ארבע דלתות) (0.44395ms)
+#21 7.297 ✔ box count: 20 ארגזים (9.005453ms)
+#21 7.297 ✔ box count: בערך 15 ארגזים (8.149313ms)
+#21 7.297 ✔ box count: יש 10 ארגזים (0.51502ms)
+#21 7.298 ✔ boxes without a count omit quantity rather than returning null or zero (0.640565ms)
+#21 7.298 ✔ invalid and conflicting quantities are not invented (1.146628ms)
+#21 7.298 ✔ numeric separators, additive quantities, and quantity bounds do not become exact totals (2.075873ms)
+#21 7.298 ✔ opposite-direction cities in a labeled segment are not assigned to the wrong side (0.721263ms)
+#21 7.298 ✔ conflicting size or location facts omit only those updates (6.847608ms)
+#21 7.298 ✔ only valid unambiguous ISO calendar dates are extracted (27.755725ms)
+#21 7.298 ✔ unsupported or ambiguous language produces no structured guesses (9.750987ms)
+#21 7.298 ✔ punctuation ends side context and vague size does not become a category (1.483498ms)
+#21 7.298 ✔ several item types are extracted once each (3.985244ms)
+#21 7.299 ✔ new leads start collecting with explicitly unknown move details (49.060553ms)
+#21 7.299 ✔ factory generates unique UUIDs and matching current UTC timestamps (11.681464ms)
+#21 7.300 ✔ leads and their pickup/dropoff objects do not share mutable defaults (2.183134ms)
+#21 7.300 ✔ unknown booleans, confirmed false, and confirmed true survive JSON serialization (3.35252ms)
+#21 7.300 ✔ nested partial updates preserve unrelated known state including false and zero (12.377ms)
+#21 7.301 ✔ explicit false and zero updates overwrite prior values (0.642865ms)
+#21 7.301 ✔ empty patches and undefined properties cannot erase known values (0.756604ms)
+#21 7.301 ✔ fridge updates preserve dimensions, photo receipt, and service answers without duplicates (55.564282ms)
+#21 7.301 ✔ box mentions retain known quantities and explicit counts update the existing item (14.990154ms)
+#21 7.301 ✔ new items use domain factory defaults and do not displace other items (1.349846ms)
+#21 7.301 ✔ multiple items of the same type produce an unapplied update instead of a guess (1.309932ms)
+#21 7.301 ✔ merged output and patch do not share mutable nested data with the input (1.083575ms)
+#21 7.301 ✔ wardrobe unavailable dimensions and both services do not loop on the active size question (48.138154ms)
+#21 7.301 ✔ final manual-review response names pending wardrobe dimensions once and acknowledges the unavailable photo
+(5.142329ms)
+#21 7.301 ✔ contextual unavailable wardrobe dimensions: אין לי כרגע את המידות (3.654182ms)
+#21 7.301 ✔ contextual unavailable wardrobe dimensions: אני לא יודע את המידות (3.587084ms)
+#21 7.301 ✔ contextual unavailable wardrobe dimensions: אבדוק את המידות ואעדכן (3.685411ms)
+#21 7.301 ✔ contextual unavailable wardrobe dimensions: אין לי את המידה עכשיו (3.5992ms)
+#21 7.301 ✔ contextual unavailable wardrobe dimensions: אבדוק ואעדכן (7.584346ms)
+#21 7.302 ✔ dimension unavailability persists, retains partial values, and a later offer reopens only missing axes
+(27.702836ms)
+#21 7.302 ✔ an unrelated unknown fact never globally defers wardrobe dimensions or invents availability (4.955094ms)
+#21 7.302 ✔ disassembly-only structured extraction leaves assembly unknown and asks its relevant question (10.199552ms)
+#21 7.302 ✔ unsupported dresser still allows photo collection and an unavailable reply never loops (4.944756ms)
+#21 7.302 ✔ photo decline plus dimensions offer: אין לי כרגע, אבל יש לי את המידות (6.136984ms)
+#21 7.302 ✔ photo decline plus dimensions offer: אין לי תמונה אבל יש מידות (2.599451ms)
+#21 7.302 ✔ offered measurements persist across unrelated turns and complete without a photo loop (16.255775ms)
+#21 7.302 ✔ photo refusal and complete measurements are merged together: אין לי תמונה, רוחב 70 גובה 180 עומק 70
+(4.765214ms)
+#21 7.302 ✔ photo refusal and complete measurements are merged together: אין לי תמונה, המקרר 70 רוחב, 180 גובה, 70
+עומק (1.752196ms)
+#21 7.302 ✔ centimeter-normalized dimension fixture: גובה 180 ס"מ (2.681878ms)
+#21 7.302 ✔ centimeter-normalized dimension fixture: גובה 1.8 מטר (1.852692ms)
+#21 7.302 ✔ centimeter-normalized dimension fixture: רוחב 700 מ"מ (5.159477ms)
+#21 7.302 ✔ centimeter-normalized dimension fixture: בערך 70 רוחב (5.380998ms)
+#21 7.303 ✔ centimeter-normalized dimension fixture: 70 על 70 על 180 בסדר רוחב, עומק, גובה (4.78911ms)
+#21 7.304 ✔ an unlabelled triple never invents axes or clears the outstanding offer (5.93277ms)
+#21 7.304 ✔ offered dimensions with no size classification ask axes rather than the size category again (7.188827ms)
+#21 7.304 ✔ withdrawing an optional dimensions offer retains actual measurements and avoids another loop (15.511953ms)
+#21 7.304 ✔ address reply captures extra floor and elevator facts and skips both questions (3.508836ms)
+#21 7.304 ✔ address and a date supplied early are retained and not asked again (13.025481ms)
+#21 7.304 ✔ a partial grouped answer asks only for the remaining floor (2.809655ms)
+#21 7.304 ✔ correction while answering a photo request changes only the corrected floor (8.506908ms)
+#21 7.304 ✔ decline, alternative and unrelated correction in one message all survive extraction (2.50255ms)
+#21 7.304 ✔ photo unavailability outside the active photo question uses the explicitly identified item (3.795926ms)
+#21 7.304 ✔ ambiguous same-type item availability updates remain unapplied while clear corrections survive (2.144817ms)
+#21 7.304 ✔ availability never erases received photos and invalid measurements reject the entire update (4.162386ms)
+#21 7.304 ✔ a correction is acknowledged before the next missing date question (5.16887ms)
+#21 7.304 ✔ complete measurements and a floor correction both receive acknowledgement before review (2.173487ms)
+#21 7.304 ✔ a claimed correction with no applied change receives no correction acknowledgement (1.792579ms)
+#21 7.304 ✔ stair carry acknowledgement retains elevator availability and does not re-ask known access facts
+(17.502303ms)
+#21 7.304 ✔ unknown floor stays missing without an immediate question loop: אני לא יודע כרגע, אבדוק ואעדכן
+(11.420166ms)
+#21 7.304 ✔ unknown floor stays missing without an immediate question loop: אבדוק ואעדכן (15.728884ms)
+#21 7.304 ✔ will-check replies still merge extra facts and corrections before selecting another missing requirement
+(8.020339ms)
+#21 7.304 ✔ deferral applies only to the asked item and leaves another item measurement askable (10.454365ms)
+#21 7.304 ✔ an ordinary unanswered question and a will-check message without question context are not deferred
+(4.232014ms)
+#21 7.304 ✔ reported fridge and 15 boxes HTTP flow prices all components and photo refusal keeps the recommendation
+current (662.389256ms)
+#21 7.304 ▶ mixed inventory HTTP flow prices supported transport and keeps wardrobe costs manual
+#21 7.304   ✔ registered synthetic route; assembly=true (109.94754ms)
+#21 7.304   ✔ registered synthetic route; assembly=null (92.459503ms)
+#21 7.305   ✔ unknown route; assembly=true (71.22784ms)
+#21 7.305 ✔ mixed inventory HTTP flow prices supported transport and keeps wardrobe costs manual (278.219278ms)
+#21 7.305 ✔ HTTP wardrobe loop retains services and pending dimensions through collection and owner manual pricing
+(110.361664ms)
+#21 7.305 ✔ recommendation is private to owner; GET and calculation alone cannot send a quote (58.604568ms)
+#21 7.305 ✔ approve sends exactly the approved quote, retains separate audit amounts, rejects replay (73.807863ms)
+#21 7.305 ✔ adjusted price goes to customer, recommendation and internal reason remain owner-only (45.260735ms)
+#21 7.305 ✔ invalid owner commands and amounts cannot modify workflow or inject evaluations (64.348904ms)
+#21 7.305 ✔ request information asks the real customer, preserves question context, blocks reuse and allows
+recalculation (69.309664ms)
+#21 7.305 ✔ takeover stops extraction and automated replies while recording customer messages (39.617014ms)
+#21 7.305 ✔ customer changes invalidate already approved pricing and block stale owner screens (43.389001ms)
+#21 7.305 ✔ reset clears all owner state and rejects actions from a previous Lead (53.029016ms)
+#21 7.305 ✔ a completed normal customer conversation automatically generates an owner-only evaluation (22.796443ms)
+#21 7.305 ✔ owner mutations and reset are blocked during extraction; failed extraction preserves review state
+(53.13934ms)
+#21 7.305 ✔ workflow actions do not mutate their input and closed states reject actions (18.189093ms)
+#21 7.306 ✔ null recommendation blocks approve but permits explicit owner pricing; unchanged facts preserve current
+snapshot (16.567859ms)
+#21 7.306 ✔ synthetic route adapter supplies numeric distance and clears it after a route correction (44.251202ms)
+#21 7.306 ✔ complex wardrobe lead retains defensible components while unavailable dimensions and unsupported transport
+stay under review (91.004492ms)
+#21 7.306 ✔ identical validated input and metadata produce identical complete evaluations without mutation
+(18.078018ms)
+#21 7.306 ✔ simple refrigerator reference preserves floor zero and elevator false (7.541765ms)
+#21 7.306 ✔ all documented fridge categories use source endpoints and deterministic midpoints (23.699212ms)
+#21 7.306 ✔ stairs apply once per endpoint for a simple fridge, summing amounts and source ranges (11.176977ms)
+#21 7.306 ✔ central range policy sums endpoints rather than inventing percentage margins (0.952722ms)
+#21 7.306 ✔ fridge plus boxes uses one provisional volume band and quantity affects price (11.64936ms)
+#21 7.306 ✔ missing distance, even with an explicit band, requires review without inferred kilometers (12.877998ms)
+#21 7.306 ✔ unsupported items, electric piano, multiple beds and wardrobes never receive invented rates (24.769958ms)
+#21 7.306 ✔ special access lowers confidence and keeps ordinary stairs separate from unpriced difficulty (17.03665ms)
+#21 7.306 ✔ non-fitting elevator stays true, prices stair work and flags additional difficulty (13.586038ms)
+#21 7.306 ✔ all statuses require approval, store rule version and detached snapshots (5.718437ms)
+#21 7.306 ✔ address, floor, quantity, item, date, and external distance changes invalidate snapshots (39.66953ms)
+#21 7.306 ✔ only ready Leads with current requirements and an amount prepare for review; sent/won/lost are preserved
+(18.615064ms)
+#21 7.307 ✔ unresolved quantity outside the singular convention and unsupported sizes do not invent a fridge amount
+(10.498902ms)
+#21 7.307 ✔ irrelevant unknown appliance services do not block pricing while explicit services still require review
+(13.788585ms)
+#21 7.307 ✔ complete dimensions or received photo improve completeness but do not imply size or elevator fit
+(8.433601ms)
+#21 7.307 ✔ multiple points, high volume, many types, basement, workers and duration flag manual review (4.990018ms)
+#21 7.307 ✔ monetary and confidence invariants hold across categories, access and missing inputs (234.561703ms)
+#21 7.307 ✔ invalid external and Lead facts reject before calculation; overflow is rejected (14.839364ms)
+#21 7.307 ✔ eval adapter preserves unknowns, false, zero and avoids duplicate box counts (17.07724ms)
+#21 7.307 ✔ closed comparisons report differences but remain explicitly partial and never accuracy gates (16.81296ms)
+#21 7.307 ✔ historical estimates compare ranges informationally, never becoming actual closed evidence (8.835516ms)
+#21 7.307 ✔ structural invariant failures are rejected independently of historical price error (8.798147ms)
+#21 7.307 ✔ pricing is offline and has no OpenAI/network imports or runtime fetch (140.455055ms)
+#21 7.307 ✔ box volume boundaries, zero boxes, aggregated rows and high-volume omission are explicit (19.983137ms)
+#21 7.307 ✔ numeric distance uses included threshold then per-km band including fractional kilometers (29.501928ms)
+#21 7.307 ✔ washing machine uses historical band and no duplicate base; workers/time are complexity only (7.969529ms)
+#21 7.307 ✔ explicit standard service bundles use full historical bands once; unresolved complexity is unpriced
+(38.211536ms)
+#21 7.307 ✔ explicit extra stops have a fee but unmodeled access keeps recommendation partial (4.70596ms)
+#21 7.307 ✔ waiting rounds started half-hours upward and is never inferred from duration (10.100772ms)
+#21 7.307 ✔ student discount is explicit, applies once and preserves correlated range bounds (8.366855ms)
+#21 7.307 ✔ missing floor or fit prevents complete recommendation; irrelevant appliance services do not (16.075791ms)
+#21 7.307 ✔ browser refrigerator with unknown quantity, 15 boxes, no photo and two stair endpoints prices every
+supported component (6.573892ms)
+#21 7.307 ✔ singular fridge normalization rejects duplicate, incomplete or ambiguous item evidence (11.640611ms)
+#21 7.307 ✔ unknown assembly is irrelevant for transport appliances/boxes but furniture reasons remain item-specific
+(4.484343ms)
+#21 7.307 ✔ photo refusal and conversational metadata preserve freshness; received evidence and actual cost facts
+invalidate it (3.21738ms)
+#21 7.307 ✔ unknown extra difficulty is an owner caution, while explicit difficulty remains unpriced (3.223806ms)
+#21 7.307 ✔ complete engine evaluations are SCORED even when historical prices differ (12.995424ms)
+#21 7.307 ✔ structural checks reject negative totals/components, missing version and absent human approval (6.873905ms)
+#21 7.307 ✔ provisional version changes invalidate earlier recommendations and extra context validates (12.188252ms)
+#21 7.307 ✔ mixed fridge/wardrobe/boxes prices the supported load and groups unresolved wardrobe risk once (9.410494ms)
+#21 7.307 ✔ missing distance keeps the mixed supported subtotal useful without inventing geographic facts (1.852076ms)
+#21 7.307 ✔ unsupported item risk groups preserve distinct notes without stacking the same unresolved item cost
+(5.69883ms)
+#21 7.307 ✔ unknown dresser services are not manufactured, while an explicit service remains manual (3.943018ms)
+#21 7.307 ✔ unknown bed and wardrobe service needs remain clarification without claiming required services (3.244632ms)
+#21 7.307 ✔ high box volume and unresolved supported counts retain refrigerator pricing but suppress unsupported stair
+composition (11.453904ms)
+#21 7.307 ✔ wardrobe singular assumptions reject duplicates, explicit quantities, ambiguous descriptions and
+incomplete inventory (3.038857ms)
+#21 7.307 ✔ fit checks require explicit item-specific context, while explicit non-fit still prices supported stairs
+(10.178663ms)
+#21 7.307 ✔ standard service context does not override explicitly unavailable dimensions (7.963321ms)
+#21 7.308 ✔ offline evidence layer covers all categories and references the current unmodified rule version
+(5.861963ms)
+#21 7.308 ✔ duplicate IDs and invalid evidence/readiness enums fail instead of silently overwriting records
+(128.655907ms)
+#21 7.308 ✔ all supplied price fields reject zero, negative and non-finite amounts; ranges reject inverted bounds
+(346.068643ms)
+#21 7.308 ✔ confirmed closed jobs require an actual price; estimates cannot silently become sent or closed jobs
+(59.579797ms)
+#21 7.308 ✔ existing six cases retain source identity, amounts, outcome, staffing, known access and original inventory
+(4.088298ms)
+#21 7.308 ✔ bundle prices cannot be smuggled into item fields or linked as tariff evidence (58.385162ms)
+#21 7.308 ✔ readiness rejects missing IDs, mismatched categories, cross-scope service evidence and unearned READY
+(72.189771ms)
+#21 7.309 ✔ box and distance tariffs explicitly remain weak engineering assumptions, not historical calibration
+(21.81096ms)
+#21 7.309 ✔ privacy checks reject phone/email/export metadata including decoded escapes; identity/address keys are
+unsupported (146.902391ms)
+#21 7.309 ✔ open-ended references, expected closes and disputed close claims stay distinct from actual transactions
+(3.513553ms)
+#21 7.309 ✔ documentation records the owner learning loop and prevents automatic tariff changes (57.31966ms)
+#21 7.309 ✔ per-session HTTP quota rejects without state mutation and reset does not clear it (366.436794ms)
+#21 7.309 ✔ socket client limits ignore forged forwarding headers and cookie churn; health is independent (46.865982ms)
+#21 7.309 ✔ new-session limits apply per peer and globally across peers without evicting active counters (3.014657ms)
+#21 7.310 ✔ global HTTP admission spans peers and recovers at the fixed-window boundary (0.956335ms)
+#21 7.310 ✔ session creation 429 never issues a cookie, and existing visitors still work (33.463267ms)
+#21 7.310 ✔ AI semaphore has no queue, never exceeds the ceiling, and releases even on failure (8.407681ms)
+#21 7.310 ✔ HTTP excess AI concurrency returns 503 with retry guidance and unchanged state (133.671517ms)
+#21 7.310 ✔ per-session AI allowance survives reset and rejected messages preserve state (50.920553ms)
+#21 7.311 ✔ client AI allowance survives new cookies; application allowance spans independent peers (3.444389ms)
+#21 7.311 ✔ daily request cutoff cannot be bypassed by session reset, new cookies or new peers (1.472433ms)
+#21 7.312 ✔ token reservations are atomic, conservative, never refunded and reset only at UTC day boundary (2.853247ms)
+#21 7.312 ✔ in-flight reservations consume daily budget immediately and midnight never resets concurrency (3.551944ms)
+#21 7.312 ✔ oversized AI requests are rejected before transport without truncating input or spending budget
+(0.725124ms)
+#21 7.312 ✔ real extraction transport admission reserves the complete request and blocks paid calls (2.438129ms)
+#21 7.312 ✔ zero AI budget still allows synthetic pricing, approval and deterministic quote acceptance (120.125896ms)
+#21 7.312 ✔ bookkeeping is bounded, fails closed at capacity, expires without eviction bypass and contains no log
+identity (5.808ms)
+#21 7.312 ✔ trusted CORS origin can read throttle responses and Retry-After; preflight is limited too (24.904438ms)
+#21 7.313 ✔ environment limits accept explicit zero budget and reject malformed or excessive values (1.280986ms)
+#21 7.314 ✔ HTTP full flow preserves the engine subtotal, finalizes the commercial total and accepts for manual
+coordination (531.421877ms)
+#21 7.314 ✔ HTTP partial subtotal cannot bypass omitted-cost, scope, photo or amount guards (152.831474ms)
+#21 7.314 ▶ conditional acceptance changes the scope and invalidates the offer even if the extractor cannot represent
+the condition
+#21 7.314   ✔ כן, אבל יש גם עוד ארון (94.65281ms)
+#21 7.314   ✔ כן, אבל רק אחרי 18:00 (77.324912ms)
+#21 7.314   ✔ סגור, רק שהפריקה עכשיו בקומה 4 (84.237732ms)
+#21 7.314   ✔ כן, בתנאי שנדבר קודם (69.870653ms)
+#21 7.315 ✔ conditional acceptance changes the scope and invalidates the offer even if the extractor cannot represent
+the condition (329.410397ms)
+#21 7.368 ▶ clarification, negation and objections cannot accept a quote or silently close the lead
+#21 7.368   ✔ זה כולל פירוק? (62.981281ms)
+#21 7.432   ✔ יקר לי (65.890785ms)
+#21 7.482   ✔ לא (50.237924ms)
+#21 7.535   ✔ כן? (50.202293ms)
+#21 7.535 ✔ clarification, negation and objections cannot accept a quote or silently close the lead (231.796087ms)
+#21 7.595 ✔ yes without a quote or answering a different active question is handled as ordinary customer information
+(61.272458ms)
+#21 7.657 ✔ failed extraction after a sent quote is atomic; later accepted scope changes go to coordination review
+(62.867834ms)
+#21 7.732 ✔ a stale customer screen cannot accept a superseded quote (76.555433ms)
+#21 7.761 ✔ complete quote approval records scope and explicit missing-photo decision without changing evidence
+(132.177374ms)
+#21 7.761 ✔ partial subtotal requires explicit finalization even when owner deliberately chooses the same amount
+(32.51428ms)
+#21 7.761 ✔ manual quote with no engine amount requires a valid entered total and omitted-cost acknowledgement
+(45.237783ms)
+#21 7.761 ✔ duplicate clicks and stale evaluation/scope reject without creating quote records (21.578919ms)
+#21 7.761 ✔ contextual כן accepts one current quote and creates one pending-coordination summary (26.405199ms)
+#21 7.761 ✔ contextual מאשר accepts one current quote and creates one pending-coordination summary (15.732732ms)
+#21 7.761 ✔ contextual סגור accepts one current quote and creates one pending-coordination summary (26.699581ms)
+#21 7.761 ✔ affirmatives to another active question cannot accept a quote even with an old displayed quote token
+(11.574242ms)
+#21 7.761 ✔ questions, negation and objections never accept or automatically mark the lead lost (37.548575ms)
+#21 7.761 ✔ conditional acceptance falls through extraction and unextracted conditions invalidate rather than silently
+close (121.316019ms)
+#21 7.761 ✔ later accepted-scope changes preserve the accepted record and hand off coordination for review
+(12.852169ms)
+#21 7.761 ✔ outdated quote tokens and incompatible scope cannot be accepted (7.433206ms)
+#21 7.761 ✔ new session clears quote, acceptance, owner review and coordination state (0.605596ms)
+#21 7.761 ✔ empty lead requests items first without mutating or storing derived requirements (11.492763ms)
+#21 7.761 ✔ known refrigerator and cities lead to a concise pickup group without asking cities (5.537625ms)
+#21 7.761 ✔ floor zero and explicit false elevator answers are satisfied (3.091428ms)
+#21 7.761 ✔ known pickup floor and elevator never appear in the next question (1.151527ms)
+#21 7.761 ✔ pickup and dropoff floor/elevator collection stays independent with unsupported inventory (5.016663ms)
+#21 7.761 ✔ partial dimensions request only missing axes, then satisfy size without a category (1.399447ms)
+#21 7.761 ✔ a structured size category makes exact refrigerator dimensions optional (1.104223ms)
+#21 7.761 ✔ unassessed free-text description does not establish sufficient size information (1.337976ms)
+#21 7.761 ✔ required photos remain pending review without blocking initial pricing readiness (1.41522ms)
+#21 7.761 ✔ unsupported dresser pricing does not suppress a required refrigerator photo or invent dresser services
+(12.588442ms)
+#21 7.761 ✔ received and not-applicable photos are distinguished and never requested (1.389334ms)
+#21 7.761 ✔ context can require exact dimensions, quantity, access notes, and assembly information (4.222202ms)
+#21 7.761 ✔ ordinary refrigerator does not require quantity, assembly, or special access answers (2.139271ms)
+#21 7.761 ✔ all mandatory refrigerator pricing fields independently block readiness when unknown (2.336779ms)
+#21 7.761 ✔ readiness transition is immutable, reversible, and preserves later lifecycle statuses (2.954703ms)
+#21 7.761 ✔ boxes with unknown quantity block readiness and request quantity without dimensions (1.412367ms)
+#21 7.761 ✔ known box quantity stays known and is never asked again, including box-only moves (0.730204ms)
+#21 7.761 ✔ quantity null is unknown; zero, negative, fractional, and nonfinite counts are invalid (1.436466ms)
+#21 7.761 ✔ item references keep known and missing quantities separate across multiple entries (0.77681ms)
+#21 7.761 ✔ future item profiles express conditional needs but cannot silently become ready (3.06071ms)
+#21 7.761 ✔ washing machine dimensions can be required explicitly for an access issue (1.241675ms)
+#21 7.761 ✔ no customer requirements exist for distance, workers, or requested time by default (0.975147ms)
+#21 7.761 ✔ factory leaves unknown values explicit and creates independent dimensions (0.350025ms)
+#21 7.761 ✔ whitespace does not count as an answered required text field (0.47376ms)
+#21 7.761 ✔ washing machine is now supported for pricing readiness with known job facts (0.582468ms)
+#21 7.761 ✔ two visitors have independent conversations, resets, reviews, pricing and quotes (405.071335ms)
+#21 7.761 ✔ unknown, malformed, encoded and duplicate cookie IDs never select existing state (67.574407ms)
+#21 7.761 ✔ expiry rejects stale writes and reads establish a new server-issued identity without replay (30.141167ms)
+#21 7.761 ✔ capacity rejects new sessions without eviction, while existing visitors still work (22.275078ms)
+#21 7.761 ✔ one busy session rejects conflicting mutations while another processes messages and owner actions
+(73.561977ms)
+#21 7.761 ✔ expiry during extraction cannot commit or free its capacity until work finishes (23.087817ms)
+#21 7.761 ✔ session state byte limit rejects atomic writes and reset recovers without losing prior state (41.240116ms)
+#21 7.761 ✔ timed cleanup runs without traffic and session store instances share no state (3.799975ms)
+#21 7.761 ✔ production cookie is opaque, host-only, Secure and HttpOnly independent of proxy headers (12.291991ms)
+#21 7.762 ✔ origin configuration rejects wildcard, path and insecure production origins (2.491245ms)
+#21 7.762 ✔ CSRF guards reject forms, missing headers, untrusted and null origins without mutation (32.789053ms)
+#21 7.762 ✔ health, preflight, unsupported routes and invalid bodies cannot consume session capacity (20.609167ms)
+#21 7.763 ℹ tests 422
+#21 7.763 ℹ suites 0
+#21 7.763 ℹ pass 422
+#21 7.763 ℹ fail 0
+#21 7.763 ℹ cancelled 0
+#21 7.763 ℹ skipped 0
+#21 7.763 ℹ todo 0
+#21 7.763 ℹ duration_ms 6914.865101
+#21 8.009 npm notice run @moving-services-sales-agent/client@0.1.0 test
+#21 8.009 npm notice run tsx --test tests/response.test.tsx tests/app.test.tsx tests/api.test.ts
+#21 8.741 ✔ every demo request sends credentials and the CSRF header, including bodyless reset (66.167666ms)
+#21 8.742 ✔ concurrent initial reads share one bootstrap request and later reads refresh normally (3.806528ms)
+#21 8.745 ✔ expired mutation shows recovery guidance and is never automatically replayed (5.118561ms)
+#21 8.745 ✔ throttling and concurrency errors show safe Hebrew retry guidance without automatic retries (2.604594ms)
+#21 10.56 ✔ product title, neutral sender labels, exact footer and vertical section order render without pilot
+branding (216.077067ms)
+#21 10.64 ✔ initial loading disables controls, failed connection is announced, and reconnect restores the demo
+(64.151215ms)
+#21 10.71 ✔ sending shows pending feedback and renders the full backend response before clearing the draft
+(83.265803ms)
+#21 10.78 ✔ send errors retain both the draft and conversation, and allow retry (72.26377ms)
+#21 10.82 ✔ reset keeps the existing draft while pending, then clears chat and draft on success (43.008163ms)
+#21 10.85 ✔ failed reset preserves the current conversation and draft (32.037566ms)
+#21 10.93 ✔ example populates an editable draft, blank drafts cannot send, and the keyboard shortcut submits
+(48.240167ms)
+#21 10.93 ✔ status labels reflect existing backend states and distinguish temporarily pending information (0.804797ms)
+#21 11.25 ✔ partial subtotal requires explicit finalization before sending 950, contextual acceptance and coordination
+(341.506535ms)
+#21 11.50 ✔ partial subtotal requires explicit finalization before sending 1234, contextual acceptance and
+coordination (255.34336ms)
+#21 11.63 ✔ manual pricing starts empty and invalid final totals cannot be submitted (122.547597ms)
+#21 11.77 ✔ failed finalization preserves the entered total and explicit acknowledgements without creating a quote
+(144.166487ms)
+#21 11.82 ✔ explicit dresser disassembly is shown without claiming unknown assembly is required (46.679514ms)
+#21 11.87 ✔ unknown relevant wardrobe services remain a clarification rather than a declared requirement (52.841942ms)
+#21 11.93 ✔ complete recommendation with its photo received is sent only after the explicit owner click (59.077462ms)
+#21 12.01 ✔ customer cannot see recommendation; owner renders breakdown, omissions and review reasons (77.166996ms)
+#21 12.08 ✔ reported large refrigerator and 15 boxes show a current full recommendation with synthetic distance and
+enabled owner actions (71.165857ms)
+#21 12.12 ✔ owner review wording merges equivalent notes but preserves distinct item issues and all confidence
+deductions (41.278236ms)
+#21 12.20 ✔ mixed refrigerator, wardrobe and boxes separate supported pricing from manual work with assembly null
+(78.587887ms)
+#21 12.25 ✔ mixed refrigerator, wardrobe and boxes separate supported pricing from manual work with assembly true
+(54.888926ms)
+#21 12.30 ✔ omitted refrigerator uses a Hebrew label even when no appliance price can be recommended (37.765997ms)
+#21 12.35 ✔ owner sees unavailable wardrobe dimensions as unresolved alongside both requested services (65.478646ms)
+#21 12.47 ✔ approve updates backend state, survives view switches and exposes only approved customer quote
+(118.877174ms)
+#21 12.61 ✔ adjust form submits positive price and private reason while preserving suggestion (134.586716ms)
+#21 12.68 ✔ invalid adjustment is blocked by form and handler validation while preserving the draft (71.409874ms)
+#21 12.78 ✔ owner information request reaches customer; stale recommendation cannot be approved (98.710325ms)
+#21 12.94 ✔ human takeover and reset are reflected across owner and customer views (168.236072ms)
+#21 12.99 ✔ chat renders the full backend response, including acknowledgement and next step (17.16231ms)
+#21 12.99 ✔ next-step card uses an operational action without duplicating the chat response or question (9.606755ms)
+#21 12.99 ✔ no next question on a review lead displays a concise owner action (3.768427ms)
+#21 12.99 ✔ customer review copy uses natural punctuation without em dashes (150.326832ms)
+#21 12.99 ✔ complex lead separates pending customer dimensions from business review without changing backend state
+(45.927528ms)
+#21 12.99 ✔ box-volume review label follows existing limit for 30 (24.394447ms)
+#21 12.99 ✔ box-volume review label follows existing limit for 31 (18.947773ms)
+#21 12.99 ✔ box-volume review label follows existing limit for 40 (17.128878ms)
+#21 12.99 ✔ box-volume review label follows existing limit for 20+20 (20.29312ms)
+#21 12.99 ✔ box-volume review label follows existing limit for  (14.501737ms)
+#21 12.99 ✔ box-volume review label follows existing limit for 20+ (40.002513ms)
+#21 12.99 ✔ empty customer and owner sections are hidden independently (73.327568ms)
+#21 12.99 ✔ a manual lead needing recalculation points to the owner even when collection status remains (51.766388ms)
+#21 12.99 ✔ quote, handoff and closed statuses retain their distinct next actions (76.462317ms)
+#21 12.99 ℹ tests 45
+#21 12.99 ℹ suites 0
+#21 12.99 ℹ pass 45
+#21 12.99 ℹ fail 0
+#21 12.99 ℹ cancelled 0
+#21 12.99 ℹ skipped 0
+#21 12.99 ℹ todo 0
+#21 12.99 ℹ duration_ms 4738.406378
+#21 13.24 npm notice run moving-services-sales-agent@0.1.0 typecheck
+#21 13.24 npm notice run npm run typecheck --workspaces
+#21 13.56 npm notice run @moving-services-sales-agent/client@0.1.0 typecheck
+#21 13.56 npm notice run tsc --noEmit
+#21 20.01 npm notice run @moving-services-sales-agent/server@0.1.0 typecheck
+#21 20.01 npm notice run tsc --noEmit && tsc --project tsconfig.test.json
+#21 34.25 npm notice run moving-services-sales-agent@0.1.0 build
+#21 34.25 npm notice run npm run build --workspaces
+#21 34.50 npm notice run @moving-services-sales-agent/client@0.1.0 build
+#21 34.50 npm notice run tsc --noEmit && vite build
+#21 39.82 vite v6.4.3 building for production...
+#21 39.94 transforming...
+#21 41.41 ✓ 37 modules transformed.
+#21 41.71 rendering chunks...
+#21 41.73 computing gzip size...
+#21 41.75 dist/index.html                   0.42 kB │ gzip:  0.28 kB
+#21 41.75 dist/assets/index-BETzEhSh.css   13.07 kB │ gzip:  3.44 kB
+#21 41.75 dist/assets/index-vB7Q1tr4.js   239.59 kB │ gzip: 74.17 kB
+#21 41.75 ✓ built in 1.89s
+#21 41.80 npm notice run @moving-services-sales-agent/server@0.1.0 build
+#21 41.80 npm notice run tsc
+#21 46.94 npm notice run moving-services-sales-agent@0.1.0 eval
+#21 46.94 npm notice run node --import tsx server/src/evals/runEvals.ts
+#21 47.50 Moving Services Sales Agent Eval Report
+#21 47.50
+#21 47.50 Offline only. Fixtures evaluate workflow, not AI extraction accuracy. Provisional pricing comparisons never
+fail on historical price differences; incomplete subtotals are not whole-job accuracy scores.
+#21 47.50
+#21 47.50 Conversation evals:
+#21 47.50 26 total | 24 passed | 0 failed | 2 not run
+#21 47.50
+#21 47.50 Pricing dataset:
+#21 47.50 6 total
+#21 47.50 3 closed_job | 0 quoted_only | 3 historical_estimate
+#21 47.50 6 evaluated | 0 scored | 5 partial input | 1 not supported | 0 invalid
+#21 47.50 Known closed prices: 3 | Known quotes: 3 | Evaluations requiring approval: 6 | Historical reference ranges: 1
+#21 47.50
+#21 47.50 pricing-001: NOT_SUPPORTED | Incomplete subtotal; not a whole-job accuracy comparison. PROVISIONAL_RULES,
+INCOMPLETE_INVENTORY, MISSING_DATE, ACCESS_UNKNOWN, ITEM_0_UNSUPPORTED, ITEM_1_UNSUPPORTED, MISSING_DISTANCE,
+pickup_LOCATION, dropoff_LOCATION, dropoff_FLOOR_RULE_NOT_APPLIED
+#21 47.50   CANNOT_PRICE: unavailable ILS; closed amount: 450; quoted amount: 450; absolute difference: unavailable;
+difference %: unavailable
+#21 47.50   Reference amount: 450; historical range comparison: UNAVAILABLE; whole-job comparison is not valid;
+closed-job evidence.
+#21 47.50
+#21 47.50 pricing-002: PARTIAL_INPUT | Incomplete subtotal; not a whole-job accuracy comparison. PROVISIONAL_RULES,
+INCOMPLETE_INVENTORY, MISSING_DATE, MANY_ITEM_TYPES, ACCESS_UNKNOWN, ITEM_0_UNSUPPORTED, ITEM_1_UNSUPPORTED,
+ITEM_2_UNSUPPORTED, ITEM_3_VISUAL_EVIDENCE, ITEM_3_SIZE, ITEM_4_UNSUPPORTED, ITEM_5_UNSUPPORTED, PROVISIONAL_BOX_RATE,
+MISSING_DISTANCE, pickup_LOCATION, pickup_FLOOR_RULE_NOT_APPLIED, dropoff_LOCATION, WORKERS_COMPLEXITY
+#21 47.50   PARTIAL_RECOMMENDATION: 75 ILS; closed amount: 1200; quoted amount: 1200; absolute difference: 1125;
+difference %: 93.75
+#21 47.50   Reference amount: 1200; historical range comparison: UNAVAILABLE; whole-job comparison is not valid;
+closed-job evidence.
+#21 47.50
+#21 47.50 pricing-003: PARTIAL_INPUT | Incomplete subtotal; not a whole-job accuracy comparison. PROVISIONAL_RULES,
+INCOMPLETE_INVENTORY, MISSING_DATE, MANY_ITEM_TYPES, ACCESS_UNKNOWN, ITEM_0_SERVICES_UNKNOWN, ITEM_0_UNSUPPORTED,
+ITEM_1_UNSUPPORTED, ITEM_2_VISUAL_EVIDENCE, ITEM_3_UNSUPPORTED, ITEM_4_UNSUPPORTED, ITEM_5_UNSUPPORTED,
+ITEM_6_UNSUPPORTED, PROVISIONAL_BOX_RATE, MISSING_DISTANCE, pickup_LOCATION, FLOOR_COMPOSITION, dropoff_LOCATION,
+WORKERS_COMPLEXITY
+#21 47.50   PARTIAL_RECOMMENDATION: 1175 ILS; closed amount: 2990; quoted amount: 2990; absolute difference: 1815;
+difference %: 60.70234113712375
+#21 47.50   Reference amount: 2990; historical range comparison: UNAVAILABLE; whole-job comparison is not valid;
+closed-job evidence.
+#21 47.50
+#21 47.50 pricing-004: PARTIAL_INPUT | Informational historical estimate. Incomplete subtotal; not a whole-job
+accuracy comparison. PROVISIONAL_RULES, INCOMPLETE_INVENTORY, MISSING_DATE, ITEM_COMPOSITION, ACCESS_UNKNOWN,
+ITEM_0_VISUAL_EVIDENCE, ITEM_1_VISUAL_EVIDENCE, MISSING_DISTANCE, pickup_LOCATION, FLOOR_COMPOSITION,
+dropoff_LOCATION, dropoff_ELEVATOR
+#21 47.50   PARTIAL_RECOMMENDATION: 975 ILS; closed amount: unknown; quoted amount: unknown; absolute difference: 225;
+difference %: 30
+#21 47.50   Reference amount: 750; historical range comparison: UNAVAILABLE; whole-job comparison is not valid;
+informational only.
+#21 47.50
+#21 47.50 pricing-005: PARTIAL_INPUT | Informational historical estimate. Incomplete subtotal; not a whole-job
+accuracy comparison. PROVISIONAL_RULES, INCOMPLETE_INVENTORY, MISSING_DATE, MANY_ITEM_TYPES, SPECIAL_ACCESS,
+ITEM_0_QUANTITY, ITEM_0_UNSUPPORTED, ITEM_1_VISUAL_EVIDENCE, ITEM_2_QUANTITY, ITEM_2_UNSUPPORTED, ITEM_3_QUANTITY,
+ITEM_3_UNSUPPORTED, ITEM_4_SERVICES_UNKNOWN, ITEM_4_UNSUPPORTED, PROVISIONAL_BOX_RATE, MISSING_DISTANCE,
+pickup_LOCATION, pickup_FLOOR, pickup_ELEVATOR, dropoff_LOCATION, dropoff_FLOOR, dropoff_ELEVATOR
+#21 47.50   PARTIAL_RECOMMENDATION: 550 ILS; closed amount: unknown; quoted amount: unknown; absolute difference:
+1650; difference %: 75
+#21 47.50   Reference amount: 2200; historical range comparison: BELOW; whole-job comparison is not valid;
+informational only.
+#21 47.50
+#21 47.50 pricing-006: PARTIAL_INPUT | Informational historical estimate. Incomplete subtotal; not a whole-job
+accuracy comparison. PROVISIONAL_RULES, INCOMPLETE_INVENTORY, MISSING_DATE, MANY_ITEM_TYPES, SPECIAL_ACCESS,
+ITEM_0_QUANTITY, ITEM_0_SERVICES_UNKNOWN, ITEM_0_UNSUPPORTED, ITEM_1_QUANTITY, ITEM_1_SERVICES_UNKNOWN,
+ITEM_1_UNSUPPORTED, ITEM_2_UNSUPPORTED, ITEM_3_QUANTITY, ITEM_3_UNSUPPORTED, ITEM_4_UNSUPPORTED, ITEM_5_UNSUPPORTED,
+ITEM_6_UNSUPPORTED, PROVISIONAL_BOX_RATE, MISSING_DISTANCE, pickup_LOCATION, pickup_FLOOR, pickup_ELEVATOR,
+dropoff_LOCATION, dropoff_FLOOR, dropoff_ELEVATOR
+#21 47.50   PARTIAL_RECOMMENDATION: 250 ILS; closed amount: unknown; quoted amount: unknown; absolute difference:
+4250; difference %: 94.44444444444444
+#21 47.50   Reference amount: 4500; historical range comparison: UNAVAILABLE; whole-job comparison is not valid;
+informational only.
+#21 47.50
+#21 47.50 Not run:
+#21 47.50 - conv-011: Future service capability has no offline execution adapter.
+#21 47.50 - conv-025: Future service capability has no offline execution adapter.
+#21 47.50
+#21 47.50 Manual mustNot review remains for 26 cases; JSON output lists unscored statements. PASS applies only to the
+implemented checks.
+#21 47.50
+#21 47.50 Final result:
+#21 47.50 PASSED
+#21 DONE 47.6s
+
+#22 [verification 10/11] RUN npm audit --json > /tmp/npm-audit.json; result=$?; test "$result" -le 1
+#22 DONE 1.5s
+
+#23 [verification 11/11] RUN npm audit --omit=dev --json > /tmp/npm-audit-production.json; result=$?; test "$result"
+-le 1
+#23 DONE 1.5s
+
+#24 [runtime-files 1/1] RUN rm -rf server/dist/evals server/dist/scripts server/dist/demo/quoteFixture.js
+#24 DONE 0.4s
+
+#25 [runtime 5/5] COPY --from=runtime-files /app/server/dist ./server/dist
+#25 DONE 0.1s
+
+#26 exporting to image
+#26 exporting layers
+#26 exporting layers 1.0s done
+#26 exporting manifest sha256:2d8905f3791f933ca982c87df62bcb69258ef87ca22f86b23babaaac2299b385 0.0s done
+#26 exporting config sha256:8199a7cc5bc3e6459418b3f1f61a74ae4003001b35994645ea380100992ad5a2 0.0s done
+#26 exporting attestation manifest sha256:3e2bf8edbd445e57576614e69ebec8dcb3eb242bb386a5345276fe1b6945cfa6 0.0s done
+#26 exporting manifest list sha256:ea37d0a858a66dac5bb610e96ff219cae96a371cf05ba590b4c6d5ea2720a715
+#26 exporting manifest list sha256:ea37d0a858a66dac5bb610e96ff219cae96a371cf05ba590b4c6d5ea2720a715 0.0s done
+#26 naming to docker.io/library/moving-services-sales-agent-server:chainguard-release-rc1-20261012 done
+#26 unpacking to docker.io/library/moving-services-sales-agent-server:chainguard-release-rc1-20261012
+#26 unpacking to docker.io/library/moving-services-sales-agent-server:chainguard-release-rc1-20261012 1.2s done
+#26 DONE 2.5s
+
+#27 resolving provenance for metadata file
+#27 DONE 0.1s

@@ -1,0 +1,70 @@
+{
+  "reviewDate": "2026-10-12",
+  "decision": "REJECT_CANDIDATE",
+  "stage": "pre-build-maintenance-gate",
+  "gitHead": "8aeec86b88cfab08fb295d784da944cd35231839",
+  "existingUncommittedDocumentationPreserved": true,
+  "candidateRuntimeImage": null,
+  "candidateRuntimeDigest": null,
+  "candidateBuildTestsScanPerformed": false,
+  "base": {
+    "reference": "alpine:3.23.6@sha256:85fe1e81d6758c208f3e1eed4338a1997e19d4be002d4dd32d3100c9a8c010a0",
+    "platform": "linux/amd64",
+    "runtimeManifest": "sha256:1f3591b8a02ea153f41c5bba878ad477f63ab3d19349762cb77504db02a23e15",
+    "sourceRevision": "00d3407329e4c65f237cc1e325a4ab0cb4974df4",
+    "pulledForDisposablePreflightOnly": true
+  },
+  "packagePreflight": {
+    "repository": "https://dl-cdn.alpinelinux.org/alpine/v3.23/main",
+    "mainSupportThrough": "2027-11-01",
+    "communityUsed": false,
+    "signedApkUpdateExitCode": 0,
+    "signatureBypassUsed": false,
+    "indexSha256": "16b6096e5aa144d9890adc838677440cc4f06f9e38394d042589966efdf9b9cd",
+    "indexDescription": "v3.23.6-57-g67c83bfcab5; 5872 packages",
+    "apkAddSimulateExitCode": 0,
+    "packagePayloadInstallationPerformed": false,
+    "versions": {
+      "nodejs": "24.18.1-r0",
+      "zlib": "1.3.2-r1",
+      "libssl3": "3.5.9-r0",
+      "libcrypto3": "3.5.9-r0",
+      "ca-certificates": "20260909-r0",
+      "icu-libs": "76.1-r1",
+      "icu-data-full": "76.1-r1",
+      "tzdata": "2026e-r0"
+    }
+  },
+  "targetCveEvidence": {
+    "CVE-2026-85091": {
+      "packageFixAvailable": true,
+      "aportsCommit": "b92621a82657b055485976b304462bddf9aa9183",
+      "upstreamPatch": "df84af25dc1942490e1d1c899a07619152a46148",
+      "runtimeFixVerified": false
+    },
+    "CVE-2026-35189": {
+      "packageFixAvailable": true,
+      "aportsCommit": "adcf4978067013c3c0917e54542f3b762d7bfc48",
+      "requiredOpenSslVersion": "3.5.9",
+      "runtimeFixVerified": false
+    }
+  },
+  "rejection": {
+    "reference": "https://github.com/nodejs/node/pull/65200",
+    "fixCommit": "https://github.com/nodejs/node/commit/419af8b86d",
+    "includedInUpstream": "24.21.0",
+    "candidateSource": "https://raw.githubusercontent.com/nodejs/node/v24.18.1/deps/ncrypto/ncrypto.cc",
+    "baselineSource": "https://raw.githubusercontent.com/nodejs/node/v22.23.3/src/crypto/crypto_x509.cc",
+    "packageBuild": "https://raw.githubusercontent.com/alpinelinux/aports/bcfd6a07384b425c00acfd1e2404e647271b2c45/main/nodejs/APKBUILD",
+    "description": "Candidate lacks the negative-result guard on ASN1_STRING_to_UTF8 in Node certificate-name conversion; baseline has the guard. Shared OpenSSL upgrades do not patch this Node-owned wrapper.",
+    "reachability": "Ordinary non-resumed outbound TLS obtains the peer certificate after chain verification and before hostname verification, converting subject and issuer through the affected iterator.",
+    "limitations": "No crash reproduction or exploitable certificate was demonstrated. A conversion failure must be reachable after certificate-chain verification. No CVE or severity is assigned here."
+  },
+  "scanner": {
+    "performed": false,
+    "reason": "User pre-build stop condition triggered; no candidate image exists. No clean-scan claim."
+  },
+  "mainDockerfileAndComposeChanged": false,
+  "publishedImagesChanged": false,
+  "currentPublicReleaseBlocked": true
+}

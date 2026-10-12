@@ -1,0 +1,15 @@
+2026-10-12: READY_FOR_CONTROLLED_DEPLOYMENT (local technical gate only)
+Anonymous pinned-base retrieval and image/SBOM signature reverification: PASS.
+Main Dockerfile no-cache rebuild: PASS; all stages pinned to approved amd64 base.
+422 server +45 client tests passed; typecheck/build both workspaces PASS.
+Offline eval PASS implemented checks;24 conversation cases,2 future not run,6 pricing cases.
+Full and production npm audits: zero vulnerabilities reported.
+TLS/compression/ICU/Jerusalem and existing Caddy integration: PASS.
+Runtime comparison:4191 /app files/links, Node binary/versions/config identical to experiment.
+Final image scan: Grype0.120.1, valid cached2026-10-11 DB, zero findings; performed once.
+Immutable Compose references, memory/swap/CPU/PID/log/proxy limits: PASS.
+Backend37.62MiB+Caddy15.24MiB sampled; not a full capacity benchmark.
+Both test services graceful exit0/noOOM; test resources/certificates removed.
+Application source/lockfile/Caddy/Compose and prior evidence hashes unchanged.
+Manifest input hashes, evidence JSON, authored whitespace and git diff --check: PASS.
+No AWS calls, publication, infrastructure changes, live AI, commits or pushes.

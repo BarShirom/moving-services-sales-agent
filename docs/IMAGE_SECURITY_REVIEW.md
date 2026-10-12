@@ -1,6 +1,20 @@
 # Runtime image security review — 2026-10-11
 
-## Current decision: adopt the verified patched Trixie runtime
+## Current runtime: adopted Chainguard candidate (2026-10-12)
+
+The main Dockerfile now uses the verified, digest-pinned Chainguard Node 26 runtime.
+The [adoption report](security/chainguard-adoption-20261012/README.md) is the current
+source of artifact identities, support status, fresh tests/scan and operational
+limitations. CVE-2026-85091 is fixed in the loaded vendor zlib implementation;
+CVE-2026-35189 is fixed in the OpenSSL 4.0.3 implementation Node actually uses;
+the Node PR #65200 certificate error guard is also present. Conclusions rely on
+signed provenance, source and linkage evidence, independently of scanner counts.
+
+Earlier Trixie/Bookworm findings and scanner omissions below are preserved for
+historical artifacts. They are not claimed retroactively fixed, accepted or
+approved for public rollback. The unchanged Caddy review still applies.
+
+## Historical decision: patched Trixie runtime (superseded)
 
 **Current bounded-pass update:** the [final release review](FINAL_RELEASE_REVIEW.md)
 records the `bounded-review-20261011` backend. Complete unused global npm/Corepack/

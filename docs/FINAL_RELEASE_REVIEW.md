@@ -1,4 +1,201 @@
-﻿# Final release review — bounded pass, 2026-10-11
+# Final release review — bounded pass, 2026-10-11
+
+## Adopted Chainguard release candidate - 2026-10-12: READY_FOR_CONTROLLED_DEPLOYMENT
+
+The main Dockerfile now uses the reviewed pinned Chainguard Node 26 configuration.
+A fresh no-cache rebuild passed 467 tests, both TypeScript checks/production builds,
+offline evals, full/production npm audits and local TLS/compression/ICU plus
+Caddy/session/CSRF/rate-limit/quote-workflow integration. Application file contents,
+Node executable, versions and runtime configuration match the verified experiment.
+The final runtime scan, run once with the existing Grype toolchain/database,
+reported zero findings. This is bounded scanner evidence, not a zero-risk claim.
+
+Final local image: `moving-services-sales-agent-server:chainguard-release-rc1-20261012`.
+OCI index: `sha256:ea37d0a858a66dac5bb610e96ff219cae96a371cf05ba590b4c6d5ea2720a715`.
+Linux/amd64 runtime: `sha256:2d8905f3791f933ca982c87df62bcb69258ef87ca22f86b23babaaac2299b385`.
+
+Both original backend blockers are addressed in this artifact: vendor zlib includes
+the upstream CVE-2026-85091 fix; Node loads OpenSSL 4.0.3 fixing CVE-2026-35189;
+the PR #65200 conversion guard is present. Signed provenance was reverified and
+anonymous pinned-base retrieval succeeded. No CVE risk acceptance is substituted
+for a fix. Node 26.11.1 remains Current, with LTS scheduled 2026-10-28. Weekly
+review, deliberate digest refresh and fail-closed withdrawal if supported fixes
+become unavailable are required by the documented maintenance plan.
+
+The [adoption report](security/chainguard-adoption-20261012/README.md) and
+[local release manifest](../deploy/releases/chainguard-release-rc1-20261012.local.json)
+contain exact identities, checks, limitations, monitoring and rollback instructions.
+Older Debian releases and their NO-GO reviews remain historical evidence, **not
+approved public rollback targets**. Unchanged Caddy evidence/risks still apply.
+
+This is local technical readiness only. Registry publication/scan, host deployment,
+confirmed domain/HTTPS, secrets/provider controls and real-host network checks
+still require their separate approvals. No AWS work, image push, public exposure,
+live AI, Git commit/push or application logic change occurred in adoption.
+
+## Chainguard single-candidate evaluation - 2026-10-12: ADOPT_FOR_REVIEW
+
+The free public Chainguard Node Starter Linux/amd64 manifest
+`sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e`
+passed the required pre-build gate: vendor image/SBOM signatures verified, the
+recorded zlib source contains the upstream CVE-2026-85091 fix, Node actually loads
+patched OpenSSL 4.0.3, and its exact recorded source includes the PR #65200 error
+guard. This conclusion does not rely on absent scanner matches.
+
+The separate local application candidate uses Node 26.11.1 **Current, not LTS**,
+shared OpenSSL 4.0.3 and zlib 1.3.2.1-motley. All 467 existing tests, typechecks,
+production builds, implemented offline evals, local TLS/compression/ICU fixtures
+and the existing private Caddy/Compose integration passed. Full/production npm
+audits reported zero. The existing Grype toolchain scanned the final backend once
+with its 2026-10-11 database and reported **zero matches**; this is bounded scanner
+evidence, not a vulnerability-free guarantee. Unchanged Caddy evidence was reused.
+
+See the [candidate report and evidence](security/chainguard-node26-20261012/README.md)
+for exact application digests, provenance, test logs, scan limitations, memory
+measurements and free-access/maintenance obligations. The recommendation only
+advances the candidate for review. It does **not** approve adopting Node 26 into
+the main Dockerfile or exposing the demo. The public free offering tracks latest;
+continued access to a supported particular major and a patch SLA are not promised.
+Pinned artifacts do not update themselves.
+
+The main Dockerfile, Caddy, Compose, lockfile and published release remain unchanged.
+The existing public-release block still applies to the published Node 22 artifact.
+Alpine rejection and earlier risk reviews below are preserved historical evidence.
+No AWS changes, live OpenAI calls, publication, commits or risk acceptance occurred.
+
+## Alpine maintained-Node candidate — 2026-10-12: REJECT_CANDIDATE
+
+The authorized single alternative stopped at its **pre-build maintenance gate**.
+The instruction to stop on a known material regression takes precedence over
+building/testing an ineligible package set. No experimental application Dockerfile,
+backend image/tag/digest, compatibility results or candidate scan were produced.
+The main Dockerfile, Compose/Caddy configuration and published images are unchanged;
+the complete live-backend product remains the intended deployment. Public release
+remains blocked. See the [structured preflight evidence](security/alpine-node24-20261012/preflight.json).
+
+### Package eligibility and the two target fixes
+
+The official Alpine3.23.6 index resolved to
+`sha256:85fe1e81d6758c208f3e1eed4338a1997e19d4be002d4dd32d3100c9a8c010a0`;
+its amd64 manifest is
+`sha256:1f3591b8a02ea153f41c5bba878ad477f63ab3d19349762cb77504db02a23e15`.
+This is a **base-image identity**, not a built backend candidate. A disposable
+container successfully validated the v3.23/main package index using APK's default
+trusted keys, with no TLS/signature bypass. Package resolution passed in simulate
+mode; payload installation, final linkage and runtime fixes were not claimed.
+The base was pulled locally and the disposable preflight container was removed.
+
+| Package | Available stable-main version | Evidence |
+| --- | --- | --- |
+| Node | 24.18.1-r0 | [APKBUILD](https://github.com/alpinelinux/aports/blob/bcfd6a07384b425c00acfd1e2404e647271b2c45/main/nodejs/APKBUILD) uses shared OpenSSL/zlib and system ICU; excludes bundled npm/corepack |
+| zlib | 1.3.2-r1 | [Alpine patch](https://github.com/alpinelinux/aports/blob/b92621a82657b055485976b304462bddf9aa9183/main/zlib/CVE-2026-85091.patch) carries upstream df84af25, repairing stale writer input state for CVE-2026-85091 |
+| libssl3 and libcrypto3 | 3.5.9-r0 each | [OpenSSL advisory](https://openssl-library.org/news/secadv/20260929.txt) fixes CVE-2026-35189 in3.5.9; both packages are required |
+| CA / full ICU / timezone data | 20260909-r0 / 76.1-r1 / 2026e-r0 | Available in the same signed main index; no fixture or locale compatibility claims yet |
+
+[Alpine3.23 main is supported through2027-11-01](https://alpinelinux.org/releases/);
+community is outside routine support and was not used. Library patch availability
+supports the proposed direction, but does not prove an application's loaded code
+is fixed. Mutable APK repositories also mean a base digest alone is insufficient
+for a reproducible build. OpenSSL's Alpine security-feed entries lag its3.5.9
+package; scanner absence alone would not have cleared the target CVE.
+
+### Concrete reason for rejection
+
+Alpine's maintained Node package is still24.18.1-r0. Although this is the latest
+Node24 release designated `security:true` in the release index, later regular
+releases contain relevant fixes. [Node PR65200](https://github.com/nodejs/node/pull/65200),
+included in [24.21.0](https://nodejs.org/en/blog/release/v24.21.0), fixes an unchecked
+negative return from `ASN1_STRING_to_UTF8`: the old code can use/free an
+uninitialized pointer and crash. The reviewed Alpine recipe has no corresponding
+backport. Updating its shared OpenSSL cannot fix Node's own ncrypto wrapper.
+
+The [24.18.1 iterator](https://raw.githubusercontent.com/nodejs/node/v24.18.1/deps/ncrypto/ncrypto.cc)
+at lines4547–4551 lacks the guard, while the equivalent
+[22.23.3 baseline conversion](https://raw.githubusercontent.com/nodejs/node/v22.23.3/src/crypto/crypto_x509.cc)
+at lines119–130 has it. The source-level call path is ordinary outbound TLS:
+[onConnectSecure/getPeerCertificate](https://raw.githubusercontent.com/nodejs/node/v24.18.1/lib/internal/tls/wrap.js)
+then [X509ToObject/GetX509NameObject](https://raw.githubusercontent.com/nodejs/node/v24.18.1/src/crypto/crypto_x509.cc)
+then the affected subject/issuer iterator. This is not limited to application use
+of an explicit X509 getter.
+
+**Exposure qualification:** certificate-chain verification occurs first; an
+ASN.1 conversion failure must still be reachable afterward, for example through
+accepted malformed name data or allocation failure. No remotely exploitable
+certificate or crash was demonstrated here, and no CVE/severity is assigned to
+the PR. Fixed OpenAI destinations and normal trust validation reduce likelihood.
+Nevertheless, introducing an upstream-confirmed fatal error path absent from the
+baseline fails this experiment's maintenance gate. Passing ordinary fixtures or
+a lower scanner count would not establish that this regression is resolved.
+
+### Maintenance decision and verification scope
+
+Reconsider **this same candidate**, under a later approved evaluation, once the
+stable-main Node package includes the fix (upstream24.21.0 or a maintained
+backport), while preserving patched shared zlib/OpenSSL. No hand-maintained Node
+patch, edge/testing repository, second distribution or alternate product was tried.
+No application tests, evals, TLS fixtures, full-image scan or memory benchmark ran
+because the candidate was rejected before build; prior467 tests remain historical.
+The existing Grype toolchain and unchanged Caddy scan evidence were located but
+not rerun. Only this review and its preflight record changed in this task; existing
+uncommitted documentation was preserved. No AWS calls, risk acceptance, live AI,
+commits, pushes or deployment occurred. Documentation whitespace/JSON validation
+is recorded after the edit; it is not runtime/security clearance.
+
+## Final public-demo decision recheck — 2026-10-12
+
+**Recommendation: NO-GO for public exposure.** The two-CVE gate below remains.
+This is not a claim of a demonstrated remote exploit against the demo, and does
+not request another general remediation cycle or full-image scan.
+
+GitHub main and local HEAD both resolve to
+`8aeec86b88cfab08fb295d784da944cd35231839`. The untracked provisioning checklist
+was preserved. Network-disabled, read-only inspection of the existing approved
+backend image reconfirmed its OCI identity, Linux/amd64, user `node`, Node22.23.3,
+bundled OpenSSL3.5.8, bundled zlib1.3.1-e00f703 and Debian zlib1g
+`1:1.3.dfsg+really1.3.1-1+b1`. Its libz hash matches the evidence below; Node's
+dynamic dependencies still include neither system libz nor libssl/libcrypto.
+
+- **Zlib remains unresolved.** Exact Debian source pages still show no
+  `gz_vacate`, fatal write errors in `gz_comp`, and `gzclearerr` clearing the
+  error without repairing writer pointers. The description's 1.3.1.2–1.3.2 range
+  does not settle the older recovery path. [Debian still marks Trixie vulnerable
+  and unfixed](https://security-tracker.debian.org/tracker/CVE-2026-85091);
+  [the upstream older-path question remains unanswered](https://github.com/madler/zlib/issues/1292).
+  No supported Trixie fixed package or authoritative exemption was found.
+  The raw-source download did not return C source; the rendered Debian source
+  pages linked below were used instead.
+- **OpenSSL remains affected.** The freshly read [official Node release
+  index](https://nodejs.org/dist/index.json) still lists v22.23.3/OpenSSL3.5.8 as
+  latest22. The [vendor advisory](https://openssl-library.org/news/secadv/20260929.txt)
+  requires OpenSSL3.5.9 on this branch. Updating Debian OpenSSL cannot repair this
+  bundled copy. No supported compatible Node22 fix was found.
+
+No gzip-file writer/recovery workflow or native addon was identified in the app;
+OS zlib reachability appears low, not proven impossible. The intended OpenAI
+endpoint is not visitor-selected, but Node's outbound TLS still reaches affected
+certificate processing. Caddy's inbound TLS termination does not protect it.
+Non-root execution, capability removal and a read-only root constrain consequences,
+not the memory flaw. Default AI concurrency2, 10 AI requests/minute, 100/day,
+token reservations, 30-second timeout and zero SDK retries remain configured.
+The 512 MiB ceiling cannot prevent a single handshake's allocation or an outage.
+`restart: unless-stopped` can recover an exited process, not a merely unhealthy
+one. An exit loses all sessions and resets in-memory abuse/budget counters;
+repeated restarts are not an availability or spending mitigation. Future host
+settings and monitoring remain unverified.
+
+**Decision dates:** recheck only these vendor records on **2026-10-15**, sooner
+on a supported fix/clarification, and before public activation; no automatic check
+was scheduled. No zlib exception is recommended by this recheck. If zlib is
+resolved, OpenSSL alone could support CONDITIONAL GO with the owner's explicit
+exception through **2026-10-18**, the host conditions below, and monitoring with
+operator shutdown on unexplained TLS/OOM/native crashes. No automatic extension.
+Accepting OpenSSL alone does not clear zlib.
+
+When available, propose only a supported Trixie zlib update and/or official Node22
+base digest with fixed bundled OpenSSL, followed by version/compatibility checks
+under separate approval. No major upgrade, distribution switch or custom backport
+is proposed. No risk acceptance, rebuild, full scan, application change, AWS
+operation, live provider call, commit, push or deployment occurred in this recheck.
 
 ## Two-CVE evidence review — 2026-10-12
 

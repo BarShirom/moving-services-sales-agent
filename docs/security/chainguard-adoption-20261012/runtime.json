@@ -1,0 +1,231 @@
+{
+  "result": "PASS",
+  "fixtures": [
+    "TLS trusted CA",
+    "untrusted CA rejection",
+    "hostname rejection",
+    "gzip",
+    "deflate",
+    "brotli",
+    "Hebrew ICU",
+    "Jerusalem winter/summer offsets",
+    "Jerusalem midnight"
+  ],
+  "versions": {
+    "node": "26.11.1",
+    "acorn": "8.18.0",
+    "ada": "4.0.0",
+    "amaro": "1.1.11",
+    "ares": "1.34.8",
+    "brotli": "1.2.0",
+    "cldr": "48.0",
+    "icu": "78.3",
+    "libffi": "3.8.0",
+    "lief": "1.0.0",
+    "llhttp": "9.4.3",
+    "merve": "1.2.2",
+    "modules": "147",
+    "napi": "10",
+    "nbytes": "0.1.4",
+    "ncrypto": "0.0.1",
+    "nghttp2": "1.70.0",
+    "nghttp3": "",
+    "ngtcp2": "",
+    "openssl": "4.0.3",
+    "simdjson": "4.6.11",
+    "simdutf": "7.7.0",
+    "sqlite": "3.53.4",
+    "tz": "2026d",
+    "undici": "8.11.2",
+    "unicode": "17.0",
+    "uv": "1.53.0",
+    "uvwasi": "0.0.23",
+    "v8": "14.6.202.34-node.37",
+    "zlib": "1.3.2.1-motley",
+    "zstd": "1.5.7"
+  },
+  "uid": 65532,
+  "sharedOpenSSL": true,
+  "sharedZlib": true,
+  "libraries": [
+    "/usr/lib/libicudata.so.78.3",
+    "/usr/lib/libc.so.6",
+    "/usr/lib/libicuuc.so.78.3",
+    "/usr/lib/libicui18n.so.78.3",
+    "/usr/lib/libssl.so.4",
+    "/usr/lib/libcrypto.so.4",
+    "/usr/lib/libz.so.1.3.2.1-motley"
+  ],
+  "nativeAddons": [],
+  "nodeSha256": "54f4d9fe3eba73943c062e2a173abccf7eeffca6dae3232b6347529263318dbf",
+  "packages": [
+    {
+      "P": "wolfi-baselayout",
+      "V": "20230201-r30",
+      "o": "wolfi-baselayout",
+      "c": "a4472f6292a5e48d6d611bf24c6e119b1a483e66"
+    },
+    {
+      "P": "ca-certificates-bundle",
+      "V": "20260909-r2",
+      "o": "ca-certificates",
+      "c": "f47c125470a19db0f450c2e4928a0db14f933d91"
+    },
+    {
+      "P": "glibc-2.44-locale-posix",
+      "V": "2.44-r8",
+      "o": "glibc-2.44",
+      "c": "3f73ace7dd5a203b7d080fd633d056d763e6760c"
+    },
+    {
+      "P": "libgcc",
+      "V": "16.2.0-r1",
+      "o": "gcc",
+      "c": "794cf72f88e1b408eca5da0dbf5c5ed25543606d"
+    },
+    {
+      "P": "glibc-2.44",
+      "V": "2.44-r8",
+      "o": "glibc-2.44",
+      "c": "3f73ace7dd5a203b7d080fd633d056d763e6760c"
+    },
+    {
+      "P": "ld-linux-2.44",
+      "V": "2.44-r8",
+      "o": "glibc-2.44",
+      "c": "3f73ace7dd5a203b7d080fd633d056d763e6760c"
+    },
+    {
+      "P": "libxcrypt",
+      "V": "4.5.2-r6",
+      "o": "libxcrypt",
+      "c": "94bc25975ca5bfdca755b5b507276667124bdf1f"
+    },
+    {
+      "P": "libcrypt1-2.44",
+      "V": "2.44-r8",
+      "o": "glibc-2.44",
+      "c": "3f73ace7dd5a203b7d080fd633d056d763e6760c"
+    },
+    {
+      "P": "busybox",
+      "V": "1.38.0-r3",
+      "o": "busybox",
+      "c": "59d45eb49286129d8d21b2469befa3b55be4719b"
+    },
+    {
+      "P": "c-ares",
+      "V": "1.34.8-r3",
+      "o": "c-ares",
+      "c": "f53ff2c139d56912d25126c4c6263a4ee36a5a47"
+    },
+    {
+      "P": "dumb-init",
+      "V": "1.2.5-r12",
+      "o": "dumb-init",
+      "c": "5998ae75065c12cf1707b79252bf6b972cb81b62"
+    },
+    {
+      "P": "icu78-data-full",
+      "V": "78.3-r4",
+      "o": "icu",
+      "c": "ff86c01e4b57072e6b837d066937eadf19da61e7"
+    },
+    {
+      "P": "libbrotlicommon1",
+      "V": "1.2.0-r6",
+      "o": "brotli",
+      "c": "2f5fe6ea87b357ddadf67308e9bf236db5a38797"
+    },
+    {
+      "P": "libbrotlidec1",
+      "V": "1.2.0-r6",
+      "o": "brotli",
+      "c": "2f5fe6ea87b357ddadf67308e9bf236db5a38797"
+    },
+    {
+      "P": "libbrotlienc1",
+      "V": "1.2.0-r6",
+      "o": "brotli",
+      "c": "2f5fe6ea87b357ddadf67308e9bf236db5a38797"
+    },
+    {
+      "P": "libev",
+      "V": "4.33-r14",
+      "o": "libev",
+      "c": "f75b3d1a942bd9ab20002279a10c2a3dd3b7951d"
+    },
+    {
+      "P": "libstdc++",
+      "V": "16.2.0-r1",
+      "o": "gcc",
+      "c": "794cf72f88e1b408eca5da0dbf5c5ed25543606d"
+    },
+    {
+      "P": "libicu78",
+      "V": "78.3-r4",
+      "o": "icu",
+      "c": "ff86c01e4b57072e6b837d066937eadf19da61e7"
+    },
+    {
+      "P": "libnghttp2-14",
+      "V": "1.70.0-r5",
+      "o": "nghttp2",
+      "c": "8f49d686e14273a3fde68e1719b7b3434408c5d6"
+    },
+    {
+      "P": "libuv",
+      "V": "1.53.0-r0",
+      "o": "libuv",
+      "c": "6ee5086b767a2f31854a43ce96bd3b6a275cc36c"
+    },
+    {
+      "P": "openssl-provider-legacy-allowed",
+      "V": "4.0.3-r1",
+      "o": "openssl-provider-legacy-allowed",
+      "c": "5489124e360c92c42599091afb060af6fb317bb1"
+    },
+    {
+      "P": "openssl-4.0-libcrypto",
+      "V": "4.0.3-r6",
+      "o": "openssl-4.0",
+      "c": "5489124e360c92c42599091afb060af6fb317bb1"
+    },
+    {
+      "P": "openssl-4.0-libssl",
+      "V": "4.0.3-r6",
+      "o": "openssl-4.0",
+      "c": "5489124e360c92c42599091afb060af6fb317bb1"
+    },
+    {
+      "P": "zlib",
+      "V": "1.3.2.1_rc20260921-r0",
+      "o": "zlib",
+      "c": "75278be0abfe311aedfbf7c3933f6f0b819980e6"
+    },
+    {
+      "P": "nghttp2",
+      "V": "1.70.0-r5",
+      "o": "nghttp2",
+      "c": "8f49d686e14273a3fde68e1719b7b3434408c5d6"
+    },
+    {
+      "P": "nodejs-26",
+      "V": "26.11.1-r0",
+      "o": "nodejs-26",
+      "c": "2f4e93dfb2f195aaf28298507c174a7312ea412d"
+    },
+    {
+      "P": "node-gyp",
+      "V": "13.1.0-r0",
+      "o": "node-gyp",
+      "c": "39d2703145d25fd4f17eb724bb1038b342e0c6cc"
+    },
+    {
+      "P": "npm-12",
+      "V": "12.2.0-r2",
+      "o": "npm-12",
+      "c": "c132a9d51c3821a3ef7ee1c6990315fc02bfc51b"
+    }
+  ]
+}

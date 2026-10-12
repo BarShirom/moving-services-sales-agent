@@ -1,0 +1,30 @@
+{
+    "matches":  0,
+    "ignoredMatches":  0,
+    "counts":  [
+
+               ],
+    "db":  {
+               "schemaVersion":  "v6.1.10",
+               "from":  "https://grype.anchore.io/databases/v6/vulnerability-db_v6.1.10_2026-10-11T00:37:11Z_1791700242.tar.zst?checksum=sha256%3Aa1e7eb21958172e46e2bb6db02e72d68eb4efd4b17d0c43fba5e56ae73d0a196",
+               "built":  "2026-10-11T06:30:42Z",
+               "path":  "/db/6/vulnerability.db",
+               "valid":  true
+           },
+    "scanner":  "0.120.1",
+    "source":  {
+                   "configDigest":  "sha256:8199a7cc5bc3e6459418b3f1f61a74ae4003001b35994645ea380100992ad5a2",
+                   "archiveManifest":  "sha256:c0e7b49d3227663c2231aaec2ca8092f45f1ac81e104604ee153776afce93704",
+                   "os":  "linux",
+                   "architecture":  "amd64"
+               },
+    "distro":  {
+                   "name":  "wolfi",
+                   "version":  "20230201",
+                   "idLike":  [
+
+                              ]
+               },
+    "timestamp":  "2026-10-12T17:41:15.463291556Z",
+    "limits":  "Offline squashed-image package scan with cached 2026-10-11 database; no custom ignores or VEX. No host kernel, source-code exploit or live provider coverage. Missing matches do not establish remediation."
+}

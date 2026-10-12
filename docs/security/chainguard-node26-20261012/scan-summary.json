@@ -1,0 +1,74 @@
+{
+    "candidate":  {
+                      "matches":  0,
+                      "ignored":  0,
+                      "critical":  0,
+                      "high":  0,
+                      "medium":  0,
+                      "low":  0,
+                      "negligible":  0,
+                      "unknown":  0,
+                      "distro":  {
+                                     "name":  "wolfi",
+                                     "version":  "20230201",
+                                     "idLike":  [
+
+                                                ]
+                                 },
+                      "database":  {
+                                       "schemaVersion":  "v6.1.10",
+                                       "from":  "https://grype.anchore.io/databases/v6/vulnerability-db_v6.1.10_2026-10-11T00:37:11Z_1791700242.tar.zst?checksum=sha256%3Aa1e7eb21958172e46e2bb6db02e72d68eb4efd4b17d0c43fba5e56ae73d0a196",
+                                       "built":  "2026-10-11T06:30:42Z",
+                                       "path":  "/db/6/vulnerability.db",
+                                       "valid":  true
+                                   },
+                      "scanner":  "0.120.1",
+                      "timestamp":  "2026-10-12T17:22:11.707322877Z",
+                      "source":  {
+                                     "archiveManifestDigest":  "sha256:efc262381bfacc804d49393c16a834f74d310a77f1c8a968af0bd059e47f88cf",
+                                     "configDigest":  "sha256:8fee4da03e3bad9068bde7f58149f65e4c8c906bbd44bb3f18e0f7de351142a2",
+                                     "ociRuntimeManifest":  "sha256:d05a15be42cc9ebcf5f0099d76af6603fb85c912f373b65f8f5c222997960be3",
+                                     "ociIndex":  "sha256:eb13ca61ea1d96a090a370f2cd3875ae02476d7975272ef9ed59335fc23e73eb"
+                                 }
+                  },
+    "historicalBackend":  {
+                              "matches":  157,
+                              "uniqueIds":  67,
+                              "counts":  [
+                                             {
+                                                 "Name":  "High",
+                                                 "Count":  54
+                                             },
+                                             {
+                                                 "Name":  "Medium",
+                                                 "Count":  47
+                                             },
+                                             {
+                                                 "Name":  "Negligible",
+                                                 "Count":  46
+                                             },
+                                             {
+                                                 "Name":  "Low",
+                                                 "Count":  10
+                                             }
+                                         ],
+                              "database":  "2026-10-11T06:30:42Z"
+                          },
+    "unchangedCaddy":  {
+                           "matches":  4,
+                           "uniqueIds":  2,
+                           "counts":  [
+                                          {
+                                              "Name":  "Medium",
+                                              "Count":  4
+                                          }
+                                      ],
+                           "database":  "2026-10-11T06:30:42Z"
+                       },
+    "limitations":  [
+                        "Whole-image squashed filesystem package matching; not every vulnerable code path can be identified by package metadata.",
+                        "Same cached DB as baseline, built 2026-10-11; no provider update during offline scan.",
+                        "No custom ignore rules or VEX; built-in kernel-header exclusions remain; no ignored matches reported.",
+                        "Independent source/linkage evidence, rather than scan absence, establishes the three required fixes."
+                    ]
+}

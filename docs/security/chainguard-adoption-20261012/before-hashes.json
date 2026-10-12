@@ -1,0 +1,114 @@
+[
+    {
+        "path":  "docs/FINAL_RELEASE_REVIEW.md",
+        "sha256":  "98c2a72f04557785dbb894d403e90daff2b47219ee820e1962323fe3fabe0ef1"
+    },
+    {
+        "path":  "docs/LIGHTSAIL_PROVISIONING_CHECKLIST.md",
+        "sha256":  "fa865092e36be41910e2af599adb457baae2eedea734bcaa5650661c76cd638e"
+    },
+    {
+        "path":  "server/Dockerfile",
+        "sha256":  "e8e9c0188508927dae8390f06d4f0a314d4f4e0431bbabdd975fc0365d148e05"
+    },
+    {
+        "path":  "server/Dockerfile.chainguard",
+        "sha256":  "518f052b91fa5aa436f0997ff464a003bdb9857bd3f43dfcf048113c67084e16"
+    },
+    {
+        "path":  "server/Dockerfile.chainguard.dockerignore",
+        "sha256":  "13470b98edd16f08c2de07b873c2e9da809d9da9db3ef4be2a7224723765bc80"
+    },
+    {
+        "path":  "package-lock.json",
+        "sha256":  "4055cc4ad5cd97d1359f354a90f411fba988779d4f3e18acf4eee062e3abac4f"
+    },
+    {
+        "path":  "deploy/compose.yaml",
+        "sha256":  "eaff414c7be3310916c4817ef4de2d140ee9bd9c697712827de7b3a5f0572245"
+    },
+    {
+        "path":  "deploy/Caddyfile",
+        "sha256":  "d0fe0178d958d639ae611278c3368403ce4cb6fc976e34546d26670dcf893d2f"
+    },
+    {
+        "path":  "docs/security/alpine-node24-20261012/preflight.json",
+        "sha256":  "ff590b3a367b978a9ff31ae683bbe03c5c06433a72a2762c4e86a7d9f62d7b8e"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/backend.grype.json",
+        "sha256":  "3e74f1682ba015440fa02ba88d6d7786f7d98ccb0f2fe9f3ac732659585adf57"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/build-metadata.json",
+        "sha256":  "9c1ccaccc845b2a70c20f684222e9d0a71f894a4bdb268ac312cfc8ec59b7851"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/build.log",
+        "sha256":  "c948f81a038324107ff7c1561a2ffef90ce31f089351a50daaeeee6d833fb37d"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/grype-db-import.json",
+        "sha256":  "48b29af39dca201c8a5c15ed25916393939f0a4bd014735ec4bc93254c5f4a32"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/grype.log",
+        "sha256":  "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/image-inspect.json",
+        "sha256":  "3e78fb128b6aa05e4b61a77619386bb425f6d9a44ad070e194a8e8ff45e660e7"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/npm-audit-production.json",
+        "sha256":  "64518fc203ed7b5daa5a5985968d2cb4a320b4e8fb7c811bd86c717e1e0d215f"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/npm-audit.json",
+        "sha256":  "64518fc203ed7b5daa5a5985968d2cb4a320b4e8fb7c811bd86c717e1e0d215f"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/provenance-summary.json",
+        "sha256":  "b63741a71969b9c0080ac90e876126f579eeb4734133074d3bbe65384d317d36"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/proxy-integration.log",
+        "sha256":  "817188bc4dfd4cfbbe6a1ae07414525ceca85438a6f730903e2f459ed8bd0b30"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/README.md",
+        "sha256":  "6794c2077f55276c46e77c7e7e5f4e4682871a32daf18f890c54e17ec3e4cd59"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/runtime.json",
+        "sha256":  "8bd771e9e2dac687e29ac70a3a601a893b96ab5db301eaf4dc3322d6487c57aa"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/sbom-attestation.json",
+        "sha256":  "fcac65ab3eec3ad6aaefb9de87bc902a62ee30f409da73be49ef30ca27b65335"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/scan-summary.json",
+        "sha256":  "f5119981cf2091e45cc1110b90f10ab5ba48ce87a1cf184c4874386653d6f37f"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/signature.json",
+        "sha256":  "70caf4e90418db6b145315883c6da0479f3fe8acae95b1514b3a5325adaa41c1"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/source-verification.json",
+        "sha256":  "8f91305d776397e4120b1d32fbf6b99c345ce5100086d11417a116cbadf6b66a"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/tests.log",
+        "sha256":  "f956244c58d22e663e291d28099a1da4a69177df0bf0d72fc2edd54976e5d293"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/verification-build.log",
+        "sha256":  "f62516d37627619301a4ac9936ba84b31169b2944a2a9857cc499dc4b4a180c3"
+    },
+    {
+        "path":  "docs/security/chainguard-node26-20261012/verification.txt",
+        "sha256":  "5d809c4a8c1c5494f0be13f0fb8692ada55fc40e7481e4c0d4121e9f6eaa61a7"
+    }
+]

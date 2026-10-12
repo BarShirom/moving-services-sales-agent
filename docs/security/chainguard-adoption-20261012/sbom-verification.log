@@ -1,0 +1,19 @@
+docker :
+At line:2 char:720
++ ... TEXITCODE}; docker run --rm --read-only --tmpfs /tmp:rw,nosuid,nodev, ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+Verification for cgr.dev/chainguard/node@sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e --
+The following checks were performed on each of these signatures:
+  - The cosign claims were validated
+  - Existence of the claims in the transparency log was verified offline
+  - The code-signing certificate was verified using trusted certificate authority certificates
+Certificate subject: https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main
+Certificate issuer URL: https://token.actions.githubusercontent.com
+GitHub Workflow Trigger: push
+GitHub Workflow SHA: 27c42d10257d47210a249f4141b6b90849bfa1e3
+GitHub Workflow Name: .github/workflows/release.yaml
+GitHub Workflow Repository: chainguard-images/images
+GitHub Workflow Ref: refs/heads/main

@@ -1,0 +1,14 @@
+Completed 2026-10-12: ADOPT_FOR_REVIEW (local candidate only)
+467 tests passed (422 server, 45 client) in the pinned candidate environment.
+Typecheck, production builds, offline evals: PASS. Eval limits retained in README.
+Application npm audits full/production: zero reported vulnerabilities.
+Runtime local TLS/compression/Hebrew/Jerusalem fixtures: PASS.
+Unchanged Caddy/Compose integration with candidate-built frontend: PASS.
+512 MiB backend / 128 MiB Caddy limits preserved; both graceful exits 0, no OOM.
+Whole-image Grype 0.120.1 scan: zero matches, cached DB 2026-10-11; no custom ignores.
+Source ancestry, signed SBOM and loaded libraries independently verify the three fixes.
+All evidence JSON parses; authored-file whitespace checks and git diff --check PASS.
+No main Dockerfile, app source, lockfile, Caddy or Compose edits.
+No AWS, live AI, deployment, image publication, Git commits or pushes.
+Prior Alpine rejection and existing uncommitted documentation preserved.
+Disposable test resources and certificates cleaned; unrelated local container preserved.

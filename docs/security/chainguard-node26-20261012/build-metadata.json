@@ -1,0 +1,58 @@
+{
+  "buildx.build.provenance": {
+    "builder": {
+      "id": ""
+    },
+    "buildType": "https://mobyproject.org/buildkit@v1",
+    "materials": [
+      {
+        "uri": "pkg:docker/cgr.dev/chainguard/node?digest=sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e\u0026platform=linux%2Famd64",
+        "digest": {
+          "sha256": "fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e"
+        }
+      }
+    ],
+    "invocation": {
+      "configSource": {
+        "entryPoint": "Dockerfile.chainguard"
+      },
+      "parameters": {
+        "frontend": "dockerfile.v0",
+        "locals": [
+          {
+            "name": "context"
+          },
+          {
+            "name": "dockerfile"
+          }
+        ],
+        "root": {
+          "configSource": {
+            "path": "Dockerfile.chainguard"
+          },
+          "request": {
+            "args": {
+              "vcs:localdir:context": ".",
+              "vcs:localdir:dockerfile": "server",
+              "vcs:revision": "8aeec86b88cfab08fb295d784da944cd35231839",
+              "vcs:source": "https://github.com/BarShirom/moving-services-sales-agent.git"
+            }
+          }
+        },
+        "compatibilityVersion": 30
+      },
+      "environment": {
+        "dockerfileVersion": "1.27.0",
+        "platform": "linux/amd64"
+      }
+    }
+  },
+  "buildx.build.ref": "desktop-linux/desktop-linux/p0tm8wzut1eolkh9x4xff0wez",
+  "containerimage.descriptor": {
+    "mediaType": "application/vnd.oci.image.index.v1+json",
+    "digest": "sha256:eb13ca61ea1d96a090a370f2cd3875ae02476d7975272ef9ed59335fc23e73eb",
+    "size": 856
+  },
+  "containerimage.digest": "sha256:eb13ca61ea1d96a090a370f2cd3875ae02476d7975272ef9ed59335fc23e73eb",
+  "image.name": "docker.io/library/moving-services-sales-agent-server:chainguard-node26-eval-20261012"
+}

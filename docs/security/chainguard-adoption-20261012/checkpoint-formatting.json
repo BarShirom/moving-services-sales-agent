@@ -1,0 +1,54 @@
+{
+    "purpose":  "Checkpoint whitespace cleanup only; no runtime input changes or verification reruns",
+    "files":  [
+                  {
+                      "path":  "docs/security/chainguard-adoption-20261012/build.log",
+                      "originalSha256":  "22bdb33060b9d399b1468f23e1c09b8ca08267e4d74469dbaef04df375a33e6e",
+                      "checkpointSha256":  "48bd968ca2c7e29cf3e594957ca87f8ed2a71aa769ee2411915bf68cf15391c2",
+                      "change":  "Trim trailing horizontal whitespace only; log content unchanged"
+                  },
+                  {
+                      "path":  "docs/security/chainguard-adoption-20261012/sbom-verification.log",
+                      "originalSha256":  "7b7b2742c0cb647420246d430ef56577fdc66151466e09d17e477c7fc30110a6",
+                      "checkpointSha256":  "4c17a22cdfcbf74df5ea3209e04b26e887f3b289da6fce162431a3321d5e6587",
+                      "change":  "Trim trailing horizontal whitespace only; log content unchanged"
+                  },
+                  {
+                      "path":  "docs/security/chainguard-adoption-20261012/signature-verification.log",
+                      "originalSha256":  "718afb00a2dc3d19e33f506395c6b3fbc7a1238b2eea3781ea89200062dd0c79",
+                      "checkpointSha256":  "11bada1c29e4e8526c794ed5c8621eab46cd255bded1ded9a267f8a2eccfe850",
+                      "change":  "Trim trailing horizontal whitespace only; log content unchanged"
+                  },
+                  {
+                      "path":  "docs/security/chainguard-adoption-20261012/verification-build.log",
+                      "originalSha256":  "49a2a7652a3aff2386f311295d711ebbb072d3821e70986cec4c96252fb11557",
+                      "checkpointSha256":  "6d50ffa58ff7e9bcaff846dd6fe011832280ed9d497e408f7dbf50a7ddf1db74",
+                      "change":  "Trim trailing horizontal whitespace only; log content unchanged"
+                  },
+                  {
+                      "path":  "docs/security/chainguard-node26-20261012/build.log",
+                      "originalSha256":  "c948f81a038324107ff7c1561a2ffef90ce31f089351a50daaeeee6d833fb37d",
+                      "checkpointSha256":  "844e95240d751983e5e64c1fa8840579df1e32e401ed9e3d7ea8b8e93d50ce39",
+                      "change":  "Trim trailing horizontal whitespace only; log content unchanged"
+                  },
+                  {
+                      "path":  "docs/security/chainguard-node26-20261012/tests.log",
+                      "originalSha256":  "f956244c58d22e663e291d28099a1da4a69177df0bf0d72fc2edd54976e5d293",
+                      "checkpointSha256":  "d2d0d40f3c41073cf0596cc058e81b8a1a261811b546ba691bbb0aff1246573a",
+                      "change":  "Trim trailing horizontal whitespace only; log content unchanged"
+                  },
+                  {
+                      "path":  "docs/security/chainguard-node26-20261012/verification-build.log",
+                      "originalSha256":  "f62516d37627619301a4ac9936ba84b31169b2944a2a9857cc499dc4b4a180c3",
+                      "checkpointSha256":  "5de467a28c7189db75ae1dba004b1d98e080e32682261aee8bf671460072d08a",
+                      "change":  "Trim trailing horizontal whitespace only; log content unchanged"
+                  },
+                  {
+                      "path":  "deploy/releases/chainguard-release-rc1-20261012.local.json",
+                      "originalSha256":  "fb96b30285f48665d58910a725ffd14d68b6efb56fb8c11e8fc769c952129ec7",
+                      "checkpointSha256":  "86d3e8f9e5cbfcc65b43fc6a5991b2a4ee19e09d38986b443631fa0dbb4359e2",
+                      "change":  "CRLF to LF only; parsed release data unchanged"
+                  }
+              ],
+    "historicalHashes":  "before-hashes.json retains the original pre-adoption observations; signed payloads, scan JSON and runtime artifacts were not rewritten"
+}

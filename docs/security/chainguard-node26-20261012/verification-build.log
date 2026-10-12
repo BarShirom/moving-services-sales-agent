@@ -1,0 +1,86 @@
+docker : #0 building with "desktop-linux" instance using docker driver
+At line:2 char:36
++ ... 'Continue'; docker build --platform linux/amd64 --target verification ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (#0 building wit...g docker driver:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+
+
+#1 [internal] load build definition from Dockerfile.chainguard
+#1 transferring dockerfile: 2.76kB 0.0s done
+#1 DONE 0.0s
+
+#2 [internal] load metadata for
+cgr.dev/chainguard/node@sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e
+#2 DONE 0.0s
+
+#3 [internal] load build context
+#3 DONE 0.0s
+
+#4 [packages 1/5] FROM cgr.dev/chainguard/node@sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e
+#4 resolve cgr.dev/chainguard/node@sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e 0.0s done
+#4 DONE 0.0s
+
+#3 [internal] load build context
+#3 transferring context: 26B 0.1s
+#3 transferring context: 6.40kB 0.4s done
+#3 DONE 0.4s
+
+#5 [verification  3/11] COPY server/src ./server/src
+#5 CACHED
+
+#6 [verification  9/11] RUN --network=none npm test && npm run typecheck && npm run build && npm run eval
+#6 CACHED
+
+#7 [verification  8/11] COPY data/evals ./data/evals
+#7 CACHED
+
+#8 [verification 10/11] RUN npm audit --json > /tmp/npm-audit.json; result=$?; test "$result" -le 1
+#8 CACHED
+
+#9 [packages 3/5] COPY package.json package-lock.json ./
+#9 CACHED
+
+#10 [packages 5/5] COPY client/package.json ./client/package.json
+#10 CACHED
+
+#11 [verification  5/11] COPY client/tsconfig.json client/vite.config.ts client/index.html ./client/
+#11 CACHED
+
+#12 [packages 2/5] WORKDIR /app
+#12 CACHED
+
+#13 [verification  2/11] COPY server/tsconfig*.json ./server/
+#13 CACHED
+
+#14 [verification  4/11] COPY server/tests ./server/tests
+#14 CACHED
+
+#15 [packages 4/5] COPY server/package.json ./server/package.json
+#15 CACHED
+
+#16 [verification  1/11] RUN npm ci --no-audit --no-fund
+#16 CACHED
+
+#17 [verification  6/11] COPY client/src ./client/src
+#17 CACHED
+
+#18 [verification  7/11] COPY client/tests ./client/tests
+#18 CACHED
+
+#19 [verification 11/11] RUN npm audit --omit=dev --json > /tmp/npm-audit-production.json; result=$?; test "$result"
+-le 1
+#19 CACHED
+
+#20 exporting to image
+#20 exporting layers
+#20 exporting layers 11.5s done
+#20 exporting manifest sha256:757280c21f6389a72a860817c612e03dc0b0e969085d41c6ab52e7fc048d4130 0.0s done
+#20 exporting config sha256:d806a60e113f46274c49741e7b1612fddf14062e636125fde47b5eff6c80e123 0.0s done
+#20 exporting attestation manifest sha256:2b3c7b0eda508e7996f104dee840937b2d1d46aa0f61340ce007063974f1814b 0.0s done
+#20 exporting manifest list sha256:6dffb34d37e7c2764b92a527fd8791cc4fcb5205b784b69c9ebf7ec23748837c
+#20 exporting manifest list sha256:6dffb34d37e7c2764b92a527fd8791cc4fcb5205b784b69c9ebf7ec23748837c 0.0s done
+#20 naming to docker.io/library/moving-services-sales-agent-server:chainguard-node26-tests-20261012 done
+#20 unpacking to docker.io/library/moving-services-sales-agent-server:chainguard-node26-tests-20261012
+#20 unpacking to docker.io/library/moving-services-sales-agent-server:chainguard-node26-tests-20261012 4.7s done
+#20 DONE 16.5s

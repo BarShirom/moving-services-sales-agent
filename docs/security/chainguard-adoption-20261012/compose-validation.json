@@ -1,0 +1,42 @@
+{
+    "result":  "PASS",
+    "backendImage":  "moving-services-sales-agent-server:chainguard-release-rc1-20261012@sha256:ea37d0a858a66dac5bb610e96ff219cae96a371cf05ba590b4c6d5ea2720a715",
+    "caddyImage":  "moving-services-sales-agent-caddy:bounded-review-20261011@sha256:2dcec600792dbe19d3bb5f08cd09b51b802290f3651eb4d3197f317d74e2609b",
+    "backend":  {
+                    "memory":  "536870912",
+                    "swapTotal":  "536870912",
+                    "cpus":  0.75,
+                    "pids":  128,
+                    "readOnly":  true,
+                    "restart":  "unless-stopped",
+                    "publishedPorts":  [
+                                           null
+                                       ],
+                    "trustedProxy":  "172.30.30.2"
+                },
+    "caddy":  {
+                  "memory":  "134217728",
+                  "swapTotal":  "134217728",
+                  "cpus":  0.25,
+                  "pids":  128,
+                  "readOnly":  true,
+                  "restart":  "unless-stopped",
+                  "ports":  [
+                                {
+                                    "mode":  "ingress",
+                                    "host_ip":  "0.0.0.0",
+                                    "target":  80,
+                                    "published":  "80",
+                                    "protocol":  "tcp"
+                                },
+                                {
+                                    "mode":  "ingress",
+                                    "host_ip":  "0.0.0.0",
+                                    "target":  443,
+                                    "published":  "443",
+                                    "protocol":  "tcp"
+                                }
+                            ]
+              },
+    "note":  "Rendered only; no production services started. The integration harness separately ran a zero-published-port override."
+}

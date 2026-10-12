@@ -1,0 +1,148 @@
+{
+  "result": "PASS",
+  "explanation": "Identical /app file contents, modes and symlink targets; Node binary, versions, non-root identity and runtime configuration. Layer timestamps and attestations can differ.",
+  "baseline": {
+    "image": "moving-services-sales-agent-server:chainguard-node26-eval-20261012",
+    "id": "sha256:eb13ca61ea1d96a090a370f2cd3875ae02476d7975272ef9ed59335fc23e73eb",
+    "size": 292390921,
+    "config": {
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "65532:65532",
+      "env": [
+        "NPM_CONFIG_UPDATE_NOTIFIER=false",
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin",
+        "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
+      ],
+      "cmd": [
+        "node",
+        "server/dist/server.js"
+      ],
+      "entrypoint": [],
+      "workingDir": "/app",
+      "healthcheck": {
+        "Test": [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:' + (process.env.PORT ?? 3001) + '/api/health', { signal: AbortSignal.timeout(4000) }).then(r => process.exit(r.status === 200 ? 0 : 1)).catch(() => process.exit(1))"
+        ],
+        "Interval": 30000000000,
+        "Timeout": 5000000000,
+        "StartPeriod": 10000000000,
+        "Retries": 3
+      }
+    },
+    "contents": {
+      "files": 4191,
+      "appTreeSha256": "43679f0a2b360bc8bfa247a19927d00459bd6a7699d6e8233888778b74f132e3",
+      "nodeSha256": "54f4d9fe3eba73943c062e2a173abccf7eeffca6dae3232b6347529263318dbf",
+      "versions": {
+        "node": "26.11.1",
+        "acorn": "8.18.0",
+        "ada": "4.0.0",
+        "amaro": "1.1.11",
+        "ares": "1.34.8",
+        "brotli": "1.2.0",
+        "cldr": "48.0",
+        "icu": "78.3",
+        "libffi": "3.8.0",
+        "lief": "1.0.0",
+        "llhttp": "9.4.3",
+        "merve": "1.2.2",
+        "modules": "147",
+        "napi": "10",
+        "nbytes": "0.1.4",
+        "ncrypto": "0.0.1",
+        "nghttp2": "1.70.0",
+        "nghttp3": "",
+        "ngtcp2": "",
+        "openssl": "4.0.3",
+        "simdjson": "4.6.11",
+        "simdutf": "7.7.0",
+        "sqlite": "3.53.4",
+        "tz": "2026d",
+        "undici": "8.11.2",
+        "unicode": "17.0",
+        "uv": "1.53.0",
+        "uvwasi": "0.0.23",
+        "v8": "14.6.202.34-node.37",
+        "zlib": "1.3.2.1-motley",
+        "zstd": "1.5.7"
+      },
+      "uid": 65532
+    }
+  },
+  "candidate": {
+    "image": "moving-services-sales-agent-server:chainguard-release-rc1-20261012",
+    "id": "sha256:ea37d0a858a66dac5bb610e96ff219cae96a371cf05ba590b4c6d5ea2720a715",
+    "size": 292390947,
+    "config": {
+      "os": "linux",
+      "architecture": "amd64",
+      "user": "65532:65532",
+      "env": [
+        "NPM_CONFIG_UPDATE_NOTIFIER=false",
+        "PATH=/usr/local/sbin:/usr/local/bin:/usr/bin:/usr/sbin:/sbin:/bin",
+        "SSL_CERT_FILE=/etc/ssl/certs/ca-certificates.crt"
+      ],
+      "cmd": [
+        "node",
+        "server/dist/server.js"
+      ],
+      "entrypoint": [],
+      "workingDir": "/app",
+      "healthcheck": {
+        "Test": [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:' + (process.env.PORT ?? 3001) + '/api/health', { signal: AbortSignal.timeout(4000) }).then(r => process.exit(r.status === 200 ? 0 : 1)).catch(() => process.exit(1))"
+        ],
+        "Interval": 30000000000,
+        "Timeout": 5000000000,
+        "StartPeriod": 10000000000,
+        "Retries": 3
+      }
+    },
+    "contents": {
+      "files": 4191,
+      "appTreeSha256": "43679f0a2b360bc8bfa247a19927d00459bd6a7699d6e8233888778b74f132e3",
+      "nodeSha256": "54f4d9fe3eba73943c062e2a173abccf7eeffca6dae3232b6347529263318dbf",
+      "versions": {
+        "node": "26.11.1",
+        "acorn": "8.18.0",
+        "ada": "4.0.0",
+        "amaro": "1.1.11",
+        "ares": "1.34.8",
+        "brotli": "1.2.0",
+        "cldr": "48.0",
+        "icu": "78.3",
+        "libffi": "3.8.0",
+        "lief": "1.0.0",
+        "llhttp": "9.4.3",
+        "merve": "1.2.2",
+        "modules": "147",
+        "napi": "10",
+        "nbytes": "0.1.4",
+        "ncrypto": "0.0.1",
+        "nghttp2": "1.70.0",
+        "nghttp3": "",
+        "ngtcp2": "",
+        "openssl": "4.0.3",
+        "simdjson": "4.6.11",
+        "simdutf": "7.7.0",
+        "sqlite": "3.53.4",
+        "tz": "2026d",
+        "undici": "8.11.2",
+        "unicode": "17.0",
+        "uv": "1.53.0",
+        "uvwasi": "0.0.23",
+        "v8": "14.6.202.34-node.37",
+        "zlib": "1.3.2.1-motley",
+        "zstd": "1.5.7"
+      },
+      "uid": 65532
+    }
+  }
+}

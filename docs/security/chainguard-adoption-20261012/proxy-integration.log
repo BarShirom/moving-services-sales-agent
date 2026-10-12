@@ -1,0 +1,9 @@
+Valid configuration
+PASS protocols: private Caddy topology and admission assertions
+PASS a: private Caddy topology and admission assertions
+PASS b: private Caddy topology and admission assertions
+PASS direct: private Caddy topology and admission assertions
+moving-proxy-1791826640473-backend-1 37.62MiB / 512MiB 7
+moving-proxy-1791826640473-caddy-1 15.24MiB / 128MiB 8
+PASS upstream-error: private Caddy topology and admission assertions
+PASS: redirect, HTTP/2, Range, health, verified local TLS, static RTL client, spoof resistance, independent quotas, synthetic quote workflow, no published ports, both graceful shutdowns

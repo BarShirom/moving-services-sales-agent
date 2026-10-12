@@ -5,45 +5,52 @@ No AWS resources are created. Authentication, durable storage and public product
 deployment remain future work. Every quote still needs human approval; acceptance
 still means manual coordination is pending.
 
-## Image architecture
+## Current image architecture - Chainguard adoption (2026-10-12)
 
-Build context is the **repository root**, not `server/`. The root lockfile and both
-workspace manifests are copied before source files so dependency layers can be reused.
+The main Dockerfile now uses the approved Chainguard Node Starter Linux/amd64
+base in **every stage**, pinned to
+`sha256:fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e`.
+Node is 26.11.1, shared OpenSSL 4.0.3 and shared zlib 1.3.2.1-motley. Both original
+backend CVEs are addressed in this implementation, with source, signed SBOM and
+runtime-linkage evidence; no risk exception is needed for those two CVEs in this
+artifact. See the [adoption report](security/chainguard-adoption-20261012/README.md)
+for the final immutable identities, checks, remaining limitations and maintenance plan.
 
-- `packages`: official `node:22-bookworm`, compatible with the project's Node 20.18+
-  engine range and the local Node 22 runtime.
-- `build`: `npm ci --workspace server --include-workspace-root=false --include=dev`,
-  then the existing server TypeScript build.
-- `production-dependencies`: a separate, clean install from the same lockfile with
-  `--workspace server --include-workspace-root=false --omit=dev`. No client packages
-  or compiler are installed in this stage.
-- `runtime`: `node:22-trixie-slim` pinned to official image index
-  `sha256:154ba2f4d6fec323d28e4f4bb86bba4677f1223391a1979cf521304e03a98dfa`,
-  verified as Node 22.23.3 / Debian 13 / Linux/amd64, compiled API and production dependencies,
-  including the server workspace manifest/link and any nested server dependencies.
-  Applies only the reviewed Debian `liblzma5` security backport (`5.8.1-1+deb13u2`)
-  for DSA-6549-1 / GHSA-5qpq-xqfv-j9pg, described in the
-  [runtime image security review](IMAGE_SECURITY_REVIEW.md).
-  Runs as `node` (UID/GID 1000), from `/app`, using
-  `node server/dist/server.js` directly so shutdown signals reach Node.
+- `packages`: pinned Wolfi/glibc base plus unchanged workspace manifests/lockfile.
+- `verification`: clean `npm ci`, both workspace tests/typechecks/builds and offline
+  evals, followed by full/production npm audits. Test execution has no network.
+- `production-dependencies`: separate production server install from the same lock.
+- `runtime-files`: removes offline eval/demo tools from compiled server output.
+- `runtime`: same pinned base, only app production dependencies and compiled server;
+  UID/GID 65532:65532, working directory `/app`, direct `node server/dist/server.js`,
+  established health check and graceful signal handling. Vendor shell/npm tooling
+  is retained intact; the application never installs packages at startup.
 
-No application environment values, credentials or `.env` files are baked into the
-image. `.dockerignore` also excludes local dependencies, builds, Git/editor files,
-tests, documentation and data. The build removes emitted offline scripts, evals and
-the quote fixture before copying the compiled output to runtime. The ordinary API
-does not read those files. Pricing evidence paths in responses are provenance labels,
-not runtime file reads. URL-relative local paths and TypeScript's case checks remain
-portable; no Windows-specific runtime path fixes were needed.
+Build from the repository root with `--platform linux/amd64` and build off-host.
+`server/Dockerfile.dockerignore` overrides the root ignore file for this Dockerfile:
+only needed source, tests/eval fixtures and manifests enter the build; credentials,
+local environments, private keys, host node_modules/builds and unrelated files are
+excluded. Tests/fixtures/client output are not copied to the backend runtime.
+Frontend assets come from the matching verification stage and are served by Caddy.
+Do not copy native dependencies from Debian, Windows or a different Node ABI.
 
-The [official Node image documentation](https://hub.docker.com/_/node) describes the
-Debian variants. The [Dockerfile reference](https://docs.docker.com/reference/dockerfile/)
-covers the multi-stage, exec-form command and health-check instructions used here.
-The runtime base is pinned, but the build-stage tag and APT repositories remain
-mutable. Record the final runtime manifest as well as the base digest. Deliberate
-security refreshes should use `--pull --no-cache`, followed by package review and
-a scan of the resulting immutable artifact; `--pull` alone can reuse stale APT layers.
+Node 26 is **Current**, scheduled for LTS on **2026-10-28**, maintenance 2027-10-20
+and EOL 2029-04-30 ([official schedule](https://github.com/nodejs/Release/blob/main/schedule.json)).
+This pinned patch does not automatically receive future security updates or become
+an updated LTS artifact. The public free offering tracks latest, without guaranteed
+access to a particular major or a patch SLA. Check weekly (first 2026-10-19), at the
+LTS transition and before activation; deliberately verify/pin/rebuild/test/scan
+updates. Stop public serving if a required supported fix cannot be obtained.
+No automatic vendor/runtime switch, custom crypto build or paid access is implied.
 
-## Adopted Trixie security status (2026-10-11)
+The historical Debian images below remain evidence only and are **not approved
+public rollback targets**. On first-release failure, stop Caddy/backend; keep TLS
+volumes and evidence, and leave the demo unavailable until a safe artifact is
+verified. Future rollback requires a previously approved, still-safe digest plus
+matching frontend/config. The adoption report contains operational commands,
+monitoring thresholds, immutable Compose references and remaining activation steps.
+
+## Historical Trixie security status (2026-10-11; not a public rollback target)
 
 The main Dockerfile adopts the reviewed `server/Dockerfile.trixie` runtime exactly;
 build stages, dependencies, non-root execution, health check and application behavior
@@ -471,15 +478,15 @@ included in the backend image. Full repository checks remain `npm test`,
 
 ## Planned ECR / Lightsail flow
 
-The planned host is now Lightsail Ubuntu 24.04, with 1 GB RAM; ECS is not the
-deployment target. The approved Trixie candidate is already in private ECR and
-scanned as recorded above. The runtime-only adoption reproduced that candidate;
-the later session-isolation application changes require a new image/digest and
-separately approved push/scan before release. Review residual risks and
-public-demo prerequisites before a separate deployment decision. Any future changed
-runtime digest requires a new scan and separate push authorization.
-The [2026-10-11 image review](IMAGE_SECURITY_REVIEW.md) records the adopted security
-patch, immutable image identities, residual findings and resource-limit smoke test.
+The planned host remains Lightsail Ubuntu 24.04 with 1 GB RAM and Caddy ingress.
+The adopted Chainguard backend is a **local** release candidate. Previously
+published Debian images remain historical and blocked for public use. A separately
+approved publication must upload a unique backend tag, verify its exact digest
+and retrieve its ECR scan; no new AWS work is authorized by local adoption.
+Reuse the unchanged verified Caddy image. For host pulling, use its private ECR
+reference at the same digest through a reviewed image-only Compose override.
+See the [current adoption report](security/chainguard-adoption-20261012/README.md)
+for maintenance, rollback and monitoring. Do not substitute mutable tags.
 Build off-host, keep `NODE_ENV=production`, explicit health checks and a stop
 timeout longer than the eight-second drain deadline. Review HTTPS ingress,
 backend-only secrets, logs, resource limits and client hosting before public access.
@@ -494,11 +501,14 @@ health check does not validate provider configuration or those missing capabilit
 
 ### Caddy and Lightsail deployment template
 
-**Release gate: READY_PENDING_EXPLICIT_RISK_APPROVAL.** See
-[FINAL_RELEASE_REVIEW.md](FINAL_RELEASE_REVIEW.md) for final whole-image findings,
-the pending zlib/OpenSSL exceptions, and [ECR_PUBLICATION_PLAN.md](ECR_PUBLICATION_PLAN.md)
-for proposed private repositories, retention and renewable pull authentication.
-Neither this template nor the earlier Go remediation authorizes publication.
+The current local runtime gate and verification results are recorded in
+[FINAL_RELEASE_REVIEW.md](FINAL_RELEASE_REVIEW.md) and the
+[Chainguard adoption report](security/chainguard-adoption-20261012/README.md).
+The old zlib/OpenSSL exception requests apply to historical Debian artifacts,
+not the fixed candidate. Local readiness does not authorize publication or public
+activation. [ECR_PUBLICATION_PLAN.md](ECR_PUBLICATION_PLAN.md) remains background
+for private repositories and renewable pull authentication; use the new release
+manifest, not historical backend image identities.
 
 [`deploy/compose.yaml`](../deploy/compose.yaml) and
 [`deploy/Caddyfile`](../deploy/Caddyfile) define this **not-yet-deployed** topology:

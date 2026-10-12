@@ -1,0 +1,70 @@
+{
+    "verifiedAt":  "2026-10-12",
+    "verification":  "cosign verify and verify-attestation both exit 0; certificate chain and transparency-log inclusion checked",
+    "verifier":  "cgr.dev/chainguard/cosign@sha256:70b49cd62302297b3e6a92eb63f86d699bc545c1231fe823147784c5fd742768",
+    "issuer":  "https://token.actions.githubusercontent.com",
+    "identity":  "https://github.com/chainguard-images/images/.github/workflows/release.yaml@refs/heads/main",
+    "imageSignatureWorkflowSha":  "11a3bef10734b330bf4250f0c1b2ea49dc65506b",
+    "subject":  [
+                    {
+                        "name":  "cgr.dev/chainguard/node",
+                        "digest":  {
+                                       "sha256":  "fa7d6d61223b68391843b13d1ced9d51293103dacb7dbaae28d0516234295e2e"
+                                   }
+                    }
+                ],
+    "packageCount":  294,
+    "sources":  [
+                    {
+                        "name":  "openssl",
+                        "versionInfo":  "openssl-4.0.3",
+                        "downloadLocation":  "https://github.com/openssl/openssl/archive/af1775b60dfa141a4ad762585052cabeb9f37e9e.tar.gz"
+                    },
+                    {
+                        "name":  "zlib",
+                        "versionInfo":  "767c4c947852e143f582c85f14cf573411df1b35",
+                        "downloadLocation":  "https://github.com/madler/zlib/archive/767c4c947852e143f582c85f14cf573411df1b35.tar.gz"
+                    },
+                    {
+                        "name":  "node",
+                        "versionInfo":  "v26.11.1",
+                        "downloadLocation":  "https://github.com/nodejs/node/archive/364593d0631def13e3043dd84f77ebca2c767ce5.tar.gz"
+                    }
+                ],
+    "recipes":  [
+                    {
+                        "name":  "openssl-4.0.yaml",
+                        "versionInfo":  "5489124e360c92c42599091afb060af6fb317bb1",
+                        "externalRefs":  [
+                                             {
+                                                 "referenceCategory":  "PACKAGE-MANAGER",
+                                                 "referenceLocator":  "pkg:github/chainguard-dev/stereo@5489124e360c92c42599091afb060af6fb317bb1#openssl-4.0.yaml",
+                                                 "referenceType":  "purl"
+                                             }
+                                         ]
+                    },
+                    {
+                        "name":  "zlib.yaml",
+                        "versionInfo":  "75278be0abfe311aedfbf7c3933f6f0b819980e6",
+                        "externalRefs":  [
+                                             {
+                                                 "referenceCategory":  "PACKAGE-MANAGER",
+                                                 "referenceLocator":  "pkg:github/chainguard-dev/stereo@75278be0abfe311aedfbf7c3933f6f0b819980e6#zlib.yaml",
+                                                 "referenceType":  "purl"
+                                             }
+                                         ]
+                    },
+                    {
+                        "name":  "nodejs-26.yaml",
+                        "versionInfo":  "2f4e93dfb2f195aaf28298507c174a7312ea412d",
+                        "externalRefs":  [
+                                             {
+                                                 "referenceCategory":  "PACKAGE-MANAGER",
+                                                 "referenceLocator":  "pkg:github/chainguard-dev/stereo@2f4e93dfb2f195aaf28298507c174a7312ea412d#nodejs-26.yaml",
+                                                 "referenceType":  "purl"
+                                             }
+                                         ]
+                    }
+                ],
+    "limitation":  "Vendor attestation verifies declared provenance; no independent source rebuild or binary reproducibility comparison was performed."
+}
