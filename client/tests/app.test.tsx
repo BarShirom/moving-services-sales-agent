@@ -1204,3 +1204,173 @@ test('scenario loading notices newly changed server progress and requires review
   assert.deepEqual(posts, [{ url: '/api/demo/owner/sample', body: { leadId: latest.customer.lead.id, revision: latest.revision } }]);
   assert.equal(transport.messages.length, 0);
 });
+
+test('responsibilities are visible once, synthetic guidance is contextual and metadata has no em dash', async t => {
+  const container = await mount(t, async () => Response.json(snapshot()));
+  assert.equal(container.querySelectorAll('.how-it-works').length, 1);
+  assert.equal(container.querySelector('.engineering-note'), null);
+  assert.equal(container.querySelector('.demo-notes'), null);
+  assert.equal(element(container, '.how-it-works h2').textContent, 'איך זה עובד?');
+  assert.deepEqual([...container.querySelectorAll('.how-it-works li')].map(item => item.textContent), [
+    'ה-AI מחלץ את פרטי ההובלה מהשיחה.',
+    'מנוע התמחור מחשב המלצת מחיר לפי כללים מוגדרים.',
+    'בעל העסק בודק ומאשר את המחיר לפני שליחת ההצעה.',
+  ]);
+  assert.equal(container.querySelector('.how-it-works')!.closest('details'), null);
+  assert.match(element(container, '.demo-start').textContent!, /סינתטית.*ללא שיחת AI חדשה/);
+  assert.match(element(container, '.composer-guidance').textContent!, /סינתטיים בלבד.*מצטבר שאינו מתחדש/);
+  const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  assert.doesNotMatch(html + container.textContent, /\u2014/u);
+});
+
+test('prepared no-AI demonstration completes with a deliberate quote approval and preserves a separate draft', async t => {
+  const transport = ownerTransport(freshOwnerState());
+  const posts: Array<{ url: string; body: unknown }> = [];
+  const container = await mount(t, async (url, init) => {
+    if (init?.method === 'POST') posts.push({ url, body: init.body ? JSON.parse(init.body as string) : undefined });
+    return transport.fetch(url, init);
+  });
+  assert.equal(container.querySelector('.accept-quote-button'), null, 'No approval exists before owner review');
+  await click(container, '.sample-button');
+  assert.equal(transport.messages.length, 0);
+  await buttonNamed(container, 'אשר ושלח הצעת מחיר');
+  assert.equal(container.querySelector('.to-customer-button'), null, 'Missing-photo acknowledgement still blocks sending');
+  await click(container, '#photo-confirmation-0');
+  await buttonNamed(container, 'אשר תנאים ושלח הצעת מחיר');
+  const quote = structuredClone(transport.current.customer.quote!);
+  assert.equal(quote.status, 'SENT');
+  assert.deepEqual(transport.current.quotes[0].reviewedPhotoItemIndices, [0]);
+  await buttonNamed(container, 'לתצוגת הלקוח ואישור ההצעה');
+  assert.match(element(container, '.customer-quote-summary').textContent!, /900 ₪.*מקרר.*ארגזים.*איסוף.*פריקה.*לא שוריינו מועד או צוות/s);
+  assert.equal(transport.messages.length, 0, 'Rendering and switching roles cannot approve');
+  await draft(container, 'טיוטה נפרדת שלא נשלחת עם האישור');
+  await buttonNamed(container, 'אישור ההצעה');
+  assert.deepEqual(transport.messages, [{ message: 'מאשר', quoteId: quote.id, quoteVersion: quote.version }]);
+  assert.equal(transport.current.customer.lead.status, 'WON');
+  assert.equal(transport.current.customer.quote!.acceptance!.quoteId, quote.id);
+  assert.equal(transport.current.customer.quote!.acceptance!.quoteVersion, quote.version);
+  assert.equal(container.querySelector('.accept-quote-button'), null);
+  assert.match(element(container, '.customer-quote-summary').textContent!, /ממתין לתיאום.*תיאום ידני מחוץ להדגמה.*לא שוריינו מועד או צוות/s);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה נפרדת שלא נשלחת עם האישור');
+  await buttonNamed(container, 'בעל העסק');
+  await buttonNamed(container, 'לקוח');
+  assert.equal(transport.messages.length, 1, 'Accepted state and repeated role switches do not replay acceptance');
+  assert.deepEqual(posts.map(post => post.url), ['/api/demo/owner/sample', '/api/demo/owner/action', '/api/demo/message']);
+});
+
+test('explicit approval uses the displayed current token and stale server rejection cannot become acceptance or retry', async t => {
+  const sample = sampleOwnerState();
+  const snapshot = ownerSnapshot(sample);
+  const approved = applyOwnerAction(sample, { action: 'APPROVE', leadId: snapshot.customer.lead.id, revision: snapshot.revision,
+    pricingEvaluationId: snapshot.pricingEvaluation!.id, scopeConfirmed: true, reviewedPhotoItemIndices: snapshot.pendingPhotoItemIndices });
+  const original = structuredClone(approved);
+  const submissions: Array<Record<string, unknown>> = [];
+  const container = await mount(t, async (url, init) => {
+    if (url === '/api/demo/message') {
+      submissions.push(JSON.parse(init!.body as string));
+      return Response.json({ error: { code: 'STALE_REVIEW', message: 'הצעת המחיר השתנתה. יש לבדוק את ההצעה העדכנית לפני האישור.' } }, { status: 409 });
+    }
+    return Response.json(approved.customer);
+  });
+  await buttonNamed(container, 'אישור ההצעה');
+  assert.deepEqual(submissions, [{ message: 'מאשר', quoteId: approved.customer.quote!.id, quoteVersion: approved.customer.quote!.version }]);
+  assert.match(element(container, '.error-banner').textContent!, /הצעת המחיר השתנתה/);
+  assert.equal(approved.customer.quote!.status, 'SENT');
+  assert.deepEqual(approved, original);
+  assert.equal(submissions.length, 1);
+});
+
+test('expired explicit approval clears quote context and recovery never replays it or sends the saved draft', async t => {
+  const sample = sampleOwnerState();
+  const snapshot = ownerSnapshot(sample);
+  const approved = applyOwnerAction(sample, { action: 'APPROVE', leadId: snapshot.customer.lead.id, revision: snapshot.revision,
+    pricingEvaluationId: snapshot.pricingEvaluation!.id, scopeConfirmed: true, reviewedPhotoItemIndices: snapshot.pendingPhotoItemIndices });
+  const fresh = freshOwnerState();
+  const calls: Array<{ url: string; method: string }> = [];
+  let expired = false;
+  const container = await mount(t, async (url, init) => {
+    calls.push({ url, method: init?.method ?? 'GET' });
+    if (url === '/api/demo/message') { expired = true; return Response.json({ error: { code: 'SESSION_EXPIRED', message: 'תוקף ההדגמה הסתיים.' } }, { status: 401 }); }
+    return Response.json((expired ? fresh : approved).customer);
+  });
+  await draft(container, 'טיוטה חשובה');
+  await buttonNamed(container, 'אישור ההצעה');
+  assert.ok(container.querySelector('.session-recovery'));
+  assert.equal(container.querySelector('.customer-quote-summary'), null);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה חשובה');
+  await buttonNamed(container, 'התחלת הדגמה חדשה');
+  assert.equal(container.querySelector('.accept-quote-button'), null);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה חשובה');
+  assert.deepEqual(calls, [{ url: '/api/demo', method: 'GET' }, { url: '/api/demo/message', method: 'POST' }, { url: '/api/demo', method: 'GET' }]);
+});
+
+test('handoff explains temporary storage and replacement remains deliberate and cancellable', async t => {
+  const sample = sampleOwnerState();
+  const initial = ownerSnapshot(sample);
+  const stopped = applyOwnerAction(sample, { action: 'TAKE_OVER_CONVERSATION', leadId: initial.customer.lead.id, revision: initial.revision });
+  const transport = ownerTransport(stopped);
+  const before = structuredClone(transport.current);
+  const container = await mount(t, transport.fetch);
+  assert.match(element(container, '.handoff-help').textContent!, /האוטומציה נעצרה.*מחוץ להדגמה.*אין כאן תיבת נציג.*שיחת ההדגמה הזמנית/s);
+  await draft(container, 'טיוטה לפני החלפה');
+  await buttonNamed(container, 'להתנסות בפנייה המוכנה');
+  assert.ok(container.querySelector('[role="alertdialog"]'));
+  await buttonNamed(container, 'ביטול והמשך השיחה');
+  assert.deepEqual(transport.current, before);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה לפני החלפה');
+  assert.equal(transport.messages.length, 0);
+  await buttonNamed(container, 'להדגמה חדשה');
+  await click(container, '.confirm-replace');
+  assert.equal(transport.current.customer.lead.status, 'COLLECTING_INFORMATION');
+});
+
+test('session-creation Retry-After blocks reconnect and prepared scenario without automatic requests', async t => {
+  let clock = Date.now();
+  t.mock.method(Date, 'now', () => clock);
+  let tick!: () => void;
+  t.mock.method(dom.window, 'setInterval', (callback: TimerHandler) => { tick = callback as () => void; return 101; });
+  t.mock.method(dom.window, 'clearInterval', () => {});
+  let calls = 0;
+  const container = await mount(t, async () => {
+    calls++;
+    return calls === 1 ? Response.json({ error: { code: 'SESSION_RATE_LIMITED', message: 'legacy copy' } }, { status: 429, headers: { 'Retry-After': '5' } }) : Response.json(snapshot());
+  });
+  assert.match(element(container, '.error-banner').textContent!, /מגבלת יצירת שיחות.*הפנייה המוכנה דורשת שיחה זמינה.*5 שניות/s);
+  assert.equal(element<HTMLButtonElement>(container, '.sample-button').disabled, true);
+  assert.equal(element<HTMLButtonElement>(container, '.error-banner button').disabled, true);
+  assert.equal(container.querySelector('.error-actions'), null, 'No unavailable-session promise or AI fallback CTA');
+  await click(container, '.sample-button');
+  await buttonNamed(container, 'ניסיון חיבור נוסף');
+  assert.equal(calls, 1);
+  clock += 6000;
+  await act(async () => tick());
+  assert.equal(calls, 1, 'Expiry changes availability only; it cannot create an automatic request');
+  await buttonNamed(container, 'ניסיון חיבור נוסף');
+  assert.equal(calls, 2);
+  assert.equal(element<HTMLButtonElement>(container, '.sample-button').disabled, false);
+});
+
+test('AI Retry-After prevents another message dispatch while preserving the no-AI prepared path', async t => {
+  let clock = Date.now();
+  t.mock.method(Date, 'now', () => clock);
+  let tick!: () => void;
+  t.mock.method(dom.window, 'setInterval', (callback: TimerHandler) => { tick = callback as () => void; return 102; });
+  t.mock.method(dom.window, 'clearInterval', () => {});
+  const transport = ownerTransport(freshOwnerState());
+  let messages = 0;
+  const container = await mount(t, async (url, init) => {
+    if (url === '/api/demo/message') { messages++; return Response.json({ error: { code: 'AI_RATE_LIMITED', message: 'יש להמתין לפני עיבוד AI נוסף.' } }, { status: 429, headers: { 'Retry-After': '5' } }); }
+    return transport.fetch(url, init);
+  });
+  await draft(container, 'טיוטה');
+  await click(container, '.send-button');
+  assert.equal(messages, 1);
+  assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, true);
+  assert.equal(element<HTMLButtonElement>(container, '.sample-button').disabled, false);
+  await click(container, '.send-button');
+  assert.equal(messages, 1);
+  clock += 6000;
+  await act(async () => tick());
+  assert.equal(messages, 1, 'Cooldown expiry cannot resubmit the failed draft');
+  assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, false);
+});

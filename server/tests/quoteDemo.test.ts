@@ -141,10 +141,77 @@ test('HTTP partial subtotal cannot bypass omitted-cost, scope, photo or amount g
   assert.deepEqual(sent.currentQuote?.reviewedPhotoItemIndices, [0]);
 });
 
+test('prepared scenario and deliberate current-quote acceptance complete without extraction or repeated side effects', async t => {
+  for (const message of ['מאשר', 'אני מאשר', 'מאשר את ההצעה', 'אני מאשרת את ההצעה']) await t.test(message, async t => {
+    const app = await api(t, () => assert.fail('Prepared scenario, quote acceptance and repeated acceptance must not call extraction'));
+    const initial = await app.owner();
+    assert.equal((await app.post('/owner/sample', token(initial))).status, 200);
+    const owner = await app.owner();
+    assert.equal((await app.post('/owner/action', { ...token(owner), action: 'APPROVE',
+      pricingEvaluationId: owner.pricingEvaluation!.id, reviewedPhotoItemIndices: owner.pendingPhotoItemIndices })).status, 200);
+    const sent = await app.owner();
+    const quote = sent.currentQuote!;
+    const customer = await app.customer();
+    assert.equal(customer.quote?.status, 'SENT', 'Reads must not accept a quote');
+    assert.equal(customer.lead.status, 'QUOTE_SENT');
+    assert.equal(quote.acceptance, null);
+    const request = { message, quoteId: quote.id, quoteVersion: quote.version };
+    for (const stale of [{ ...request, quoteId: 'old-quote' }, { ...request, quoteVersion: quote.version + 1 }]) {
+      assert.equal((await app.post('/message', stale)).status, 409);
+      assert.deepEqual(await app.owner(), sent);
+    }
+    assert.equal((await app.post('/message', request)).status, 200);
+    const accepted = await app.owner();
+    assert.equal(accepted.currentQuote?.status, 'ACCEPTED');
+    assert.equal(accepted.customer.lead.status, 'WON');
+    assert.equal(accepted.coordinationSummary?.status, 'PENDING');
+    assert.equal(accepted.coordinationSummary?.acceptedAmount, 900);
+    assert.equal(accepted.currentQuote?.acceptance?.quoteVersion, quote.version);
+    assert.deepEqual(accepted.pricingEvaluation, sent.pricingEvaluation);
+    assert.deepEqual(accepted.reviews, sent.reviews);
+    assert.deepEqual(accepted.customer.lead.moveDetails, sent.customer.lead.moveDetails);
+    assert.equal((await app.post('/message', request)).status, 200);
+    assert.deepEqual(await app.owner(), accepted, 'Repeated deliberate approval is idempotent');
+  });
+});
+
+test('negotiation stops automation and retains later messages only within the temporary demo session', async t => {
+  const app = await api(t, () => assert.fail('Negotiation and stopped-session messages must not call extraction'));
+  const initial = await app.owner();
+  assert.equal((await app.post('/owner/sample', token(initial))).status, 200);
+  const owner = await app.owner();
+  assert.equal((await app.post('/owner/action', { ...token(owner), action: 'APPROVE',
+    pricingEvaluationId: owner.pricingEvaluation!.id, reviewedPhotoItemIndices: owner.pendingPhotoItemIndices })).status, 200);
+  assert.equal((await app.post('/message', { message: 'אפשר להוזיל?' })).status, 200);
+  const stopped = await app.owner();
+  assert.equal(stopped.customer.lead.status, 'HUMAN_HANDOFF');
+  assert.equal(stopped.currentQuote?.acceptance, null);
+  assert.equal(stopped.coordinationSummary, null);
+  assert.equal(stopped.customer.nextQuestion, null);
+  assert.match(stopped.customer.responseText, /האוטומציה בהדגמה נעצרה/);
+  assert.match(stopped.customer.responseText, /מחוץ להדגמה/);
+  assert.match(stopped.customer.responseText, /בשיחת ההדגמה הזמנית/);
+  assert.match(stopped.customer.responseText, /אינם נשלחים לנציג/);
+  assert.doesNotMatch(stopped.customer.responseText, /נציג יבדוק|ימשיך איתך|יחזור אליך/);
+  assert.equal((await app.post('/message', { message: 'מאשר', quoteId: stopped.currentQuote!.id,
+    quoteVersion: stopped.currentQuote!.version })).status, 200);
+  const later = await app.owner();
+  assert.equal(later.customer.lead.status, 'HUMAN_HANDOFF');
+  assert.equal(later.currentQuote?.acceptance, null);
+  assert.equal(later.coordinationSummary, null);
+  assert.deepEqual(later.quotes, stopped.quotes);
+  assert.deepEqual(later.reviews, stopped.reviews);
+  assert.equal(later.customer.lead.messages.length, stopped.customer.lead.messages.length + 1);
+  assert.equal(later.customer.lead.messages.at(-1)?.text, 'מאשר');
+  assert.equal(later.customer.responseText, stopped.customer.responseText);
+});
+
 test('conditional acceptance changes the scope and invalidates the offer even if the extractor cannot represent the condition', async t => {
-  for (const message of ['כן, אבל יש גם עוד ארון', 'כן, אבל רק אחרי 18:00', 'סגור, רק שהפריקה עכשיו בקומה 4', 'כן, בתנאי שנדבר קודם']) {
+  for (const message of ['כן, אבל יש גם עוד ארון', 'כן, אבל רק אחרי 18:00', 'סגור, רק שהפריקה עכשיו בקומה 4', 'כן, בתנאי שנדבר קודם',
+    'אני מאשר, אבל רק אחרי 18:00', 'מאשר את ההצעה רק אם תוסיפו ארון']) {
     await t.test(message, async t => {
-      const app = await api(t, input => input.text === 'כן' ? {} : quoteFixtureExtractor(input));
+      const app = await api(t, input => ['כן', 'אני מאשר, אבל רק אחרי 18:00', 'מאשר את ההצעה רק אם תוסיפו ארון'].includes(input.text)
+        ? {} : quoteFixtureExtractor(input));
       const sent = await sendQuote(app);
       const quote = sent.currentQuote!;
       assert.equal((await app.post('/message', { message, quoteId: quote.id, quoteVersion: quote.version })).status, 200);
@@ -163,7 +230,7 @@ test('conditional acceptance changes the scope and invalidates the offer even if
 });
 
 test('clarification, negation and objections cannot accept a quote or silently close the lead', async t => {
-  for (const message of ['זה כולל פירוק?', 'יקר לי', 'לא', 'כן?']) await t.test(message, async t => {
+  for (const message of ['זה כולל פירוק?', 'יקר לי', 'לא', 'כן?', 'אני מאשר את ההצעה?']) await t.test(message, async t => {
     const app = await api(t);
     await sendQuote(app);
     assert.equal((await app.post('/message', { message })).status, 200);

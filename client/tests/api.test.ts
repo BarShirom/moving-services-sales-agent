@@ -99,3 +99,36 @@ test('cumulative beta budget closure never promises tomorrow or uses Retry-After
     fetchMock.mock.restore();
   }
 });
+
+test('session creation limits explain the actual blocked action, expose bounded Retry-After and never retry', async t => {
+  for (const code of ['SESSION_RATE_LIMITED', 'SESSION_CAPACITY']) {
+    const fetchMock = t.mock.method(globalThis, 'fetch', async () => Response.json({ error: { code, message: 'opaque legacy copy' } },
+      { status: code === 'SESSION_RATE_LIMITED' ? 429 : 503, headers: { 'Retry-After': '60' } }));
+    await assert.rejects(demoRequest(), error => {
+      assert.ok(error instanceof DemoApiError);
+      assert.equal(error.code, code);
+      assert.equal(error.retryAfterSeconds, 60);
+      assert.match(error.message, /(?:מגבלת יצירת שיחות|אין מקום לשיחה נוספת).*הפנייה המוכנה דורשת שיחה זמינה.*60 שניות/);
+      assert.doesNotMatch(error.message, /AI|opaque/);
+      return true;
+    });
+    assert.equal(fetchMock.mock.callCount(), 1);
+    fetchMock.mock.restore();
+  }
+});
+
+test('Retry-After dates are honored and invalid headers cannot introduce retry instructions', async t => {
+  t.mock.method(Date, 'now', () => Date.parse('2026-10-20T12:00:00Z'));
+  for (const [header, expected] of [['Tue, 20 Oct 2026 12:00:30 GMT', 30], ['untrusted input', undefined], ['-1', undefined], ['999999999', undefined]] as const) {
+    const fetchMock = t.mock.method(globalThis, 'fetch', async () => Response.json({ error: { code: 'SESSION_RATE_LIMITED', message: 'blocked' } },
+      { status: 429, headers: { 'Retry-After': header } }));
+    await assert.rejects(demoRequest(), error => {
+      assert.ok(error instanceof DemoApiError);
+      assert.equal(error.retryAfterSeconds, expected);
+      assert.doesNotMatch(error.message, /untrusted|999999999/);
+      return true;
+    });
+    assert.equal(fetchMock.mock.callCount(), 1);
+    fetchMock.mock.restore();
+  }
+});

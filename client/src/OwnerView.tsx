@@ -94,8 +94,8 @@ function componentLabel(component: PricingComponent, owner: OwnerSnapshot): stri
   if (component.code !== 'FLOORS') return ({ WASHING_MACHINE: 'מכונת כביסה', BOXES: 'נפח ארגזים', DISTANCE: 'מרחק המסלול', ASSEMBLY_DISASSEMBLY: 'פירוק / הרכבה', EXTRA_STOP: 'נקודות נוספות', WAITING: 'המתנה', DISCOUNT: 'הנחת סטודנט' } as Record<string, string>)[component.code] ?? component.label;
   return 'קומות ללא מעלית ' + (component.label.startsWith('pickup') ? 'באיסוף' : 'בפריקה');
 }
-export function OwnerView({ owner, onChange, onBusy, onReset, onSample, onError, disabled = false }: {
-  onSample?: () => void; onError?: (error: unknown) => void;
+export function OwnerView({ owner, onChange, onBusy, onReset, onSample, onError, onCustomer, disabled = false }: {
+  onSample?: () => void; onError?: (error: unknown) => void; onCustomer?: () => void;
   disabled?: boolean; owner: OwnerSnapshot; onChange: (value: OwnerSnapshot) => void; onBusy: (value: boolean) => void; onReset: () => Promise<void>;
 }) {
   const [working, setPending] = useState(false);
@@ -137,7 +137,7 @@ export function OwnerView({ owner, onChange, onBusy, onReset, onSample, onError,
     setPending(true); onBusy(true); setError(''); setNotice('');
     try { onChange(await operation()); setForm(null); setAmount(''); setReason(''); setQuestion(''); setNotice(success); }
     catch (error) {
-      if (onError && error instanceof DemoApiError && error.code === 'SESSION_EXPIRED') onError(error);
+      if (onError && error instanceof DemoApiError && ['SESSION_EXPIRED', 'SESSION_RATE_LIMITED', 'SESSION_CAPACITY', 'RATE_LIMITED', 'PROTECTION_CAPACITY'].includes(error.code)) onError(error);
       else setError(error instanceof Error ? error.message : 'לא ניתן להשלים את הפעולה.');
     }
     finally { setPending(false); onBusy(false); }
@@ -182,6 +182,7 @@ export function OwnerView({ owner, onChange, onBusy, onReset, onSample, onError,
           {!finalized && !complete && evaluation && <small>רכיבים שלא תומחרו אינם כלולים בסכום.</small>}
         </div>
         <div className="owner-next-action"><h3>מה עושים עכשיו?</h3><p>{nextAction}</p>
+          {quoteSent && !handoff && onCustomer && <button type="button" className="primary-button to-customer-button" disabled={pending} onClick={onCustomer}>לתצוגת הלקוח ואישור ההצעה</button>}
           {!finalized && !!customerMissing.length && <p>להשלמה מהלקוח: {customerMissing.join(' · ')}</p>}
           {!finalized && !!ownerReview.length && <p>לבדיקת בעל העסק: {ownerReview.join(' · ')}</p>}
           {!finalized && !!evaluation?.omittedComponents.length && <p>יש {evaluation.omittedComponents.length} רכיבים שלא תומחרו. יש לכלול אותם במחיר הסופי.</p>}

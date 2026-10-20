@@ -12,6 +12,7 @@ import { OwnerView } from '../src/OwnerView';
 import { sampleOwnerState, ownerSnapshot, applyOwnerAction } from '../../server/src/demo/ownerWorkflow';
 import { act } from 'react';
 import type { OwnerSnapshot } from '../src/api';
+import { CustomerQuoteOverview } from '../src/QuoteOverview';
 
 function snapshot(): DemoSnapshot {
   const lead = createLead();
@@ -28,6 +29,36 @@ test('chat renders the full backend response, including acknowledgement and next
   const html = renderToStaticMarkup(<ConversationMessages messages={state.lead.messages} />);
   assert.ok(html.includes(state.responseText));
   assert.ok(!html.includes(state.nextQuestion!.text));
+});
+
+test('customer quote summary shows approved scope with real zero/false and meaningful missing values', () => {
+  const state = sampleOwnerState();
+  const owner = ownerSnapshot(state);
+  const approved = applyOwnerAction(state, { action: 'APPROVE', leadId: owner.customer.lead.id, revision: owner.revision,
+    pricingEvaluationId: owner.pricingEvaluation!.id, scopeConfirmed: true, reviewedPhotoItemIndices: owner.pendingPhotoItemIndices });
+  const customer = approved.customer;
+  customer.quote!.scope.pickup.floor = 0;
+  customer.quote!.scope.pickup.elevator = false;
+  customer.quote!.scope.dropoff.floor = null;
+  customer.quote!.scope.dropoff.elevator = null;
+  const before = structuredClone(customer);
+  const html = renderToStaticMarkup(<CustomerQuoteOverview state={customer} disabled={false} accepting={false} onAccept={() => { throw new Error('Render cannot accept'); }} />);
+  const document = new JSDOM(html).window.document;
+  assert.match(document.body.textContent!, /קומה: 0, מעלית: לא/);
+  assert.match(document.body.textContent!, /קומה: טרם צוינה, מעלית: טרם צוין/);
+  assert.doesNotMatch(document.body.textContent!, /\u2014/u);
+  assert.ok(document.querySelector('.accept-quote-button'));
+  assert.deepEqual(customer, before);
+  for (const status of ['INVALIDATED', 'SUPERSEDED', 'ACCEPTED'] as const) {
+    customer.quote!.status = status;
+    const document = new JSDOM(renderToStaticMarkup(<CustomerQuoteOverview state={customer} disabled={false} accepting={false} onAccept={() => { throw new Error('Render cannot accept'); }} />)).window.document;
+    assert.equal(document.querySelector('.accept-quote-button'), null, status);
+  }
+  customer.quote!.status = 'SENT';
+  customer.lead.status = 'HUMAN_HANDOFF';
+  assert.doesNotMatch(renderToStaticMarkup(<CustomerQuoteOverview state={customer} disabled={false} accepting={false} onAccept={() => {}} />), /accept-quote-button/);
+  customer.quote!.leadId = 'unrelated-lead';
+  assert.equal(renderToStaticMarkup(<CustomerQuoteOverview state={customer} disabled={false} accepting={false} onAccept={() => {}} />), '');
 });
 
 test('next-step card uses an operational action without duplicating the chat response or question', () => {
