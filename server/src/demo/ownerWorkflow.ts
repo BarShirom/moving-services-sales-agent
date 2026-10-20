@@ -13,7 +13,7 @@ import type { CustomerQuoteRecord, QuoteToken } from '../domain/quote/types.js';
 import type { DemoSnapshot } from './types.js';
 import type { OwnerDemoState, OwnerSnapshot } from './ownerTypes.js';
 
-export const handoffText = 'תודה, העברתי את הפרטים לנציג שימשיך איתך מכאן ויחזור אליך בהקדם.';
+export const handoffText = 'האוטומציה בהדגמה נעצרה. הפרטים נשמרו בשיחה; המשך הטיפול והתיאום נעשים ידנית מחוץ להדגמה. אין כאן צ׳אט עם נציג או חזרה אוטומטית לשיחה.';
 export function freshOwnerState(): OwnerDemoState {
   const lead = createLead();
   const requirements = evaluateRequirements(lead);
@@ -245,7 +245,7 @@ export function handleQuoteReply(
     if (!sameScope || !ownerApproved) { invalidateSentQuote(next); next.pricingStale = next.pricingEvaluation !== null; }
     next.customer.lead.status = 'HUMAN_HANDOFF';
     append(next, sameScope && ownerApproved ? 'קיבלתי. נציג יבדוק את השאלה או הבקשה שלך וימשיך איתך מכאן; ההצעה לא אושרה מחדש.'
-      : 'הפרטים השתנו ולכן ההצעה הקודמת אינה זמינה לאישור. נציג יבדוק את הפרטים ויחזור אליך.', 'AGENT', timestamp);
+      : 'הפרטים השתנו ולכן ההצעה הקודמת אינה זמינה לאישור. נדרשת בדיקה ידנית מחוץ להדגמה.', 'AGENT', timestamp);
   }
   syncCustomerQuote(next);
   next.revision++;
@@ -274,7 +274,7 @@ export function acceptCustomerResult(state: OwnerDemoState, result: DemoSnapshot
         if (next.coordinationSummary) next.coordinationSummary.status = 'REVIEW_REQUIRED';
         next.customer.responseText = quote.acceptance
           ? 'האישור הקודם נשמר עבור הפרטים שאושרו. השינוי החדש דורש בדיקת נציג לפני המשך התיאום.'
-          : 'הבקשה החדשה דורשת בדיקת נציג. ההצעה הקודמת לא אושרה; נציג יבדוק את התנאי ויחזור אליך.';
+          : 'הבקשה החדשה דורשת בדיקה ידנית מחוץ להדגמה. ההצעה הקודמת לא אושרה; האוטומציה נעצרה.';
       } else {
         next.customer.lead.status = result.requirements.readyForPricing ? 'READY_FOR_PRICING' : 'COLLECTING_INFORMATION';
         next.customer.nextQuestion = result.nextQuestion;

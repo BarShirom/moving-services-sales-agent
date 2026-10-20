@@ -60,6 +60,34 @@ The engine produces a **₪950 partial subtotal**: refrigerator 425 + boxes 150 
 
 Switch to **בעל העסק**, choose **השלם ואשר מחיר סופי**, enter **1200**, confirm whole-job scope/omitted costs and proceeding without the photo, then send the local demo quote. Switch to **לקוח** and reply **כן**. Both views show accepted **₪1,200** and pending coordination; the original **₪950** calculation stays separate. Reset clears the session. The requested date is not a reserved appointment.
 
+### Guided interface and recovery
+
+The landing screen offers **תרחיש מוכן ללא AI**, using the existing
+`POST /api/demo/owner/sample` route to load a prepared synthetic lead for owner review.
+It does not invoke extraction, invent customer messages or consume AI allowance. It is also
+offered after AI-availability errors. This differs from filling the conversation's example
+draft, which is sent only when the visitor submits it.
+
+The progress guide derives its current step from the server's lead/quote state. The owner
+overview keeps workflow status, the relevant calculated or approved amount, missing information
+and next action together. Detailed confidence deductions and developer JSON are secondary,
+collapsed disclosures; the score remains an information-completeness measure.
+
+Replacing a meaningful conversation through reset or sample loading requires confirmation.
+Session-expiration errors instead disable stale mutations and offer an explicit new session.
+Starting it discards old customer/owner snapshots and quote identity/version, while retaining
+an unsent draft where possible. No message, acceptance or owner action is automatically replayed.
+
+Photo requests explain that upload is unavailable and offer the existing deterministic
+unavailable-photo reply. It preserves `NOT_AVAILABLE`; finalization still needs the owner's
+explicit missing-photo acknowledgement. **עצור אוטומציה לטיפול ידני** requires confirmation
+and stops automation for that lead. There is no owner chat/reply interface or resume action;
+continuation happens outside the demo. Starting another demonstration is a separate action.
+
+The local page uses Hebrew RTL metadata, an SVG favicon and secondary repository/portfolio
+links. Customer and owner layouts use desktop columns and return to a single column on narrow
+screens. Existing business rules, pricing, AI limits and deployment controls are unchanged.
+
 ## Structured state and extraction
 
 - Lead facts use explicit unknowns: `null` is not `false`, and floor `0` is known ground floor. Dimensions are centimeters; normalized requested dates are `YYYY-MM-DD`, times `HH:mm`, and audit timestamps UTC ISO strings.

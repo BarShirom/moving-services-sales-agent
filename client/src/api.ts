@@ -4,6 +4,11 @@ export type { OwnerSnapshot, OwnerAction };
 import type { DemoSnapshot } from '../../server/src/demo/types';
 export type { DemoSnapshot };
 
+/** Safe API identity for explicit UI recovery; never retries a mutation. */
+export class DemoApiError extends Error {
+  constructor(public readonly code: string, message: string) { super(message); this.name = 'DemoApiError'; }
+}
+
 async function request<T>(path: string, method: 'GET' | 'POST', body?: unknown): Promise<T> {
   let response: Response;
   try {
@@ -16,16 +21,21 @@ async function request<T>(path: string, method: 'GET' | 'POST', body?: unknown):
       }),
     });
   } catch {
-    throw new Error('לא ניתן להתחבר לשרת. ודאו שהוא פועל ונסו שוב.');
+    throw new DemoApiError('NETWORK_ERROR', 'לא ניתן להתחבר לשרת. נסו להתחבר שוב.');
   }
   if (!response.ok) {
     const body = await response.json().catch(() => null);
+    if (['AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED'].includes(body?.error?.code)) {
+      throw new DemoApiError(body.error.code, 'עיבוד ה-AI בהדגמה זו סגור. תקציב הבטא משותף ומצטבר ואינו מתחדש אוטומטית. המידע הקיים נשמר ואפשר להמשיך בבדיקה ידנית.');
+    }
+    if (body?.error?.code === 'AI_NOT_CONFIGURED') throw new DemoApiError('AI_NOT_CONFIGURED', 'עיבוד הודעות בעזרת AI אינו זמין כרגע. אפשר לנסות את הפנייה המוכנה ללא AI.');
     // Render only the demo API's curated errors, never proxy/provider error bodies.
-    const knownCodes = ['BUSY', 'INVALID_MESSAGE', 'AI_NOT_CONFIGURED', 'EXTRACTION_FAILED', 'INVALID_REQUEST', 'INVALID_OWNER_ACTION', 'STALE_REVIEW', 'ACTION_UNAVAILABLE', 'SESSION_EXPIRED', 'SESSION_CAPACITY', 'SESSION_FULL', 'REQUEST_FORBIDDEN', 'RATE_LIMITED', 'SESSION_RATE_LIMITED', 'AI_RATE_LIMITED', 'AI_BUSY', 'AI_BUDGET_EXHAUSTED', 'AI_INPUT_LIMIT', 'PROTECTION_CAPACITY'];
+    const knownCodes = ['BUSY', 'INVALID_MESSAGE', 'AI_NOT_CONFIGURED', 'EXTRACTION_FAILED', 'INVALID_REQUEST', 'INVALID_OWNER_ACTION', 'STALE_REVIEW', 'ACTION_UNAVAILABLE', 'SESSION_EXPIRED', 'SESSION_CAPACITY', 'SESSION_FULL', 'REQUEST_FORBIDDEN', 'RATE_LIMITED', 'SESSION_RATE_LIMITED', 'AI_RATE_LIMITED', 'AI_BUSY', 'AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED', 'AI_INPUT_LIMIT', 'PROTECTION_CAPACITY'];
     const retrySeconds = Number(response.headers.get('Retry-After'));
     const retryHint = [429, 503].includes(response.status) && Number.isSafeInteger(retrySeconds) && retrySeconds > 0 && retrySeconds <= 86400
       ? ` אפשר לנסות שוב בעוד ${retrySeconds} שניות.` : '';
-    throw new Error(knownCodes.includes(body?.error?.code) && typeof body.error.message === 'string'
+    const known = knownCodes.includes(body?.error?.code);
+    throw new DemoApiError(known ? body.error.code : 'UNKNOWN', known && typeof body.error.message === 'string'
       ? body.error.message + retryHint : 'השרת אינו זמין כרגע. נסו שוב בעוד רגע.');
   }
   try { return await response.json(); }

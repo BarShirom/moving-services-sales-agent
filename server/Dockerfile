@@ -14,6 +14,7 @@ COPY server/src ./server/src
 COPY server/tests ./server/tests
 COPY client/tsconfig.json client/vite.config.ts client/index.html ./client/
 COPY client/src ./client/src
+COPY client/public ./client/public
 COPY client/tests ./client/tests
 COPY data/evals ./data/evals
 RUN --network=none npm test && npm run typecheck && npm run build && npm run eval

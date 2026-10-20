@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { demoRequest, ownerRequest, ownerAction, ownerPricing, ownerSample } from '../src/api';
+import { DemoApiError, demoRequest, ownerRequest, ownerAction, ownerPricing, ownerSample } from '../src/api';
 
 test('every demo request sends credentials and the CSRF header, including bodyless reset', async t => {
   const calls: RequestInit[] = [];
@@ -40,8 +40,35 @@ test('expired mutation shows recovery guidance and is never automatically replay
   const fetchMock = t.mock.method(globalThis, 'fetch', async () => Response.json({
     error: { code: 'SESSION_EXPIRED', message: 'רעננו את העמוד כדי להתחיל הדגמה חדשה.' },
   }, { status: 409 }));
-  await assert.rejects(demoRequest('/message', 'כן'), /רעננו את העמוד/);
+  await assert.rejects(demoRequest('/message', 'כן'), error => {
+    assert.ok(error instanceof DemoApiError);
+    assert.equal(error.code, 'SESSION_EXPIRED');
+    return true;
+  });
   assert.equal(fetchMock.mock.callCount(), 1);
+});
+
+test('unavailable AI offers a visitor-safe explanation and unknown error identities remain generic', async t => {
+  const fetchMock = t.mock.method(globalThis, 'fetch', async () => Response.json({
+    error: { code: 'AI_NOT_CONFIGURED', message: 'Do not expose server configuration instructions.' },
+  }, { status: 503 }));
+  await assert.rejects(demoRequest('/message', 'דוגמה'), error => {
+    assert.ok(error instanceof DemoApiError);
+    assert.equal(error.code, 'AI_NOT_CONFIGURED');
+    assert.match(error.message, /פנייה המוכנה ללא AI/);
+    assert.doesNotMatch(error.message, /configuration|\.env|מפתח/);
+    return true;
+  });
+  fetchMock.mock.mockImplementation(async () => Response.json({
+    error: { code: 'untrusted text', message: 'untrusted body' },
+  }, { status: 500 }));
+  await assert.rejects(demoRequest('/message', 'דוגמה'), error => {
+    assert.ok(error instanceof DemoApiError);
+    assert.equal(error.code, 'UNKNOWN');
+    assert.doesNotMatch(error.message, /untrusted/);
+    return true;
+  });
+  assert.equal(fetchMock.mock.callCount(), 2);
 });
 
 test('throttling and concurrency errors show safe Hebrew retry guidance without automatic retries', async t => {
@@ -50,6 +77,24 @@ test('throttling and concurrency errors show safe Hebrew retry guidance without 
       error: { code, message: 'ההדגמה עמוסה כרגע.' },
     }, { status, headers: { 'Retry-After': '5' } }));
     await assert.rejects(demoRequest('/message', 'טיוטה'), /ההדגמה עמוסה כרגע.*5 שניות/);
+    assert.equal(fetchMock.mock.callCount(), 1);
+    fetchMock.mock.restore();
+  }
+});
+
+test('cumulative beta budget closure never promises tomorrow or uses Retry-After', async t => {
+  for (const [status, code] of [[429, 'AI_BUDGET_EXHAUSTED'], [503, 'AI_WINDOW_CLOSED']] as const) {
+    const fetchMock = t.mock.method(globalThis, 'fetch', async () => Response.json({
+      error: { code, message: 'נסו שוב מחר כשהתקציב היומי יתחדש.' },
+    }, { status, headers: { 'Retry-After': '86400' } }));
+    await assert.rejects(demoRequest('/message', 'טיוטה'), error => {
+      assert.ok(error instanceof Error);
+      assert.match(error.message, /עיבוד ה-AI בהדגמה זו סגור/);
+      assert.match(error.message, /משותף ומצטבר ואינו מתחדש אוטומטית/);
+      assert.match(error.message, /המידע הקיים נשמר/);
+      assert.doesNotMatch(error.message, /מחר|86400|שניות|נסו שוב/);
+      return true;
+    });
     assert.equal(fetchMock.mock.callCount(), 1);
     fetchMock.mock.restore();
   }

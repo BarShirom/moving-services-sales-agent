@@ -1,8 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { AgentState, statusLabel } from './AgentState';
-import { ownerAction, ownerPricing, ownerRequest, ownerSample, type OwnerSnapshot, type OwnerAction } from './api';
+import { DemoApiError, ownerAction, ownerPricing, ownerRequest, ownerSample, type OwnerSnapshot, type OwnerAction } from './api';
 import type { ReviewReason, PricingComponent, OmittedComponent } from '../../server/src/domain/pricing/types';
-import { highBoxVolumeLabel, itemLabel, itemPricingReviewLabel } from './leadPresentation';
+import { highBoxVolumeLabel, itemLabel, itemPricingReviewLabel, presentRequirements } from './leadPresentation';
 import { QuoteOverview } from './QuoteOverview';
 import type { MoveItem } from '../../server/src/domain/lead';
 
@@ -14,7 +14,7 @@ const omittedLabels: Record<string, string> = { BOXES: 'ארגזים: כמות �
   ITEM_DIMENSIONS: 'מידות הפריט: נדרשת השלמה או בדיקה', UNSUPPORTED_ITEM_ACCESS: 'נשיאה וגישה: דורשות בדיקה ותמחור ידני',
   SERVICE_REQUIREMENTS: 'צורך בפירוק / הרכבה: נדרש בירור',
   WORKERS: 'צוות', TIME: 'משך העבודה' };
-const decisions = { APPROVED: 'המחיר אושר ונשלח', ADJUSTED: 'המחיר עודכן ונשלח', REQUEST_MORE_INFO: 'נשלחה בקשת מידע', HUMAN_HANDOFF: 'השיחה הועברה לנציג' };
+const decisions = { APPROVED: 'המחיר אושר ונשלח', ADJUSTED: 'המחיר עודכן ונשלח', REQUEST_MORE_INFO: 'נשלחה בקשת מידע', HUMAN_HANDOFF: 'האוטומציה נעצרה לטיפול ידני' };
 function requestedServices(item?: MoveItem): string | null {
   const services = [item?.requiresDisassembly === true && 'פירוק', item?.requiresAssembly === true && 'הרכבה'].filter(Boolean);
   return services.length ? services.join(' ו') : null;
@@ -94,25 +94,40 @@ function componentLabel(component: PricingComponent, owner: OwnerSnapshot): stri
   if (component.code !== 'FLOORS') return ({ WASHING_MACHINE: 'מכונת כביסה', BOXES: 'נפח ארגזים', DISTANCE: 'מרחק המסלול', ASSEMBLY_DISASSEMBLY: 'פירוק / הרכבה', EXTRA_STOP: 'נקודות נוספות', WAITING: 'המתנה', DISCOUNT: 'הנחת סטודנט' } as Record<string, string>)[component.code] ?? component.label;
   return 'קומות ללא מעלית ' + (component.label.startsWith('pickup') ? 'באיסוף' : 'בפריקה');
 }
-export function OwnerView({ owner, onChange, onBusy, onReset, disabled = false }: {
+export function OwnerView({ owner, onChange, onBusy, onReset, onSample, onError, disabled = false }: {
+  onSample?: () => void; onError?: (error: unknown) => void;
   disabled?: boolean; owner: OwnerSnapshot; onChange: (value: OwnerSnapshot) => void; onBusy: (value: boolean) => void; onReset: () => Promise<void>;
 }) {
   const [working, setPending] = useState(false);
   const pending = working || disabled;
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
-  const [form, setForm] = useState<'approve' | 'adjust' | 'question' | null>(null);
+  const [form, setForm] = useState<'approve' | 'adjust' | 'question' | 'handoff' | null>(null);
   const [amount, setAmount] = useState('');
   const [reason, setReason] = useState('');
   const [question, setQuestion] = useState('');
   const [scopeConfirmed, setScopeConfirmed] = useState(false);
   const [reviewedPhotos, setReviewedPhotos] = useState<number[]>([]);
   const [showSampleConfirmation, setShowSampleConfirmation] = useState(false);
+  const handoffButton = useRef<HTMLButtonElement>(null);
+  const handoffCancel = useRef<HTMLButtonElement>(null);
+  useEffect(() => { if (form === 'handoff') handoffCancel.current?.focus(); }, [form]);
   const evaluation = owner.pricingEvaluation;
   const complete = evaluation?.completeness === 'COMPLETE_RECOMMENDATION';
   const quoteSent = owner.currentQuote?.status === 'SENT';
   const quoteAccepted = owner.currentQuote?.status === 'ACCEPTED';
   const finalized = quoteSent || quoteAccepted;
+  const { customerMissing, ownerReview } = presentRequirements(owner.customer);
+  const handoff = owner.customer.lead.status === 'HUMAN_HANDOFF';
+  const nextAction = handoff ? 'המשך הטיפול ידני, מחוץ להדגמה.'
+    : owner.customer.lead.status === 'LOST' ? 'הפנייה נסגרה. אפשר להתחיל הדגמה חדשה.'
+    : quoteAccepted ? 'המחיר אושר על ידי הלקוח. נותר לתאם מועד וצוות ידנית.'
+    : quoteSent ? 'עברו לתצוגת הלקוח כדי להשיב להצעת המחיר.'
+    : owner.pendingOwnerQuestion ? 'ממתינים לתשובת הלקוח לשאלה שנשלחה.'
+    : owner.pricingStale ? 'הפרטים השתנו. חשבו המלצה מחדש לפני אישור מחיר.'
+    : owner.actions.approve || owner.actions.adjust ? 'בדקו את פרטי ההובלה והתנאים, ואשרו מחיר סופי ללקוח.'
+    : owner.actions.recalculate ? 'חשבו המלצה לפי הפרטים שנאספו.'
+    : 'השלימו את הפרטים החסרים בתצוגת הלקוח לפני אישור מחיר.';
   const photosConfirmed = owner.pendingPhotoItemIndices.every(index => reviewedPhotos.includes(index));
   const validAmount = amount.trim() !== '' && Number.isFinite(Number(amount)) && Number(amount) > 0
     && Number.isSafeInteger(Math.round(Number(amount) * 100)) && Number(amount) === Math.round(Number(amount) * 100) / 100;
@@ -121,9 +136,23 @@ export function OwnerView({ owner, onChange, onBusy, onReset, disabled = false }
     if (pending) return;
     setPending(true); onBusy(true); setError(''); setNotice('');
     try { onChange(await operation()); setForm(null); setAmount(''); setReason(''); setQuestion(''); setNotice(success); }
-    catch (error) { setError(error instanceof Error ? error.message : 'לא ניתן להשלים את הפעולה.'); }
+    catch (error) {
+      if (onError && error instanceof DemoApiError && error.code === 'SESSION_EXPIRED') onError(error);
+      else setError(error instanceof Error ? error.message : 'לא ניתן להשלים את הפעולה.');
+    }
     finally { setPending(false); onBusy(false); }
   }
+  function refresh() {
+    return run(async () => {
+      const refreshed = await ownerRequest();
+      // A cookie-issuing GET may replace an expired or externally changed session.
+      if (refreshed.customer.lead.id !== owner.customer.lead.id) {
+        throw new DemoApiError('SESSION_EXPIRED', 'ההדגמה הקודמת הסתיימה או הוחלפה. התחילו הדגמה חדשה.');
+      }
+      return refreshed;
+    }, 'המידע מעודכן.');
+  }
+  function closeForm() { const wasHandoff = form === 'handoff'; setForm(null); if (wasHandoff) handoffButton.current?.focus(); }
   function act(action: OwnerAction) { return run(() => ownerAction(action), 'הפעולה נשמרה. אפשר לעבור לתצוגת הלקוח.'); }
   function openFinalization(mode: 'approve' | 'adjust') {
     setForm(mode); setScopeConfirmed(false); setReviewedPhotos([]); setReason(''); setError('');
@@ -145,45 +174,45 @@ export function OwnerView({ owner, onChange, onBusy, onReset, disabled = false }
   }
   return <div className="owner-view" aria-busy={pending}>
     <section className="card owner-overview">
-      <div className="owner-title"><div><span className="eyebrow">סביבת הדגמה · בעל העסק</span><h2>בדיקת ההובלה</h2><span className="status-label">{statusLabel(owner.customer)}</span></div><span className="owner-emblem" aria-hidden="true">✓</span></div>
+      <div className="owner-title"><div><span className="eyebrow">סביבת הדגמה · בעל העסק</span><h2>בדיקת ההובלה</h2><span className="status-label">{statusLabel(owner.customer)}</span></div><span className="owner-emblem" aria-hidden="true">₪</span></div>
       <p className="card-description">כל הפרטים, המלצה שקופה והחלטה שלך לפני שהמחיר מגיע ללקוח.</p>
+      <div className="owner-workflow-summary">
+        <div className="owner-price-summary"><span>{finalized ? quoteAccepted ? 'המחיר שהלקוח אישר' : 'המחיר הסופי שאישר בעל העסק' : !evaluation ? 'מחיר ההובלה' : complete ? 'המלצת המנוע, לפני אישור' : evaluation.suggestedAmount === null ? 'נדרש תמחור ידני' : 'סכום חלקי, לפני מחיר סופי'}</span>
+          <strong>{finalized && owner.currentQuote ? money(owner.currentQuote.approvedAmount) : evaluation?.suggestedAmount != null ? money(evaluation.suggestedAmount) : 'טרם נקבע מחיר'}</strong>
+          {!finalized && !complete && evaluation && <small>רכיבים שלא תומחרו אינם כלולים בסכום.</small>}
+        </div>
+        <div className="owner-next-action"><h3>מה עושים עכשיו?</h3><p>{nextAction}</p>
+          {!finalized && !!customerMissing.length && <p>להשלמה מהלקוח: {customerMissing.join(' · ')}</p>}
+          {!finalized && !!ownerReview.length && <p>לבדיקת בעל העסק: {ownerReview.join(' · ')}</p>}
+          {!finalized && !!evaluation?.omittedComponents.length && <p>יש {evaluation.omittedComponents.length} רכיבים שלא תומחרו. יש לכלול אותם במחיר הסופי.</p>}
+        </div>
+      </div>
       <div className="owner-toolbar">
-        <button type="button" disabled={pending} onClick={() => void run(ownerRequest, 'המידע מעודכן.')}>רענון הפנייה</button>
-        <button type="button" disabled={pending} onClick={() => setShowSampleConfirmation(!showSampleConfirmation)}>תרחיש לדוגמה</button>
+        <button type="button" disabled={pending} onClick={() => void refresh()}>רענון הפנייה</button>
+        <button type="button" disabled={pending} onClick={() => onSample ? onSample() : setShowSampleConfirmation(!showSampleConfirmation)}>תרחיש מוכן ללא AI</button>
         <button type="button" disabled={pending} onClick={() => void onReset()}>איפוס הדגמה</button>
       </div>
-      {showSampleConfirmation && <div className="sample-confirmation"><p>טעינת הובלת מקרר סינתטית תחליף את השיחה הנוכחית. אינה משתמשת ב-AI.</p><button type="button" disabled={pending} onClick={() => { setShowSampleConfirmation(false); void run(() => ownerSample(token), 'תרחיש ההדגמה נטען.'); }}>טען תרחיש והחלף שיחה</button></div>}
+      {!onSample && showSampleConfirmation && <div className="sample-confirmation"><p>טעינת הובלת מקרר סינתטית תחליף את השיחה הנוכחית. אינה משתמשת ב-AI.</p><button type="button" disabled={pending} onClick={() => { setShowSampleConfirmation(false); void run(() => ownerSample(token), 'תרחיש ההדגמה נטען.'); }}>טען תרחיש והחלף שיחה</button><button type="button" disabled={pending} onClick={() => setShowSampleConfirmation(false)}>ביטול</button></div>}
       {error && <p className="error-banner" role="alert">{error}</p>}
       {notice && <p className="owner-notice" role="status">{notice}</p>}
     </section>
-    <AgentState state={owner.customer} />
-    <QuoteOverview owner={owner} />
-    <section className="card pricing-card" aria-labelledby="pricing-heading">
-      <div className="card-heading"><h2 id="pricing-heading">{finalized ? 'חישוב המנוע ששימש לבדיקה' : 'מחיר מומלץ'}</h2><span className="review-badge">{quoteAccepted ? 'הלקוח אישר את המחיר' : quoteSent ? 'הצעת המחיר נשלחה' : 'נדרש אישור בעל העסק'}</span></div>
-      {!evaluation ? <p className="muted">ההמלצה תופיע לאחר השלמת הפרטים הדרושים לתמחור.</p> : <>
-        {owner.pricingStale && <p className="stale-banner" role="status">ההמלצה אינה עדכנית. יש להשלים את המידע ולחשב מחדש לפני אישור.</p>}
-        <div className="price-hero"><strong className="suggested-price">{evaluation.suggestedAmount === null ? 'נדרש תמחור ידני' : money(evaluation.suggestedAmount)}</strong><span>{evaluation.completeness === 'COMPLETE_RECOMMENDATION' ? 'המלצה מלאה להובלה לפי הכללים הזמניים' : evaluation.completeness === 'CANNOT_PRICE' ? 'אין המלצה מספרית' : 'המלצה חלקית: רכיבים חסרים בתמחור'}</span></div>
-        <div className="price-metrics"><div><span>{evaluation.completeness === 'COMPLETE_RECOMMENDATION' ? 'טווח מומלץ להובלה' : 'טווח לרכיבים שתומחרו'}</span><strong dir="ltr">{evaluation.priceRange ? `${money(evaluation.priceRange.min)}–${money(evaluation.priceRange.max)}` : 'לא זמין'}</strong></div><div><span>ציון שלמות ומידע</span><strong>{evaluation.confidence}%</strong><small>אינו מדד לדיוק סטטיסטי</small></div></div>
-        <p className="pricing-explanation">{finalized ? 'זהו החישוב המקורי של המנוע. המחיר הסופי שאושר מוצג בנפרד.' : 'המלצה דטרמיניסטית לפי כללים זמניים.'} {complete ? 'רכיבי המחיר חושבו; תנאים תפעוליים שטרם הושלמו עדיין דורשים בדיקה.' : <>רכיבים שלא תומחרו אינם כלולים בסכום או בטווח. {finalized ? 'המחיר הסופי נקבע ואושר בנפרד.' : 'בעל העסק נדרש לקבוע ולאשר מחיר סופי להובלה המתוארת.'}</>}</p>
-        {owner.demoDistanceKm !== null && <p className="pricing-explanation">מרחק הדגמה סינתטי: {owner.demoDistanceKm} ק״מ (נתון זמני, לא מדידת מפה).</p>}
-        <h3>תומחר</h3>
-        <ul className="price-breakdown">{evaluation.breakdown.map((part, index) => <li key={index}><div><strong>{componentLabel(part, owner)}</strong><b>{money(part.amount)}</b></div><p>טווח ייחוס לרכיב: {money(part.range.min)}–{money(part.range.max)}</p>{part.code === 'FLOORS' && evaluation.omittedComponents.some(omitted => omitted.code === 'UNSUPPORTED_ITEM_ACCESS') && <p className="pricing-scope">תמחור המדרגות כולל את הפריטים שתומחרו בלבד. נשיאת הפריטים ללא תעריף ותנאי הגישה שלהם דורשים תמחור ידני נפרד.</p>}<details><summary>בסיס החישוב</summary><p dir="auto">{part.basis}</p></details></li>)}</ul>
-        {!evaluation.breakdown.length && <p className="muted">אין רכיבים שניתן לחשב לפי הכללים הנוכחיים.</p>}
-        <h3>דורש תמחור ידני</h3>{!evaluation.omittedComponents.length && <p className="complete-note">אין רכיבים שהוחרגו מהחישוב.</p>}
-        <ul className="omitted-list">{evaluation.omittedComponents.map((part, index) => <li key={index}><strong>{omittedLabel(part, owner)}</strong>{part.quantity !== null && <span>{part.code === 'DISTANCE' ? 'מרחק ידוע בק״מ' : 'כמות'}: {part.quantity}</span>}<details><summary>פרטי ההחרגה</summary><p dir="auto">{part.reason}</p></details></li>)}</ul>
-        <div className="review-reasons"><h3>מה דורש בדיקה</h3><ul>{reviewNotes(owner).map(item => <li key={item.key}>{item.label}<small>הפחתה בציון: {item.confidenceDeduction}</small></li>)}</ul></div>
-      </>}
-      <button type="button" className="recalculate-button" disabled={pending || !owner.actions.recalculate} onClick={() => void run(() => ownerPricing(token), 'ההמלצה חושבה מחדש.')}>חשב המלצה מחדש</button>
-    </section>
+    <div className="owner-decision-layout">
+      <div className="owner-sidebar">
     <section className="card owner-actions" aria-labelledby="actions-heading"><h2 id="actions-heading">החלטת בעל העסק</h2>
       {owner.pendingOwnerQuestion && <p className="muted">ממתינים לתשובת הלקוח: {owner.pendingOwnerQuestion}</p>}
-      {owner.customer.lead.status === 'HUMAN_HANDOFF' && <p className="owner-notice">השיחה בטיפול אנושי. הסוכן האוטומטי נעצר; הודעות הלקוח נשמרות.</p>}
+      {owner.customer.lead.status === 'HUMAN_HANDOFF' && <p className="owner-notice">האוטומציה נעצרה. המשך הטיפול מתבצע מחוץ להדגמה; אין כאן ממשק מענה אנושי או אפשרות לחדש את האוטומציה בפנייה זו.</p>}
       <div className="action-grid">
         <button type="button" className="approve-button" disabled={pending || (complete ? !owner.actions.approve : !owner.actions.adjust)} onClick={approve}>{complete ? 'אשר ושלח הצעת מחיר' : evaluation?.suggestedAmount === null ? 'הזן ואשר מחיר סופי' : 'השלם ואשר מחיר סופי'}</button>
         {complete && <button type="button" disabled={pending || !owner.actions.adjust} onClick={() => openFinalization('adjust')}>שנה מחיר</button>}
         <button type="button" disabled={pending || !owner.actions.requestMoreInfo} onClick={() => setForm('question')}>בקש מידע נוסף</button>
-        <button type="button" disabled={pending || !owner.actions.takeOver} onClick={() => void act({ ...token, action: 'TAKE_OVER_CONVERSATION' })}>קח את השיחה</button>
+        <button ref={handoffButton} type="button" disabled={pending || !owner.actions.takeOver} onClick={() => setForm('handoff')}>עצור אוטומציה לטיפול ידני</button>
       </div>
+      {form === 'handoff' && <div className="handoff-confirmation" role="group" aria-labelledby="handoff-heading" aria-describedby="handoff-description" onKeyDown={event => { if (event.key === 'Escape' && !pending) closeForm(); }}>
+        <h3 id="handoff-heading">לעצור את האוטומציה בפנייה הזו?</h3>
+        <p id="handoff-description">לא ניתן לחדש אותה בפנייה זו. ההמשך יהיה בטיפול ידני מחוץ להדגמה; אין כאן צ׳אט עם נציג.</p>
+        <button type="button" disabled={pending || !owner.actions.takeOver} onClick={() => void act({ ...token, action: 'TAKE_OVER_CONVERSATION' })}>אשר עצירה והמשך ידני</button>
+        <button ref={handoffCancel} type="button" className="cancel-action" disabled={pending} onClick={closeForm}>ביטול</button>
+      </div>}
       {(form === 'adjust' || form === 'approve') && evaluation && <form className="owner-form finalization-form" onSubmit={event => { event.preventDefault(); submitFinalization(); }}>
         <h3>{form === 'approve' ? 'בדיקת התנאים לפני שליחת ההצעה' : 'אישור מחיר סופי להובלה המתוארת'}</h3>
         <div className="calculated-subtotal"><strong>{complete ? 'הסכום שחושב במנוע' : 'סכום הרכיבים שתומחרו'}</strong><p>{evaluation.suggestedAmount === null ? 'אין סכום מחושב. המחיר ייקבע על ידי בעל העסק.' : money(evaluation.suggestedAmount)}</p>
@@ -202,8 +231,32 @@ export function OwnerView({ owner, onChange, onBusy, onReset, disabled = false }
         <label htmlFor="owner-question">השאלה שתישלח ללקוח</label><textarea id="owner-question" required maxLength={500} value={question} onChange={event => setQuestion(event.target.value)} disabled={pending} />
         <button type="submit" disabled={pending || !question.trim() || !owner.actions.requestMoreInfo}>שלח שאלה ללקוח</button>
       </form>}
-      {form && <button type="button" className="cancel-action" disabled={pending} onClick={() => setForm(null)}>ביטול</button>}
+      {form && form !== 'handoff' && <button type="button" className="cancel-action" disabled={pending} onClick={closeForm}>ביטול</button>}
     </section>
+      </div>
+      <div className="owner-content">
+    <AgentState state={owner.customer} />
+    <QuoteOverview owner={owner} />
+    <section className="card pricing-card" aria-labelledby="pricing-heading">
+      <div className="card-heading"><h2 id="pricing-heading">{finalized ? 'חישוב המנוע ששימש לבדיקה' : 'מחיר מומלץ'}</h2><span className="review-badge">{quoteAccepted ? 'הלקוח אישר את המחיר' : quoteSent ? 'הצעת המחיר נשלחה' : 'נדרש אישור בעל העסק'}</span></div>
+      {!evaluation ? <p className="muted">ההמלצה תופיע לאחר השלמת הפרטים הדרושים לתמחור.</p> : <>
+        {owner.pricingStale && <p className="stale-banner" role="status">ההמלצה אינה עדכנית. יש להשלים את המידע ולחשב מחדש לפני אישור.</p>}
+        <div className="price-hero"><strong className="suggested-price">{evaluation.suggestedAmount === null ? 'נדרש תמחור ידני' : money(evaluation.suggestedAmount)}</strong><span>{evaluation.completeness === 'COMPLETE_RECOMMENDATION' ? 'המלצה מלאה להובלה לפי הכללים הזמניים' : evaluation.completeness === 'CANNOT_PRICE' ? 'אין המלצה מספרית' : 'המלצה חלקית: רכיבים חסרים בתמחור'}</span></div>
+        <div className="price-metrics"><div><span>{evaluation.completeness === 'COMPLETE_RECOMMENDATION' ? 'טווח מומלץ להובלה' : 'טווח לרכיבים שתומחרו'}</span><strong dir="ltr">{evaluation.priceRange ? `${money(evaluation.priceRange.min)}–${money(evaluation.priceRange.max)}` : 'לא זמין'}</strong></div><div><span>ציון שלמות ומידע</span><strong>{evaluation.confidence}%</strong><small>אינו מדד לדיוק סטטיסטי</small></div></div>
+        <p className="pricing-explanation">{finalized ? 'זהו החישוב המקורי של המנוע. המחיר הסופי שאושר מוצג בנפרד.' : 'המלצה דטרמיניסטית לפי כללים זמניים.'} {complete ? 'רכיבי המחיר חושבו; תנאים תפעוליים שטרם הושלמו עדיין דורשים בדיקה.' : <>רכיבים שלא תומחרו אינם כלולים בסכום או בטווח. {finalized ? 'המחיר הסופי נקבע ואושר בנפרד.' : 'בעל העסק נדרש לקבוע ולאשר מחיר סופי להובלה המתוארת.'}</>}</p>
+        {owner.demoDistanceKm !== null && <p className="pricing-explanation">מרחק הדגמה סינתטי: {owner.demoDistanceKm} ק״מ (נתון זמני, לא מדידת מפה).</p>}
+        <h3>תומחר</h3>
+        <ul className="price-breakdown">{evaluation.breakdown.map((part, index) => <li key={index}><div><strong>{componentLabel(part, owner)}</strong><b>{money(part.amount)}</b></div><p>טווח ייחוס לרכיב: {money(part.range.min)}–{money(part.range.max)}</p>{part.code === 'FLOORS' && evaluation.omittedComponents.some(omitted => omitted.code === 'UNSUPPORTED_ITEM_ACCESS') && <p className="pricing-scope">תמחור המדרגות כולל את הפריטים שתומחרו בלבד. נשיאת הפריטים ללא תעריף ותנאי הגישה שלהם דורשים תמחור ידני נפרד.</p>}<details><summary>בסיס החישוב</summary><p dir="auto">{part.basis}</p></details></li>)}</ul>
+        {!evaluation.breakdown.length && <p className="muted">אין רכיבים שניתן לחשב לפי הכללים הנוכחיים.</p>}
+        <h3>דורש תמחור ידני</h3>{!evaluation.omittedComponents.length && <p className="complete-note">אין רכיבים שהוחרגו מהחישוב.</p>}
+        <ul className="omitted-list">{evaluation.omittedComponents.map((part, index) => <li key={index}><strong>{omittedLabel(part, owner)}</strong>{part.quantity !== null && <span>{part.code === 'DISTANCE' ? 'מרחק ידוע בק״מ' : 'כמות'}: {part.quantity}</span>}<details><summary>פרטי ההחרגה</summary><p dir="auto">{part.reason}</p></details></li>)}</ul>
+        <div className="review-reasons"><h3>מה דורש בדיקה</h3><ul>{reviewNotes(owner).map(item => <li key={item.key}>{item.label}</li>)}</ul></div>
+        {!!evaluation.reviewReasons.length && <details className="confidence-details"><summary>פירוט ציון השלמות והמידע</summary><p>זהו ציון לפי כללי ההדגמה, ואינו מדד לדיוק סטטיסטי.</p><ul>{reviewNotes(owner).map(item => <li key={item.key}>{item.label}<small>הפחתה בציון: {item.confidenceDeduction}</small></li>)}</ul></details>}
+      </>}
+      <button type="button" className="recalculate-button" disabled={pending || !owner.actions.recalculate} onClick={() => void run(() => ownerPricing(token), 'ההמלצה חושבה מחדש.')}>חשב המלצה מחדש</button>
+    </section>
+      </div>
+    </div>
     {owner.reviews.length > 0 && <section className="card owner-history"><h2>היסטוריית החלטות</h2><ul>{[...owner.reviews].reverse().map(review => <li key={review.id}><strong>{decisions[review.decision]}</strong><time dateTime={review.createdAt}>{new Date(review.createdAt).toLocaleString('he-IL')}</time>
       <p>המלצה: {review.suggestedAmount === null ? 'לא זמינה' : money(review.suggestedAmount)} · אושר: {review.approvedAmount === null ? 'טרם אושר' : money(review.approvedAmount)}</p>
       {review.internalReason && <p>סיבה פנימית: {review.internalReason}</p>}{review.customerQuestion && <p>{review.customerQuestion}</p>}

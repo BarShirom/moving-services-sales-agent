@@ -13,7 +13,7 @@ export function QuoteOverview({ owner }: { owner: OwnerSnapshot }) {
     {quote && ['SENT', 'ACCEPTED'].includes(quote.status) && <section className="card final-quote-card" aria-labelledby="final-quote-heading">
       <div className="card-heading"><h2 id="final-quote-heading">{quote.status === 'ACCEPTED' ? 'הלקוח אישר את המחיר' : 'הצעת המחיר נשלחה'}</h2></div>
       <p>מחיר סופי שאושר להובלה המתוארת: <strong className="final-quote-amount">{money(quote.approvedAmount)}</strong></p>
-      <p>{owner.customer.lead.status === 'HUMAN_HANDOFF' ? 'המשך טיפול אצל הנציג.' : quote.status === 'ACCEPTED' ? 'ממתין לתיאום' : 'ממתינים לתשובת הלקוח'}</p>
+      <p>{owner.customer.lead.status === 'HUMAN_HANDOFF' ? 'המשך הטיפול ידני, מחוץ להדגמה.' : quote.status === 'ACCEPTED' ? 'ממתין לתיאום' : 'ממתינים לתשובת הלקוח'}</p>
       <p className="muted">הצעה {quote.version} · המועד המבוקש אינו מועד משוריין.</p>
       {quote.omittedCostsAcknowledged && <p>בעל העסק אישר שהמחיר הסופי מכסה גם את הרכיבים שלא תומחרו במנוע.</p>}
       {!!quote.reviewedPhotoItemIndices.length && <ul className="photo-decisions">{quote.reviewedPhotoItemIndices.map(index => <li key={index}>

@@ -8,6 +8,10 @@ import { createLead } from '../../server/src/domain/createLead';
 import { evaluateRequirements } from '../../server/src/domain/requirements/evaluateRequirements';
 import { createMoveItem } from '../../server/src/domain/createMoveItem';
 import { JSDOM } from 'jsdom';
+import { OwnerView } from '../src/OwnerView';
+import { sampleOwnerState, ownerSnapshot, applyOwnerAction } from '../../server/src/demo/ownerWorkflow';
+import { act } from 'react';
+import type { OwnerSnapshot } from '../src/api';
 
 function snapshot(): DemoSnapshot {
   const lead = createLead();
@@ -140,10 +144,102 @@ test('a manual lead needing recalculation points to the owner even when collecti
 test('quote, handoff and closed statuses retain their distinct next actions', () => {
   const state = complexSnapshot();
   for (const [status, label] of [
-    ['QUOTE_SENT', 'ממתינים לתשובת הלקוח להצעה.'], ['HUMAN_HANDOFF', 'המשך טיפול אצל הנציג.'],
+    ['QUOTE_SENT', 'ממתינים לתשובת הלקוח להצעה.'], ['HUMAN_HANDOFF', 'המשך טיפול ידני מחוץ להדגמה.'],
     ['WON', 'ממתין לתיאום'], ['LOST', 'הפנייה נסגרה.'],
   ] as const) {
     state.lead.status = status;
     assert.equal(renderState(state).querySelector('.next-card > p')?.textContent, label);
   }
+});
+
+test('items with missing or pending backend requirements never receive a success check', () => {
+  const state = complexSnapshot();
+  const before = structuredClone(state);
+  let document = renderState(state);
+  assert.equal(document.querySelector('.fact-check'), null);
+  assert.match(document.querySelector('.item-row')!.textContent!, /להשלמה \/ בדיקה/);
+  assert.deepEqual(state, before);
+  state.lead.moveDetails.items = [{ ...createMoveItem('box'), quantity: 10 }];
+  state.requirements = evaluateRequirements(state.lead);
+  document = renderState(state);
+  assert.equal(document.querySelector('.item-pending-label'), null);
+  assert.equal(document.querySelector('.fact-check'), null);
+});
+
+test('owner summary separates approved final price from engine recommendation and keeps conditions visible', () => {
+  let state = sampleOwnerState();
+  let owner = ownerSnapshot(state);
+  const render = (value: OwnerSnapshot) => new JSDOM(renderToStaticMarkup(<OwnerView owner={value} onChange={() => {}} onBusy={() => {}} onReset={async () => {}} />)).window.document;
+  const before = structuredClone(owner);
+  let document = render(owner);
+  assert.match(document.querySelector('.owner-price-summary')!.textContent!, /המלצת המנוע, לפני אישור.*900/);
+  assert.match(document.querySelector('.owner-next-action')!.textContent!, /בדקו את פרטי ההובלה והתנאים/);
+  assert.match(document.querySelector('.review-reasons')!.textContent!, /תעריף המרחק/);
+  assert.doesNotMatch(document.querySelector('.review-reasons')!.textContent!, /הפחתה בציון/);
+  const score = document.querySelector<HTMLDetailsElement>('.confidence-details')!;
+  assert.equal(score.open, false);
+  assert.match(score.textContent!, /הפחתה בציון/);
+  assert.deepEqual(owner, before);
+
+  state = applyOwnerAction(state, { leadId: owner.customer.lead.id, revision: owner.revision,
+    action: 'ADJUST_PRICE', pricingEvaluationId: owner.pricingEvaluation!.id, amount: 1234,
+    scopeConfirmed: true, reviewedPhotoItemIndices: owner.pendingPhotoItemIndices });
+  owner = ownerSnapshot(state);
+  document = render(owner);
+  assert.match(document.querySelector('.owner-price-summary')!.textContent!, /המחיר הסופי שאישר בעל העסק.*1,234/);
+  assert.match(document.querySelector('.suggested-price')!.textContent!, /900/);
+  assert.match(document.querySelector('.owner-next-action')!.textContent!, /עברו לתצוגת הלקוח/);
+  assert.equal(owner.customer.quote?.status, 'SENT');
+  assert.equal(owner.pricingEvaluation!.suggestedAmount, 900);
+});
+
+// Isolated DOM clicks exercise the real owner mutation boundary; no server or provider exists here.
+const ownerDom = new JSDOM('<!doctype html><html lang="he" dir="rtl"><body></body></html>', { url: 'http://localhost/' });
+for (const [key, value] of Object.entries({ window: ownerDom.window, document: ownerDom.window.document,
+  navigator: ownerDom.window.navigator, HTMLElement: ownerDom.window.HTMLElement, IS_REACT_ACT_ENVIRONMENT: true })) {
+  Object.defineProperty(globalThis, key, { value, configurable: true, writable: true });
+}
+const { createRoot } = await import('react-dom/client');
+
+test('handoff requires cancellable explicit confirmation and never implies a working human chat', async t => {
+  let state = sampleOwnerState();
+  let owner = ownerSnapshot(state);
+  const initial = structuredClone(state);
+  const calls: string[] = [];
+  t.mock.method(globalThis, 'fetch', async (url: string, init?: RequestInit) => {
+    calls.push(url);
+    assert.equal(url, '/api/demo/owner/action');
+    const action = JSON.parse(init!.body as string);
+    assert.equal(action.action, 'TAKE_OVER_CONVERSATION');
+    state = applyOwnerAction(state, action);
+    return Response.json(ownerSnapshot(state));
+  });
+  const container = ownerDom.window.document.createElement('div');
+  ownerDom.window.document.body.append(container);
+  const root = createRoot(container);
+  const render = () => root.render(<OwnerView owner={owner} onChange={next => { owner = next; render(); }} onBusy={() => {}} onReset={async () => {}} />);
+  t.after(async () => { await act(async () => root.unmount()); container.remove(); });
+  await act(async () => render());
+  const button = (label: string) => {
+    const result = [...container.querySelectorAll('button')].find(value => value.textContent === label);
+    assert.ok(result, label);
+    return result;
+  };
+  await act(async () => button('עצור אוטומציה לטיפול ידני').click());
+  assert.equal(calls.length, 0);
+  assert.match(container.querySelector('.handoff-confirmation')!.textContent!, /לא ניתן לחדש.*מחוץ להדגמה.*אין כאן צ׳אט עם נציג/);
+  assert.equal(ownerDom.window.document.activeElement, button('ביטול'));
+  await act(async () => button('ביטול').dispatchEvent(new ownerDom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  assert.equal(container.querySelector('.handoff-confirmation'), null);
+  assert.equal(ownerDom.window.document.activeElement, button('עצור אוטומציה לטיפול ידני'));
+  assert.deepEqual(state, initial);
+  await act(async () => button('עצור אוטומציה לטיפול ידני').click());
+  await act(async () => button('ביטול').click());
+  assert.equal(calls.length, 0);
+  await act(async () => button('עצור אוטומציה לטיפול ידני').click());
+  await act(async () => button('אשר עצירה והמשך ידני').click());
+  assert.equal(calls.length, 1);
+  assert.equal(state.customer.lead.status, 'HUMAN_HANDOFF');
+  assert.match(container.querySelector('.owner-actions')!.textContent!, /אין כאן ממשק מענה אנושי או אפשרות לחדש/);
+  assert.equal(button('עצור אוטומציה לטיפול ידני').disabled, true);
 });

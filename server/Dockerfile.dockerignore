@@ -16,6 +16,8 @@
 !client/index.html
 !client/src/
 !client/src/**
+!client/public/
+!client/public/**
 !client/tests/
 !client/tests/**
 !data/

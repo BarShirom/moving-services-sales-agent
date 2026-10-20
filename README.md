@@ -88,6 +88,22 @@ Unsupported pricing components remain visible to the owner.
 The [offline walkthrough](docs/ENGINEERING_GUIDE.md#offline-demo-walkthrough) includes exact messages
 and a partial-subtotal-to-final-quote example.
 
+### Trying the interface
+
+The Hebrew interface guides visitors from the customer conversation through owner review,
+customer acceptance and pending manual coordination. Its progress guide reflects server state;
+switching a view does not advance the workflow or send an AI request.
+
+Choose **תרחיש מוכן ללא AI** to load the existing synthetic lead directly into owner review.
+This is prepared demonstration data, not an AI-generated conversation, and remains available
+when AI is unavailable. Loading it or resetting asks for confirmation when existing work would
+be replaced. A sample message in the conversation only fills the draft; sending it is a separate action.
+
+If a session expires, explicitly start a new demonstration. The interface clears old lead/quote
+context and preserves an unsent draft for manual submission; it never replays an acceptance or
+owner decision. Photo upload and human-agent chat are outside the demo. An unavailable-photo
+reply keeps the photo missing, and stopping automation means continuing manually outside the app.
+
 ## Current project status
 
 Working local v0.1 demo. Verified on **2026-10-07**:

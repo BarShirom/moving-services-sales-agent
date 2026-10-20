@@ -1,0 +1,13 @@
+# Demo usability and session recovery
+
+This change makes the Hebrew RTL demonstration easier to try and complete. A prepared synthetic lead is available through the existing no-AI server endpoint, alongside the customer-message flow. Guidance follows server lifecycle state. Every price still requires owner approval, and customer acceptance remains pending manual coordination rather than a booked move.
+
+Reset and sample replacement require confirmation when facts, messages, quotes, reviews or a draft would be lost. AI-availability errors offer the existing prepared lead and owner-review paths; cumulative allowance is never described as renewing tomorrow. Photo uploads remain unsupported, unavailable-photo replies are explicit drafts, and required owner acknowledgements remain enforced. Manual handoff is described as stopping automation for follow-up outside the demo.
+
+Expired or unexpectedly replaced sessions clear stale lead, review and quote/version context, preserve the unsent customer draft, and require explicit GET recovery. Messages, acceptance and owner actions are never automatically replayed. This identity protection applies both to view switching and to the owner's refresh button; a same-lead refresh continues normally. Intentional reset/sample replacement is handled separately.
+
+The interface adds a concise value proposition, server-derived steps, clearer owner status/price/next action, collapsed score details, responsive layouts, project links, sharing metadata and a local SVG favicon. Transcript updates scroll their own area instead of skipping the introduction. The Docker verification stage includes the public asset directory so the favicon is part of the committed build.
+
+The clean release branch starts from the published repository baseline and includes the already-deployed application source needed to preserve diagnostics and cumulative beta accounting. It excludes unrelated pending readiness changes, host deployment controls and historical accounting artifacts. Compared with the deployed backend source, application behavior is unchanged except for three user-facing manual-handoff messages; pricing, extraction, approval, acceptance and accounting rules are preserved.
+
+Regression coverage uses offline fixtures and injected responses. It includes owner refresh receiving HTTP200 with another lead identity, explicit recovery, stale quote removal, draft/focus preservation, no automatic replay, normal refresh, intentional replacement/reset, budget fallback, photo and handoff acknowledgement. Release validation uses the repository tests, evals, typechecking and build. Deployment verification uses health/static identity checks and the existing no-AI synthetic scenario, without a provider request.

@@ -59,18 +59,19 @@ async function click(container: Element, selector: string) {
   await act(async () => element<HTMLButtonElement>(container, selector).click());
 }
 
-test('product title, neutral sender labels, exact footer and vertical section order render without pilot branding', async t => {
+test('Hebrew value proposition, role labels and verified project links render with RTL and collapsed developer data', async t => {
   const container = await mount(t, async () => Response.json(snapshot(true)));
-  assert.equal(element(container, 'h1').textContent, 'Moving Services Sales Agent');
-  assert.equal(element(container, 'footer').textContent, '© 2026 Bar Shirom. All rights reserved.');
+  assert.match(element(container, 'h1').textContent!, /מפניית לקוח להצעת מחיר באישור בעל העסק/);
+  assert.ok(container.querySelector('footer a[href="https://github.com/BarShirom/moving-services-sales-agent"]'));
+  assert.ok(container.querySelector('footer a[href="https://barshirom.com/"]'));
   assert.doesNotMatch(container.textContent!, /rick\s*(?:&|and|&amp;)\s*go/i);
   assert.deepEqual([...container.querySelectorAll('.message-label')].map(node => node.textContent), ['הלקוח', 'הסוכן']);
-  assert.deepEqual([...container.querySelectorAll('h2')].map(node => node.textContent), ['השיחה שלכם', 'מה הבנתי', 'מה עדיין חסר מהלקוח', 'השלב הבא']);
+  for (const title of ['השיחה שלכם', 'מה הבנתי', 'מה עדיין חסר מהלקוח', 'השלב הבא']) assert.ok([...container.querySelectorAll('h2')].some(node => node.textContent === title));
   assert.equal(element(container, 'label').getAttribute('for'), element(container, 'textarea').id);
   assert.equal(element(container, '.app-shell').getAttribute('dir'), 'rtl');
   assert.equal(element<HTMLDetailsElement>(container, 'details').open, false);
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
-  assert.match(html, /<title>Moving Services Sales Agent<\/title>/);
+  assert.match(html, /<title>סוכן מכירות להובלות/);
   assert.doesNotMatch(html, /Rick/i);
 });
 
@@ -88,6 +89,15 @@ test('initial loading disables controls, failed connection is announced, and rec
   assert.equal(calls, 2);
   assert.equal(container.querySelector('[role="alert"]'), null);
   assert.equal(element<HTMLTextAreaElement>(container, 'textarea').disabled, false);
+});
+
+test('opening and updating a conversation never scrolls the whole page past the introduction', async t => {
+  const pageScroll = t.mock.method(dom.window.HTMLElement.prototype, 'scrollIntoView', () => {});
+  const container = await mount(t, async () => Response.json(snapshot(true)));
+  assert.equal(pageScroll.mock.callCount(), 0);
+  await draft(container, 'דוגמה סינתטית');
+  await click(container, '.send-button');
+  assert.equal(pageScroll.mock.callCount(), 0, 'Conversation updates must scroll its own transcript rather than the page');
 });
 
 test('sending shows pending feedback and renders the full backend response before clearing the draft', async t => {
@@ -148,6 +158,8 @@ test('reset keeps the existing draft while pending, then clears chat and draft o
   });
   await draft(container, 'טיוטה לפני איפוס');
   await click(container, '.reset-button');
+  assert.ok(container.querySelector('[role="alertdialog"]'));
+  await click(container, '.confirm-replace');
   assert.match(element(container, '.reset-button').textContent!, /מאפסים/);
   assert.equal(element<HTMLButtonElement>(container, '.reset-button').disabled, true);
   assert.equal(element<HTMLTextAreaElement>(container, 'textarea').value, 'טיוטה לפני איפוס');
@@ -165,6 +177,7 @@ test('failed reset preserves the current conversation and draft', async t => {
   });
   await draft(container, 'לא לאבד את הטיוטה');
   await click(container, '.reset-button');
+  await click(container, '.confirm-replace');
   assert.match(element(container, '[role="alert"]').textContent!, /לא ניתן להתחבר/);
   assert.equal(element<HTMLTextAreaElement>(container, 'textarea').value, 'לא לאבד את הטיוטה');
   assert.equal(container.querySelectorAll('.message').length, 2);
@@ -209,8 +222,8 @@ test('status labels reflect existing backend states and distinguish temporarily 
 
 // Owner view exercises actual workflow functions behind a local fake HTTP transport.
 const { sampleOwnerState, freshOwnerState, ownerSnapshot, applyOwnerAction } = await import('../../server/src/demo/ownerWorkflow');
-function ownerTransport() {
-  let current = sampleOwnerState();
+function ownerTransport(initial = sampleOwnerState()) {
+  let current = initial;
   const messages: Array<Record<string, unknown>> = [];
   return {
     get current() { return current; },
@@ -219,6 +232,10 @@ function ownerTransport() {
       if (url === '/api/demo/owner') return Response.json(ownerSnapshot(current));
       if (url === '/api/demo') return Response.json(current.customer);
       if (url === '/api/demo/reset') { current = freshOwnerState(); return Response.json(current.customer); }
+      if (url === '/api/demo/owner/sample') {
+        assert.deepEqual(JSON.parse(init!.body as string), { leadId: current.customer.lead.id, revision: current.revision });
+        current = sampleOwnerState(); return Response.json(ownerSnapshot(current));
+      }
       if (url === '/api/demo/message') {
         const body = JSON.parse(init!.body as string);
         messages.push(body);
@@ -359,6 +376,7 @@ for (const finalAmount of [950, 1234]) {
     assert.equal(container.querySelectorAll('.coordination-summary').length, 1);
     assert.equal(element<HTMLButtonElement>(container, '.approve-button').disabled, true);
     await buttonNamed(container, 'איפוס הדגמה');
+    await click(container, '.confirm-replace');
     assert.equal(transport.current.customer.quote, undefined);
     assert.equal(transport.current.coordinationSummary, null);
     assert.equal(transport.current.quotes.length, 0);
@@ -366,7 +384,7 @@ for (const finalAmount of [950, 1234]) {
     await buttonNamed(container, 'בעל העסק');
     assert.equal(container.querySelector('.coordination-summary'), null);
     assert.equal(container.querySelector('.final-quote-card'), null);
-    assert.equal(element(container, 'footer').textContent, '© 2026 Bar Shirom. All rights reserved.');
+    assert.match(element(container, 'footer').textContent!, /בר שירום/);
   });
 }
 
@@ -486,7 +504,7 @@ test('customer cannot see recommendation; owner renders breakdown, omissions and
   assert.match(container.textContent!, /המלצה מלאה/);
   assert.match(element(container, '.review-reasons').textContent!, /תעריף המרחק הוא הנחת עבודה זמנית/);
   assert.match(container.textContent!, /נדרש אישור בעל העסק/);
-  assert.equal(element(container, 'footer').textContent, '© 2026 Bar Shirom. All rights reserved.');
+  assert.match(element(container, 'footer').textContent!, /בר שירום/);
   await buttonNamed(container, 'לקוח');
   assert.equal(container.querySelector('.pricing-card'), null);
   assert.doesNotMatch(container.textContent!, /suggestedAmount|מחיר מומלץ/);
@@ -574,9 +592,14 @@ test('owner review wording merges equivalent notes but preserves distinct item i
   const notes = [...container.querySelectorAll('.review-reasons li')];
   assert.equal(notes.length, 3);
   assert.deepEqual(notes.map(note => note.textContent), [
-    'נדרש אישור לתנאי ההובלההפחתה בציון: 5',
-    'מקרר: חסרים צילום או מידות מלאותהפחתה בציון: 4',
-    'ארגזים: חסרים צילום או מידות מלאותהפחתה בציון: 6',
+    'נדרש אישור לתנאי ההובלה',
+    'מקרר: חסרים צילום או מידות מלאות',
+    'ארגזים: חסרים צילום או מידות מלאות',
+  ]);
+  const confidence = element<HTMLDetailsElement>(container, '.confidence-details');
+  assert.equal(confidence.open, false);
+  assert.deepEqual([...confidence.querySelectorAll('small')].map(note => note.textContent), [
+    'הפחתה בציון: 5', 'הפחתה בציון: 4', 'הפחתה בציון: 6',
   ]);
   assert.match(element(container, '.price-metrics').textContent!, /85%/);
   assert.equal(evaluation.reviewReasons.length, 4);
@@ -779,16 +802,405 @@ test('human takeover and reset are reflected across owner and customer views', a
   const transport = ownerTransport();
   const container = await mount(t, transport.fetch);
   await buttonNamed(container, 'בעל העסק');
-  await buttonNamed(container, 'קח את השיחה');
+  await buttonNamed(container, 'עצור אוטומציה לטיפול ידני');
+  assert.notEqual(transport.current.customer.lead.status, 'HUMAN_HANDOFF');
+  await buttonNamed(container, 'אשר עצירה והמשך ידני');
   assert.equal(transport.current.customer.lead.status, 'HUMAN_HANDOFF');
   await buttonNamed(container, 'לקוח');
-  assert.match(container.textContent!, /בטיפול נציג אנושי/);
-  assert.match(element(container, '.message-area').textContent!, /נציג שימשיך איתך/);
+  assert.match(container.textContent!, /האוטומציה נעצרה/);
+  assert.match(element(container, '.message-area').textContent!, /האוטומציה בהדגמה נעצרה/);
   await buttonNamed(container, 'בעל העסק');
   await buttonNamed(container, 'איפוס הדגמה');
+  await click(container, '.confirm-replace');
   assert.equal(transport.current.pricingEvaluation, null);
   assert.equal(transport.current.reviews.length, 0);
   assert.equal(container.querySelector('.owner-history'), null);
   await buttonNamed(container, 'בעל העסק');
   assert.match(container.textContent!, /ההמלצה תופיע לאחר השלמת/);
+});
+
+for (const acceptingQuote of [false, true]) {
+  test(`expired ${acceptingQuote ? 'quote acceptance' : 'customer message'} clears stale bindings and recovers by explicit GET without replay`, async t => {
+    let initial = sampleOwnerState();
+    if (acceptingQuote) {
+      const owner = ownerSnapshot(initial);
+      initial = applyOwnerAction(initial, { action: 'APPROVE', leadId: owner.customer.lead.id,
+        revision: owner.revision, pricingEvaluationId: owner.pricingEvaluation!.id,
+        scopeConfirmed: true, reviewedPhotoItemIndices: owner.pendingPhotoItemIndices });
+    }
+    const oldQuote = initial.customer.quote;
+    const fresh = freshOwnerState();
+    const recovery = deferred();
+    let expired = false;
+    let recovered = false;
+    const requests: Array<{ url: string; method: string; body?: Record<string, unknown> }> = [];
+    const container = await mount(t, async (url, init) => {
+      requests.push({ url, method: init?.method ?? 'GET', ...(init?.body ? { body: JSON.parse(init.body as string) } : {}) });
+      if (url === '/api/demo/message') {
+        if (!expired) {
+          expired = true;
+          return Response.json({ error: { code: 'SESSION_EXPIRED', message: 'תוקף ההדגמה הסתיים.' } }, { status: 401 });
+        }
+        assert.equal(recovered, true, 'A second mutation requires completed explicit recovery');
+        return Response.json(fresh.customer);
+      }
+      if (url === '/api/demo/owner') return Response.json(ownerSnapshot(recovered ? fresh : initial));
+      assert.equal(url, '/api/demo', 'No reset or other mutation may be used to recover');
+      if (expired && !recovered) return recovery.promise;
+      return Response.json((recovered ? fresh : initial).customer);
+    });
+    // Populate owner context as well as customer context before expiry.
+    await buttonNamed(container, 'בעל העסק');
+    assert.ok(container.querySelector('.pricing-card'));
+    await buttonNamed(container, 'לקוח');
+    const savedDraft = acceptingQuote ? 'מאשר' : 'טיוטה שצריך לשמור';
+    await draft(container, savedDraft);
+    await click(container, '.send-button');
+    const submissions = () => requests.filter(request => request.url === '/api/demo/message');
+    assert.equal(submissions().length, 1);
+    assert.deepEqual(submissions()[0].body, { message: savedDraft,
+      ...(oldQuote ? { quoteId: oldQuote.id, quoteVersion: oldQuote.version } : {}) });
+    assert.match(element(container, '.session-recovery').textContent!, /תוקף ההדגמה הסתיים/);
+    assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, savedDraft);
+    assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').disabled, true);
+    assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, true);
+    assert.equal(element<HTMLButtonElement>(container, '.reset-button').disabled, true);
+    assert.equal(container.querySelector('.message'), null);
+    assert.equal(container.querySelector('.debug-panel'), null);
+    assert.equal(container.querySelector('.pricing-card'), null);
+    const beforeRecovery = requests.length;
+    await click(container, '.reset-button');
+    await click(container, '.send-button');
+    assert.equal(requests.length, beforeRecovery);
+    await buttonNamed(container, 'התחלת הדגמה חדשה');
+    assert.equal(requests.length, beforeRecovery + 1);
+    assert.deepEqual(requests.at(-1), { url: '/api/demo', method: 'GET' });
+    assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, true);
+    recovered = true;
+    await act(async () => recovery.resolve(Response.json(fresh.customer)));
+    assert.equal(container.querySelector('.session-recovery'), null);
+    assert.equal(submissions().length, 1, 'Recovery cannot replay a message or acceptance');
+    assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, savedDraft);
+    assert.equal(document.activeElement, element(container, '#customer-message'), 'Recovery restores keyboard focus to the retained draft');
+    await buttonNamed(container, 'בעל העסק');
+    assert.equal(container.querySelector('.final-quote-card'), null);
+    assert.equal(container.querySelector('.coordination-summary'), null);
+    assert.equal(container.querySelector('.owner-history'), null);
+    assert.match(element(container, '.owner-price-summary').textContent!, /טרם נקבע מחיר/);
+    await buttonNamed(container, 'לקוח');
+    assert.equal(submissions().length, 1);
+    await click(container, '.send-button');
+    assert.equal(submissions().length, 2);
+    assert.deepEqual(submissions()[1].body, { message: savedDraft }, 'New manual submission has no stale quote ID or version');
+  });
+}
+
+test('an expired owner mutation clears finalization and is never replayed after explicit session recovery', async t => {
+  const initial = sampleOwnerState();
+  const fresh = freshOwnerState();
+  const before = structuredClone(initial);
+  let expired = false;
+  let recovered = false;
+  const actions: Array<Record<string, unknown>> = [];
+  const requests: string[] = [];
+  const container = await mount(t, async (url, init) => {
+    requests.push(url);
+    if (url === '/api/demo/owner/action') {
+      actions.push(JSON.parse(init!.body as string));
+      expired = true;
+      return Response.json({ error: { code: 'SESSION_EXPIRED', message: 'תוקף ההדגמה הסתיים.' } }, { status: 401 });
+    }
+    if (url === '/api/demo/owner') return Response.json(ownerSnapshot(recovered ? fresh : initial));
+    assert.equal(url, '/api/demo');
+    if (expired) recovered = true;
+    return Response.json((recovered ? fresh : initial).customer);
+  });
+  await draft(container, 'טיוטת לקוח שלא נשלחה');
+  await buttonNamed(container, 'בעל העסק');
+  await buttonNamed(container, 'שנה מחיר');
+  await fill(container, '#approved-amount', '1234');
+  await click(container, '#scope-confirmation');
+  await click(container, '#photo-confirmation-0');
+  await buttonNamed(container, 'אשר ושלח את המחיר הסופי');
+  assert.equal(actions.length, 1);
+  assert.equal(actions[0].action, 'ADJUST_PRICE');
+  assert.ok(container.querySelector('.session-recovery'));
+  assert.equal(container.querySelector('.finalization-form'), null);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטת לקוח שלא נשלחה');
+  assert.deepEqual(initial, before, 'Rejected owner request cannot create a quote or review');
+  const beforeRecovery = requests.length;
+  await buttonNamed(container, 'התחלת הדגמה חדשה');
+  assert.equal(requests.length, beforeRecovery + 1);
+  assert.equal(requests.at(-1), '/api/demo');
+  assert.equal(actions.length, 1);
+  await buttonNamed(container, 'בעל העסק');
+  assert.equal(container.querySelector('.finalization-form'), null);
+  assert.equal(container.querySelector('.owner-history'), null);
+  assert.equal(container.querySelector('.final-quote-card'), null);
+  assert.equal(actions.length, 1, 'Neither reconnect nor view switching can replay the owner mutation');
+  assert.equal(fresh.reviews.length, 0);
+});
+
+test('fresh no-AI scenario loads through the existing token-checked endpoint without confirmation or message submission', async t => {
+  const transport = ownerTransport(freshOwnerState());
+  const initial = ownerSnapshot(transport.current);
+  const calls: Array<{ url: string; method: string; body?: unknown }> = [];
+  const container = await mount(t, async (url, init) => {
+    calls.push({ url, method: init?.method ?? 'GET', ...(init?.body ? { body: JSON.parse(init.body as string) } : {}) });
+    return transport.fetch(url, init);
+  });
+  assert.equal(calls.length, 1);
+  await buttonNamed(container, 'בעל העסק');
+  await buttonNamed(container, 'לקוח');
+  assert.equal(calls.filter(call => call.method === 'POST').length, 0);
+  await click(container, '.sample-button');
+  assert.equal(container.querySelector('[role="alertdialog"]'), null);
+  assert.deepEqual(calls.filter(call => call.method === 'POST'), [{ url: '/api/demo/owner/sample', method: 'POST',
+    body: { leadId: initial.customer.lead.id, revision: initial.revision } }]);
+  assert.equal(transport.messages.length, 0);
+  assert.match(container.textContent!, /נטענה פנייה מוכנה לבדיקה.*לא שיחה שנוצרה עכשיו/);
+  assert.ok(container.querySelector('.owner-view'));
+  assert.notEqual(transport.current.customer.lead.id, initial.customer.lead.id);
+  await buttonNamed(container, 'לקוח');
+  await buttonNamed(container, 'בעל העסק');
+  assert.equal(calls.filter(call => call.method === 'POST').length, 1, 'View changes cannot trigger AI or reload the scenario');
+});
+
+test('replacing a progressed conversation requires confirmation; cancellation preserves facts, quote and draft', async t => {
+  const sample = sampleOwnerState();
+  const owner = ownerSnapshot(sample);
+  const approved = applyOwnerAction(sample, { action: 'APPROVE', leadId: owner.customer.lead.id,
+    revision: owner.revision, pricingEvaluationId: owner.pricingEvaluation!.id,
+    scopeConfirmed: true, reviewedPhotoItemIndices: owner.pendingPhotoItemIndices });
+  const transport = ownerTransport(approved);
+  const before = structuredClone(transport.current);
+  const posts: Array<{ url: string; body: unknown }> = [];
+  const container = await mount(t, async (url, init) => {
+    if (init?.method === 'POST') posts.push({ url, body: init.body ? JSON.parse(init.body as string) : undefined });
+    return transport.fetch(url, init);
+  });
+  await draft(container, 'טיוטה שלא לאבד');
+  await click(container, '.sample-button');
+  assert.ok(container.querySelector('[role="alertdialog"]'));
+  assert.equal(posts.length, 0);
+  await buttonNamed(container, 'ביטול והמשך השיחה');
+  assert.equal(container.querySelector('[role="alertdialog"]'), null);
+  assert.equal(posts.length, 0);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה שלא לאבד');
+  assert.deepEqual(transport.current, before);
+  assert.match(element(container, '.message-area').textContent!, /900 ₪/);
+  await click(container, '.sample-button');
+  await click(container, '.confirm-replace');
+  assert.deepEqual(posts, [{ url: '/api/demo/owner/sample', body: { leadId: before.customer.lead.id, revision: before.revision } }]);
+  assert.equal(transport.messages.length, 0);
+  assert.notEqual(transport.current.customer.lead.id, before.customer.lead.id);
+  assert.equal(transport.current.customer.quote, undefined);
+});
+
+test('exhausted shared AI budget offers a working no-AI scenario while preserving progress until confirmed', async t => {
+  const transport = ownerTransport();
+  const before = structuredClone(transport.current);
+  let messages = 0;
+  let samples = 0;
+  const container = await mount(t, async (url, init) => {
+    if (url === '/api/demo/message') {
+      messages++;
+      return Response.json({ error: { code: 'AI_BUDGET_EXHAUSTED', message: 'not forwarded' } }, { status: 503, headers: { 'Retry-After': '86400' } });
+    }
+    if (url === '/api/demo/owner/sample') samples++;
+    return transport.fetch(url, init);
+  });
+  await draft(container, 'מידע שלא נשלח בהצלחה');
+  await click(container, '.send-button');
+  assert.equal(messages, 1);
+  assert.match(element(container, '.error-banner').textContent!, /אינו מתחדש אוטומטית/);
+  assert.doesNotMatch(element(container, '.error-banner').textContent!, /מחר|86400|not forwarded/);
+  await buttonNamed(container, 'לטעינת פנייה מוכנה ללא AI');
+  assert.ok(container.querySelector('[role="alertdialog"]'));
+  assert.equal(samples, 0);
+  await buttonNamed(container, 'ביטול והמשך השיחה');
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'מידע שלא נשלח בהצלחה');
+  assert.deepEqual(transport.current, before);
+  assert.equal(messages, 1);
+  await buttonNamed(container, 'לטעינת פנייה מוכנה ללא AI');
+  await click(container, '.confirm-replace');
+  assert.equal(samples, 1);
+  assert.equal(messages, 1, 'Scenario loading cannot retry the failed AI message');
+  assert.ok(container.querySelector('.owner-view'));
+  assert.equal(container.querySelector('.error-banner'), null);
+});
+
+test('photo unavailability quick reply only fills an editable draft and never marks a photo received', async t => {
+  const transport = await partialQuoteTransport();
+  assert.ok(transport.current.customer.nextQuestion?.requirements.some(requirement => requirement.id === 'item.photo'));
+  const originalPhotos = transport.current.customer.lead.moveDetails.items.map(item => item.photoStatus);
+  const sent: Array<Record<string, unknown>> = [];
+  const container = await mount(t, async (url, init) => {
+    if (url === '/api/demo/message') {
+      sent.push(JSON.parse(init!.body as string));
+      return Response.json(transport.current.customer);
+    }
+    return transport.fetch(url, init);
+  });
+  assert.match(element(container, '.photo-help').textContent!, /אין אפשרות להעלות תמונות.*בעל העסק יצטרך לאשר/);
+  await buttonNamed(container, 'הכנסת תשובה: אין לי תמונה כרגע');
+  assert.equal(sent.length, 0);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'אין לי כרגע');
+  assert.equal(document.activeElement, element(container, '#customer-message'));
+  assert.deepEqual(transport.current.customer.lead.moveDetails.items.map(item => item.photoStatus), originalPhotos);
+  await draft(container, 'אין לי כרגע');
+  await click(container, '.send-button');
+  assert.deepEqual(sent, [{ message: 'אין לי כרגע' }]);
+  assert.deepEqual(transport.current.customer.lead.moveDetails.items.map(item => item.photoStatus), originalPhotos);
+});
+
+test('resetting an empty conversation with no draft needs no destructive-action confirmation', async t => {
+  const transport = ownerTransport(freshOwnerState());
+  const requests: Array<{ url: string; method: string }> = [];
+  const container = await mount(t, async (url, init) => {
+    requests.push({ url, method: init?.method ?? 'GET' });
+    return transport.fetch(url, init);
+  });
+  await click(container, '.reset-button');
+  assert.equal(container.querySelector('[role="alertdialog"]'), null);
+  assert.deepEqual(requests.filter(request => request.method === 'POST'), [{ url: '/api/demo/reset', method: 'POST' }]);
+  assert.equal(transport.messages.length, 0);
+});
+
+for (const replacementSource of ['expired session', 'another tab'] as const) {
+  test(`owner refresh HTTP 200 replacing the lead after ${replacementSource} clears quote bindings and preserves the unsent draft`, async t => {
+    const sample = sampleOwnerState();
+    const owner = ownerSnapshot(sample);
+    const previous = applyOwnerAction(sample, { action: 'APPROVE', leadId: owner.customer.lead.id,
+      revision: owner.revision, pricingEvaluationId: owner.pricingEvaluation!.id,
+      scopeConfirmed: true, reviewedPhotoItemIndices: owner.pendingPhotoItemIndices });
+    const replacement = replacementSource === 'expired session' ? freshOwnerState() : sampleOwnerState();
+    const recovery = deferred();
+    const requests: Array<{ url: string; method: string; body?: unknown }> = [];
+    let ownerGets = 0;
+    let customerGets = 0;
+    const container = await mount(t, async (url, init) => {
+      requests.push({ url, method: init?.method ?? 'GET', ...(init?.body ? { body: JSON.parse(init.body as string) } : {}) });
+      if (url === '/api/demo/owner') return Response.json(ownerSnapshot(++ownerGets === 1 ? previous : replacement));
+      if (url === '/api/demo') {
+        customerGets++;
+        if (customerGets === 2) return recovery.promise;
+        return Response.json((customerGets === 1 ? previous : replacement).customer);
+      }
+      assert.equal(url, '/api/demo/message', 'No reset, acceptance or owner mutation can recover the session');
+      return Response.json(replacement.customer);
+    });
+    const savedDraft = 'טיוטת לקוח שלא נשלחה';
+    await draft(container, savedDraft);
+    await buttonNamed(container, 'בעל העסק');
+    assert.ok(container.querySelector('.final-quote-card'));
+    assert.ok(container.querySelector('.owner-history'));
+    await buttonNamed(container, 'רענון הפנייה');
+    assert.ok(container.querySelector('.session-recovery'));
+    for (const selector of ['.owner-view', '.final-quote-card', '.owner-history', '.coordination-summary', '.pricing-card', '.message', '.debug-panel']) {
+      assert.equal(container.querySelector(selector), null, `Stale session data must be removed: ${selector}`);
+    }
+    assert.equal(container.querySelector('.owner-notice'), null, 'An unexpected replacement cannot report ordinary refresh success');
+    assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, savedDraft);
+    assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').disabled, true);
+    assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, true);
+    assert.deepEqual(requests, [
+      { url: '/api/demo', method: 'GET' },
+      { url: '/api/demo/owner', method: 'GET' },
+      { url: '/api/demo/owner', method: 'GET' },
+    ]);
+    await buttonNamed(container, 'התחלת הדגמה חדשה');
+    assert.deepEqual(requests.at(-1), { url: '/api/demo', method: 'GET' });
+    assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, true);
+    await act(async () => recovery.resolve(Response.json(replacement.customer)));
+    assert.equal(container.querySelector('.session-recovery'), null);
+    assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, savedDraft);
+    assert.equal(document.activeElement, element(container, '#customer-message'));
+    await buttonNamed(container, 'בעל העסק');
+    assert.equal(container.querySelector('.final-quote-card'), null);
+    assert.equal(container.querySelector('.owner-history'), null);
+    await buttonNamed(container, 'לקוח');
+    assert.ok(requests.every(request => request.method === 'GET'), 'Neither recovery nor view switching may replay a mutation');
+    await click(container, '.send-button');
+    assert.deepEqual(requests.filter(request => request.method === 'POST'), [
+      { url: '/api/demo/message', method: 'POST', body: { message: savedDraft } },
+    ], 'Only a new manual submission is sent, without the previous quote ID or version');
+  });
+}
+
+test('same-lead owner refresh updates the displayed pricing and shows the ordinary success notice without mutation', async t => {
+  const initial = sampleOwnerState();
+  const changed = structuredClone(initial);
+  changed.customer.lead.moveDetails.items[1].quantity = 25;
+  const { generatePricing } = await import('../../server/src/demo/ownerWorkflow');
+  const refreshed = generatePricing(changed);
+  assert.equal(refreshed.customer.lead.id, initial.customer.lead.id);
+  assert.notEqual(refreshed.pricingEvaluation!.suggestedAmount, initial.pricingEvaluation!.suggestedAmount);
+  const requests: Array<{ url: string; method: string }> = [];
+  let ownerGets = 0;
+  const container = await mount(t, async (url, init) => {
+    requests.push({ url, method: init?.method ?? 'GET' });
+    if (url === '/api/demo/owner') return Response.json(ownerSnapshot(++ownerGets === 1 ? initial : refreshed));
+    assert.equal(url, '/api/demo');
+    return Response.json(initial.customer);
+  });
+  await draft(container, 'טיוטה שנשארת גם אחרי רענון');
+  await buttonNamed(container, 'בעל העסק');
+  const originalPricing = element(container, '.suggested-price').textContent;
+  await buttonNamed(container, 'רענון הפנייה');
+  assert.equal(container.querySelector('.session-recovery'), null);
+  assert.notEqual(element(container, '.suggested-price').textContent, originalPricing);
+  assert.match(element(container, '.suggested-price').textContent!, new RegExp(refreshed.pricingEvaluation!.suggestedAmount!.toLocaleString('he-IL')));
+  assert.equal(element(container, '.owner-view .owner-notice').textContent, 'המידע מעודכן.');
+  assert.ok(requests.every(request => request.method === 'GET'));
+  assert.equal(ownerGets, 2);
+});
+
+test('a cookie-issuing view GET that replaces a session requires explicit recovery and cannot retain old owner context', async t => {
+  const previous = sampleOwnerState();
+  const fresh = freshOwnerState();
+  const requests: Array<{ url: string; method: string }> = [];
+  let refreshed = false;
+  const container = await mount(t, async (url, init) => {
+    requests.push({ url, method: init?.method ?? 'GET' });
+    if (url === '/api/demo/owner') { refreshed = true; return Response.json(ownerSnapshot(fresh)); }
+    assert.equal(url, '/api/demo');
+    return Response.json((refreshed ? fresh : previous).customer);
+  });
+  await draft(container, 'טיוטה שמורה');
+  await buttonNamed(container, 'בעל העסק');
+  assert.ok(container.querySelector('.session-recovery'));
+  assert.equal(container.querySelector('.owner-view'), null);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה שמורה');
+  assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, true);
+  await buttonNamed(container, 'התחלת הדגמה חדשה');
+  assert.equal(container.querySelector('.session-recovery'), null);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה שמורה');
+  assert.equal(document.activeElement, element(container, '#customer-message'));
+  assert.ok(requests.every(request => request.method === 'GET'), 'View replacement and recovery cannot replay any mutation');
+});
+
+test('scenario loading notices newly changed server progress and requires review before replacing its latest token', async t => {
+  const transport = ownerTransport(freshOwnerState());
+  const originalId = transport.current.customer.lead.id;
+  const posts: Array<{ url: string; body: unknown }> = [];
+  const container = await mount(t, async (url, init) => {
+    if (init?.method === 'POST') posts.push({ url, body: init.body ? JSON.parse(init.body as string) : undefined });
+    return transport.fetch(url, init);
+  });
+  // Simulate progress made in another tab after this client's initial GET.
+  Object.assign(transport.current, sampleOwnerState());
+  const latest = structuredClone(transport.current);
+  assert.notEqual(latest.customer.lead.id, originalId);
+  await click(container, '.sample-button');
+  assert.ok(container.querySelector('[role="alertdialog"]'));
+  assert.match(container.textContent!, /הפנייה השתנתה מאז שהוצגה/);
+  assert.equal(posts.length, 0, 'Changed progress cannot be overwritten by a previously empty client snapshot');
+  await buttonNamed(container, 'ביטול והמשך השיחה');
+  assert.deepEqual(transport.current, latest);
+  assert.match(element(container, '.message-area').textContent!, /תרחיש הדגמה סינתטי/);
+  await click(container, '.sample-button');
+  await click(container, '.confirm-replace');
+  assert.deepEqual(posts, [{ url: '/api/demo/owner/sample', body: { leadId: latest.customer.lead.id, revision: latest.revision } }]);
+  assert.equal(transport.messages.length, 0);
 });
