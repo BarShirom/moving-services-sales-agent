@@ -190,10 +190,10 @@ export function OwnerView({ owner, onChange, onBusy, onReset, onSample, onError,
       </div>
       <div className="owner-toolbar">
         <button type="button" disabled={pending} onClick={() => void refresh()}>רענון הפנייה</button>
-        <button type="button" disabled={pending} onClick={() => onSample ? onSample() : setShowSampleConfirmation(!showSampleConfirmation)}>תרחיש מוכן ללא AI</button>
+        <button type="button" disabled={pending} onClick={() => onSample ? onSample() : setShowSampleConfirmation(!showSampleConfirmation)}>טעינת פנייה מוכנה</button>
         <button type="button" disabled={pending} onClick={() => void onReset()}>איפוס הדגמה</button>
       </div>
-      {!onSample && showSampleConfirmation && <div className="sample-confirmation"><p>טעינת הובלת מקרר סינתטית תחליף את השיחה הנוכחית. אינה משתמשת ב-AI.</p><button type="button" disabled={pending} onClick={() => { setShowSampleConfirmation(false); void run(() => ownerSample(token), 'תרחיש ההדגמה נטען.'); }}>טען תרחיש והחלף שיחה</button><button type="button" disabled={pending} onClick={() => setShowSampleConfirmation(false)}>ביטול</button></div>}
+      {!onSample && showSampleConfirmation && <div className="sample-confirmation"><p>טעינת פנייה מוכנה עם פרטי הובלת מקרר סינתטיים תחליף את השיחה הנוכחית.</p><button type="button" disabled={pending} onClick={() => { setShowSampleConfirmation(false); void run(() => ownerSample(token), 'נטענה פנייה מוכנה לבדיקה. זו דוגמה סינתטית.'); }}>טעינת פנייה מוכנה והחלפת השיחה</button><button type="button" disabled={pending} onClick={() => setShowSampleConfirmation(false)}>ביטול</button></div>}
       {error && <p className="error-banner" role="alert">{error}</p>}
       {notice && <p className="owner-notice" role="status">{notice}</p>}
     </section>

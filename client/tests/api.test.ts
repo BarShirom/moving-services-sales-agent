@@ -55,7 +55,7 @@ test('unavailable AI offers a visitor-safe explanation and unknown error identit
   await assert.rejects(demoRequest('/message', 'דוגמה'), error => {
     assert.ok(error instanceof DemoApiError);
     assert.equal(error.code, 'AI_NOT_CONFIGURED');
-    assert.match(error.message, /פנייה המוכנה ללא AI/);
+    assert.equal(error.message, 'עיבוד הודעות בעזרת AI אינו זמין כרגע. אפשר לטעון פנייה מוכנה.');
     assert.doesNotMatch(error.message, /configuration|\.env|מפתח/);
     return true;
   });

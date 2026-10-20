@@ -174,7 +174,7 @@ export default function App() {
       }
       const result = await ownerSample({ leadId: latest.customer.lead.id, revision: latest.revision });
       setOwner(result); setState(result.customer); setText(''); setView('owner');
-      setNotice('נטענה פנייה מוכנה לבדיקה. זו דוגמה סינתטית, לא שיחה שנוצרה עכשיו בעזרת AI.');
+      setNotice('נטענה פנייה מוכנה לבדיקה. זו דוגמה סינתטית.');
     } catch (error) { handleError(error); }
     finally { setPending(null); }
   }
@@ -200,7 +200,7 @@ export default function App() {
     {!state && <button type="button" onClick={() => void reconnect()} disabled={busy || retrySeconds > 0}>ניסיון חיבור נוסף</button>}
     {retrySeconds > 0 && <p className="retry-wait">יש להמתין עוד {retrySeconds} שניות לפני ניסיון נוסף. לא ננסה שוב אוטומטית.</p>}
     {state && aiUnavailable && <div className="error-actions">
-      <button type="button" disabled={blocked} onClick={() => requestReplacement('sample')}>לטעינת פנייה מוכנה ללא AI</button>
+      <button type="button" disabled={blocked} onClick={() => requestReplacement('sample')}>לטעינת פנייה מוכנה</button>
       {view === 'customer' && <button type="button" disabled={blocked} onClick={() => void switchView('owner')}>לבדיקת הפנייה הקיימת</button>}
     </div>}
   </div>;
@@ -214,8 +214,8 @@ export default function App() {
     </header>
     <section className="demo-start" aria-labelledby="demo-start-heading">
       <div><h2 id="demo-start-heading">רוצים להכיר את התהליך בלי לכתוב הודעות?</h2>
-        <p>טענו פנייה סינתטית מוכנה, אשרו מחיר כבעל העסק ואז אשרו את ההצעה כלקוח. ללא שיחת AI חדשה.</p></div>
-      <button type="button" className="primary-button sample-button" disabled={blocked || !state} onClick={() => requestReplacement('sample')}>{pending === 'sample' ? 'טוענים פנייה…' : 'טעינת פנייה מוכנה ללא AI'}</button>
+        <p>טענו פנייה מוכנה, אשרו מחיר כבעל העסק ואז אשרו את ההצעה כלקוח.</p></div>
+      <button type="button" className="primary-button sample-button" disabled={blocked || !state} onClick={() => requestReplacement('sample')}>{pending === 'sample' ? 'טוענים פנייה…' : 'טעינת פנייה מוכנה'}</button>
     </section>
     <section className="how-it-works" aria-labelledby="how-heading">
       <h2 id="how-heading">איך זה עובד?</h2>
@@ -243,7 +243,7 @@ export default function App() {
       </section>}
       {confirmation && <section className="confirmation-panel" role="alertdialog" aria-labelledby="replace-heading" aria-describedby="replace-description" tabIndex={-1} ref={confirmPanel} onKeyDown={event => { if (event.key === 'Escape') cancelReplacement(); }}>
         <h2 id="replace-heading">{confirmation === 'sample' ? 'להחליף את השיחה בפנייה המוכנה?' : 'להתחיל מחדש ולמחוק את השיחה הנוכחית?'}</h2>
-        <p id="replace-description">הפרטים, ההחלטות וההצעה הנוכחיים יוחלפו, וגם הטיוטה תימחק. {confirmation === 'sample' ? 'תיטען פנייה סינתטית מוכנה לבדיקה, ללא שימוש ב-AI.' : 'תיפתח שיחה ריקה.'}</p>
+        <p id="replace-description">הפרטים, ההחלטות וההצעה הנוכחיים יוחלפו, וגם הטיוטה תימחק. {confirmation === 'sample' ? 'תיטען פנייה מוכנה לבדיקה עם פרטים סינתטיים.' : 'תיפתח שיחה ריקה.'}</p>
         <button type="button" className="confirm-replace" disabled={busy || retrySeconds > 0} onClick={() => void (confirmation === 'sample' ? loadSample() : reset())}>{confirmation === 'sample' ? 'אישור החלפה וטעינת הפנייה' : 'אישור איפוס ההדגמה'}</button>
         <button type="button" disabled={busy} onClick={cancelReplacement}>ביטול והמשך השיחה</button>
       </section>}
@@ -262,7 +262,7 @@ export default function App() {
             {state?.lead.status === 'HUMAN_HANDOFF' && <section className="handoff-help" aria-labelledby="handoff-heading">
               <h3 id="handoff-heading">האוטומציה נעצרה</h3>
               <p>המשך הטיפול מתבצע מחוץ להדגמה. אין כאן תיבת נציג או חזרה אוטומטית לשיחה. הודעות נוספות נשמרות רק בשיחת ההדגמה הזמנית.</p>
-              <button type="button" disabled={blocked} onClick={() => requestReplacement('sample')}>להתנסות בפנייה המוכנה</button>
+              <button type="button" disabled={blocked} onClick={() => requestReplacement('sample')}>לטעינת פנייה מוכנה</button>
               <button type="button" disabled={blocked} onClick={() => requestReplacement('reset')}>להדגמה חדשה</button>
             </section>}
             <div ref={messageArea} className="message-area" role="log" aria-label="הודעות השיחה" aria-live="polite" aria-busy={busy}>
@@ -285,7 +285,7 @@ export default function App() {
               </div>}
               <label className="visually-hidden" htmlFor="customer-message">הודעת הלקוח</label>
               <p className="composer-guidance">פרטים סינתטיים בלבד. עיבוד AI כפוף לתקציב משותף ומצטבר שאינו מתחדש אוטומטית.</p>
-              {messageCooldown && <p className="composer-guidance" role="status">עיבוד הודעות AI זמין לניסיון נוסף בעוד {aiRetrySeconds} שניות. אפשר להמשיך בפנייה המוכנה ללא AI או באישור הצעה קיימת.</p>}
+              {messageCooldown && <p className="composer-guidance" role="status">עיבוד הודעות AI זמין לניסיון נוסף בעוד {aiRetrySeconds} שניות. אפשר להמשיך בפנייה המוכנה או באישור הצעה קיימת.</p>}
               <div className="composer-row">
                 <textarea ref={input} id="customer-message" value={text} onChange={event => setText(event.target.value)} maxLength={4000} disabled={blocked || !state} rows={1} placeholder="כתבו הודעה…" onKeyDown={event => {
                   if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); void send(); }

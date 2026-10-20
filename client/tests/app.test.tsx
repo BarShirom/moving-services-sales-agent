@@ -958,7 +958,8 @@ test('fresh no-AI scenario loads through the existing token-checked endpoint wit
   assert.deepEqual(calls.filter(call => call.method === 'POST'), [{ url: '/api/demo/owner/sample', method: 'POST',
     body: { leadId: initial.customer.lead.id, revision: initial.revision } }]);
   assert.equal(transport.messages.length, 0);
-  assert.match(container.textContent!, /נטענה פנייה מוכנה לבדיקה.*לא שיחה שנוצרה עכשיו/);
+  assert.equal(element(container, '.owner-notice').textContent, 'נטענה פנייה מוכנה לבדיקה. זו דוגמה סינתטית.');
+  assert.ok([...container.querySelectorAll('.owner-toolbar button')].some(button => button.textContent === 'טעינת פנייה מוכנה'));
   assert.ok(container.querySelector('.owner-view'));
   assert.notEqual(transport.current.customer.lead.id, initial.customer.lead.id);
   await buttonNamed(container, 'לקוח');
@@ -1015,14 +1016,14 @@ test('exhausted shared AI budget offers a working no-AI scenario while preservin
   assert.equal(messages, 1);
   assert.match(element(container, '.error-banner').textContent!, /אינו מתחדש אוטומטית/);
   assert.doesNotMatch(element(container, '.error-banner').textContent!, /מחר|86400|not forwarded/);
-  await buttonNamed(container, 'לטעינת פנייה מוכנה ללא AI');
+  await buttonNamed(container, 'לטעינת פנייה מוכנה');
   assert.ok(container.querySelector('[role="alertdialog"]'));
   assert.equal(samples, 0);
   await buttonNamed(container, 'ביטול והמשך השיחה');
   assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'מידע שלא נשלח בהצלחה');
   assert.deepEqual(transport.current, before);
   assert.equal(messages, 1);
-  await buttonNamed(container, 'לטעינת פנייה מוכנה ללא AI');
+  await buttonNamed(container, 'לטעינת פנייה מוכנה');
   await click(container, '.confirm-replace');
   assert.equal(samples, 1);
   assert.equal(messages, 1, 'Scenario loading cannot retry the failed AI message');
@@ -1217,9 +1218,14 @@ test('responsibilities are visible once, synthetic guidance is contextual and me
     'בעל העסק בודק ומאשר את המחיר לפני שליחת ההצעה.',
   ]);
   assert.equal(container.querySelector('.how-it-works')!.closest('details'), null);
-  assert.match(element(container, '.demo-start').textContent!, /סינתטית.*ללא שיחת AI חדשה/);
+  assert.equal(element(container, '.demo-start p').textContent, 'טענו פנייה מוכנה, אשרו מחיר כבעל העסק ואז אשרו את ההצעה כלקוח.');
+  assert.equal(element(container, '.sample-button').textContent, 'טעינת פנייה מוכנה');
   assert.match(element(container, '.composer-guidance').textContent!, /סינתטיים בלבד.*מצטבר שאינו מתחדש/);
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
+  const head = new JSDOM(html).window.document.head;
+  assert.equal(head.querySelector('meta[property="og:description"]')?.getAttribute('content'), 'נסו שיחת לקוח או טענו פנייה מוכנה. עברו על פרטי ההובלה, אשרו מחיר כבעל העסק ואז אשרו את ההצעה כלקוח, לקראת תיאום ידני.');
+  assert.equal(head.querySelector('link[rel="canonical"]')?.getAttribute('href'), 'https://sales.barshirom.com/');
+  assert.doesNotMatch(html + container.textContent, /ללא AI|ללא שיחת AI|ללא שימוש ב-AI/u);
   assert.doesNotMatch(html + container.textContent, /\u2014/u);
 });
 
@@ -1313,7 +1319,7 @@ test('handoff explains temporary storage and replacement remains deliberate and 
   const container = await mount(t, transport.fetch);
   assert.match(element(container, '.handoff-help').textContent!, /האוטומציה נעצרה.*מחוץ להדגמה.*אין כאן תיבת נציג.*שיחת ההדגמה הזמנית/s);
   await draft(container, 'טיוטה לפני החלפה');
-  await buttonNamed(container, 'להתנסות בפנייה המוכנה');
+  await buttonNamed(container, 'לטעינת פנייה מוכנה');
   assert.ok(container.querySelector('[role="alertdialog"]'));
   await buttonNamed(container, 'ביטול והמשך השיחה');
   assert.deepEqual(transport.current, before);

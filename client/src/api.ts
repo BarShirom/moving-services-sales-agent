@@ -28,7 +28,7 @@ async function request<T>(path: string, method: 'GET' | 'POST', body?: unknown):
     if (['AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED'].includes(body?.error?.code)) {
       throw new DemoApiError(body.error.code, 'עיבוד ה-AI בהדגמה זו סגור. תקציב הבטא משותף ומצטבר ואינו מתחדש אוטומטית. המידע הקיים נשמר ואפשר להמשיך בבדיקה ידנית.');
     }
-    if (body?.error?.code === 'AI_NOT_CONFIGURED') throw new DemoApiError('AI_NOT_CONFIGURED', 'עיבוד הודעות בעזרת AI אינו זמין כרגע. אפשר לנסות את הפנייה המוכנה ללא AI.');
+    if (body?.error?.code === 'AI_NOT_CONFIGURED') throw new DemoApiError('AI_NOT_CONFIGURED', 'עיבוד הודעות בעזרת AI אינו זמין כרגע. אפשר לטעון פנייה מוכנה.');
     // Render only the demo API's curated errors, never proxy/provider error bodies.
     const knownCodes = ['BUSY', 'INVALID_MESSAGE', 'AI_NOT_CONFIGURED', 'EXTRACTION_FAILED', 'INVALID_REQUEST', 'INVALID_OWNER_ACTION', 'STALE_REVIEW', 'ACTION_UNAVAILABLE', 'SESSION_EXPIRED', 'SESSION_CAPACITY', 'SESSION_FULL', 'REQUEST_FORBIDDEN', 'RATE_LIMITED', 'SESSION_RATE_LIMITED', 'AI_RATE_LIMITED', 'AI_BUSY', 'AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED', 'AI_INPUT_LIMIT', 'PROTECTION_CAPACITY'];
     const retryHeader = response.headers.get('Retry-After');

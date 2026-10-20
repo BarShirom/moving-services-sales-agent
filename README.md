@@ -6,9 +6,9 @@ A Hebrew RTL sales-workflow demo: customer messages become structured move detai
 
 Built by Bar Shirom to explore a clear separation between AI extraction, business rules and human decisions. Rick & GO supplied the moving-business context; this repository does not claim ongoing commercial use or measured business results.
 
-## Try it without AI
+## Try the prepared lead
 
-1. Choose **תרחיש מוכן ללא AI** to load an existing synthetic lead into owner review. This does not generate an AI conversation.
+1. Choose **טעינת פנייה מוכנה** to load an existing synthetic lead into owner review.
 2. Review the deterministic recommendation and acknowledge the missing-photo condition before approving the quote.
 3. Switch directly to the customer view and select **אישור ההצעה**. Approval uses the current quote identity/version through a deterministic path, without extraction.
 4. The accepted quote remains **ממתין לתיאום**. Coordination happens outside the demo.
@@ -25,7 +25,7 @@ Use synthetic data only. The prepared scenario needs an available temporary sess
 
 The deployed app serves HTTPS with isolated cookie sessions, request limits and bounded AI admission. Customer/lead sessions remain in memory and disappear on expiry or backend recreation. The public beta's separate cumulative AI ledger durably preserves consumed attempts and conservative reservations across backend recreation. It does not replenish automatically or guarantee the provider's billing total.
 
-Local defaults use process-local request/token counters; they are distinct from the deployed cumulative public-beta controls. The public demo may stop AI admission when its shared allowance or fixed expiry is reached. The no-AI workflow remains usable when a session is available.
+Local defaults use process-local request/token counters; they are distinct from the deployed cumulative public-beta controls. The public demo may stop AI admission when its shared allowance or fixed expiry is reached. The prepared-lead workflow remains usable when a session is available.
 
 ## Verification
 

@@ -62,7 +62,7 @@ Switch to **בעל העסק**, choose **השלם ואשר מחיר סופי**, e
 
 ### Guided interface and recovery
 
-The landing screen offers **תרחיש מוכן ללא AI**, using the existing
+The landing screen offers **טעינת פנייה מוכנה**, using the existing
 `POST /api/demo/owner/sample` route to load a prepared synthetic lead for owner review.
 It does not invoke extraction, invent customer messages or consume AI allowance. It is also
 offered after AI-availability errors. This differs from filling the conversation's example
