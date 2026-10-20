@@ -170,19 +170,33 @@ test('oversized AI requests are rejected before transport without truncating inp
   assert.equal(guard.snapshot().dailyAIRequests, 0);
 });
 
-test('real extraction transport admission reserves the complete request and blocks paid calls', async () => {
-  let calls = 0;
-  const extractor = createAIExtractor({ env: {}, request: async () => { calls++; throw new Error('synthetic provider failure'); } });
+for (const model of ['gpt-5.4-nano', 'gpt-6-luna']) {
+test(`real ${model} extraction admission reserves the complete request and blocks paid calls`, async () => {
+  let calls = 0, expectedReservation = 0;
   const guard = new DemoProtection(config({ dailyAI: 1 }));
+  const extractor = createAIExtractor({ env: { OPENAI_MODEL: model }, request: async () => {
+    calls++;
+    assert.equal(guard.snapshot().dailyAIRequests, 1, 'admission precedes transport');
+    assert.equal(guard.snapshot().dailyReservedTokens, expectedReservation);
+    throw new Error('synthetic provider failure');
+  } });
   const s = session();
   const admission: Parameters<typeof extractor>[1] = (request, run) => {
     assert.equal(request.max_output_tokens, 4000); assert.ok(request.instructions); assert.ok(request.text?.format);
+    assert.equal(request.model, model);
+    if (model === 'gpt-6-luna') {
+      assert.deepEqual(request.reasoning, { effort: 'none' });
+      assert.equal(request.service_tier, 'default');
+    }
+    expectedReservation = Buffer.byteLength(JSON.stringify(request)) + 4000 + 4096;
     return guard.extract(s, 'peer', request, run);
   };
   await assert.rejects(extractor({ lead: createLead(), text: 'synthetic' }, admission));
   await assert.rejects(extractor({ lead: createLead(), text: 'synthetic' }, admission), fails('AI_BUDGET_EXHAUSTED'));
   assert.equal(calls, 1);
+  assert.equal(guard.snapshot().dailyReservedTokens, expectedReservation, 'failed attempt is not refunded');
 });
+}
 
 test('zero AI budget still allows synthetic pricing, approval and deterministic quote acceptance', async t => {
   const root = await api(t, new DemoProtection(config({ dailyAI: 0 })), { extractor: () => assert.fail('No paid call allowed') });

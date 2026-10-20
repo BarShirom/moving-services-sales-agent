@@ -13,7 +13,7 @@ import type { CustomerQuoteRecord, QuoteToken } from '../domain/quote/types.js';
 import type { DemoSnapshot } from './types.js';
 import type { OwnerDemoState, OwnerSnapshot } from './ownerTypes.js';
 
-export const handoffText = 'תודה, העברתי את הפרטים לנציג שימשיך איתך מכאן ויחזור אליך בהקדם.';
+export const handoffText = 'האוטומציה בהדגמה נעצרה. המשך הטיפול נעשה ידנית מחוץ להדגמה. פרטים והודעות נוספות נשמרים רק בשיחת ההדגמה הזמנית, ואינם נשלחים לנציג.';
 export function freshOwnerState(): OwnerDemoState {
   const lead = createLead();
   const requirements = evaluateRequirements(lead);
@@ -244,8 +244,8 @@ export function handleQuoteReply(
   } else {
     if (!sameScope || !ownerApproved) { invalidateSentQuote(next); next.pricingStale = next.pricingEvaluation !== null; }
     next.customer.lead.status = 'HUMAN_HANDOFF';
-    append(next, sameScope && ownerApproved ? 'קיבלתי. נציג יבדוק את השאלה או הבקשה שלך וימשיך איתך מכאן; ההצעה לא אושרה מחדש.'
-      : 'הפרטים השתנו ולכן ההצעה הקודמת אינה זמינה לאישור. נציג יבדוק את הפרטים ויחזור אליך.', 'AGENT', timestamp);
+    append(next, sameScope && ownerApproved ? `ההצעה לא אושרה מחדש. ${handoffText}`
+      : `הפרטים השתנו ולכן ההצעה הקודמת אינה זמינה לאישור. ${handoffText}`, 'AGENT', timestamp);
   }
   syncCustomerQuote(next);
   next.revision++;
@@ -273,8 +273,8 @@ export function acceptCustomerResult(state: OwnerDemoState, result: DemoSnapshot
         next.customer.lead.status = 'HUMAN_HANDOFF';
         if (next.coordinationSummary) next.coordinationSummary.status = 'REVIEW_REQUIRED';
         next.customer.responseText = quote.acceptance
-          ? 'האישור הקודם נשמר עבור הפרטים שאושרו. השינוי החדש דורש בדיקת נציג לפני המשך התיאום.'
-          : 'הבקשה החדשה דורשת בדיקת נציג. ההצעה הקודמת לא אושרה; נציג יבדוק את התנאי ויחזור אליך.';
+          ? `האישור הקודם נשמר עבור הפרטים שאושרו. השינוי החדש דורש בדיקה. ${handoffText}`
+          : `ההצעה הקודמת לא אושרה. ${handoffText}`;
       } else {
         next.customer.lead.status = result.requirements.readyForPricing ? 'READY_FOR_PRICING' : 'COLLECTING_INFORMATION';
         next.customer.nextQuestion = result.nextQuestion;
@@ -284,7 +284,7 @@ export function acceptCustomerResult(state: OwnerDemoState, result: DemoSnapshot
     } else if (quote.status === 'ACCEPTED') {
       next.customer.lead.status = 'WON';
       next.customer.nextQuestion = null;
-      next.customer.responseText = 'אישורך להצעת המחיר נשמר. נציג ימשיך איתך בתיאום הסופי; המועד עדיין לא שוריין.';
+      next.customer.responseText = 'אישורך להצעת המחיר נשמר. ההובלה ממתינה לתיאום ידני מחוץ להדגמה; מועד ההובלה עדיין לא שוריין ולא הוקצה צוות.';
     } else if (state.activeQuoteQuestionId === quote.id && !state.pendingOwnerQuestion) {
       next.customer.lead.status = 'QUOTE_SENT';
       next.customer.nextQuestion = { text: quoteAcceptanceQuestion, requirements: [] };

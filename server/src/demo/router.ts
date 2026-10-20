@@ -7,6 +7,7 @@ import { buildExtractionRequest, extractMessageWithAI } from '../integrations/op
 import { DemoProtection, ProtectionError, protectionResponse } from './protection.js';
 import { admittedClientIP } from './clientIdentity.js';
 import { AIExtractionError } from '../integrations/openai/errors.js';
+import { AIWindowError } from '../safety/aiWindow.js';
 import { ownerActionSchema, reviewTokenSchema, OwnerWorkflowError } from '../domain/ownerReview/types.js';
 import { acceptCustomerResult, applyOwnerAction, assertReviewToken, freshOwnerState, generatePricing,
   handleQuoteReply, ownerSnapshot, recordHandoffMessage, sampleOwnerState } from './ownerWorkflow.js';
@@ -105,6 +106,10 @@ export function createDemoRouter(extractor: MessageExtractor = extractMessageWit
       session.state = acceptCustomerResult(session.state, result, timestamp);
       response.json(session.state.customer);
     } catch (error) {
+      if (error instanceof AIWindowError) {
+        response.status(503).json({ error: { code: 'AI_WINDOW_CLOSED',
+          message: 'חלון ה-AI אינו פעיל. המידע הקודם נשמר ואפשר להמשיך בבדיקה ידנית.' } }); return;
+      }
       if (error instanceof ProtectionError) { protectionResponse(error, response); return; }
       if (error instanceof DemoSessionError) { response.status(error.status).json({ error: { code: error.code, message: error.message } }); return; }
       if (error instanceof OwnerWorkflowError) {

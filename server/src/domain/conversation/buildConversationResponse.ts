@@ -59,7 +59,7 @@ export function buildConversationResponse(
   let continuation = requirements.nextQuestion?.text;
   if (!continuation && !waitingForCustomer) {
     if (!['COLLECTING_INFORMATION', 'READY_FOR_PRICING'].includes(lead.status)) {
-      continuation = 'תודה, העדכון נשמר. הצוות ימשיך לטפל בפנייה.';
+      continuation = 'העדכון נשמר בשיחת ההדגמה הזמנית בלבד. המשך טיפול או תיאום נעשים ידנית מחוץ להדגמה.';
     } else if (requirements.readyForPricing) {
       // Describe the next step; no external handoff or quote approval has actually happened.
       continuation = 'יש לי את הפרטים הדרושים. השלב הבא הוא בדיקה ותמחור על ידי הצוות.';

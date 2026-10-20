@@ -5,6 +5,7 @@ import { acceptCustomerResult, applyOwnerAction, freshOwnerState, generatePricin
 import { createMoveItem } from '../src/domain/createMoveItem.js';
 import { evaluateRequirements } from '../src/domain/requirements/evaluateRequirements.js';
 import { processCustomerMessageWithExtractor } from '../src/domain/conversation/processCustomerMessage.js';
+import { buildConversationResponse } from '../src/domain/conversation/buildConversationResponse.js';
 import { quoteAcceptanceQuestion } from '../src/domain/quote/quoteScope.js';
 import type { OwnerDemoState } from '../src/demo/ownerTypes.js';
 
@@ -102,7 +103,8 @@ test('duplicate clicks and stale evaluation/scope reject without creating quote 
   assert.throws(() => applyOwnerAction(state, { ...action, pricingEvaluationId: 'old-evaluation' }, now));
 });
 
-for (const reply of ['כן', 'מאשר', 'סגור']) {
+for (const reply of ['כן', 'מאשר', 'מאשרת', 'סגור', 'אני מאשר', 'אני מאשרת', 'מאשר את ההצעה', 'מאשרת את ההצעה',
+  'אני מאשר את ההצעה', 'אני מאשרת את ההצעה!']) {
   test(`contextual ${reply} accepts one current quote and creates one pending-coordination summary`, () => {
     const state = partialFixture();
     const sent = applyOwnerAction(state, finalize(state, 1100), now);
@@ -120,6 +122,8 @@ for (const reply of ['כן', 'מאשר', 'סגור']) {
     assert.equal(accepted.customer.nextQuestion, null);
     assert.match(accepted.customer.responseText, /1,100 ₪/);
     assert.match(accepted.customer.responseText, /מועד ההובלה עדיין לא שוריין/);
+    assert.match(accepted.customer.responseText, /תיאום ידני מחוץ להדגמה/);
+    assert.match(accepted.customer.responseText, /לא הוקצה צוות/);
     const again = handleQuoteReply(accepted, reply, new Date('2026-10-08T10:00:00Z'));
     assert.strictEqual(again, accepted);
   });
@@ -140,7 +144,7 @@ test('affirmatives to another active question cannot accept a quote even with an
 });
 
 test('questions, negation and objections never accept or automatically mark the lead lost', () => {
-  for (const message of ['זה כולל פירוק?', 'כן?', 'יקר לי', 'לא']) {
+  for (const message of ['זה כולל פירוק?', 'כן?', 'אני מאשר את ההצעה?', 'יקר לי', 'לא']) {
     const state = sampleOwnerState();
     const sent = applyOwnerAction(state, approve(state), now);
     const result = handleQuoteReply(sent, message, acceptedAt)!;
@@ -154,6 +158,7 @@ test('questions, negation and objections never accept or automatically mark the 
 test('conditional acceptance falls through extraction and unextracted conditions invalidate rather than silently close', async () => {
   for (const text of ['כן, אבל יש גם עוד ארון', 'כן, אבל רק אחרי 18:00', 'סגור, רק שהפריקה עכשיו בקומה 4',
     'כן. אבל רק בתנאי שנציג יבדוק את התנאי החדש', 'סגור! רק אחרי 18:00', 'מאשרת; בתנאי שהשינוי אושר',
+    'אני מאשר, אבל רק אחרי 18:00', 'מאשר את ההצעה אם תוסיפו ארון', 'אני מאשרת את ההצעה. הפריקה בקומה 4',
     'אפשר רק אחרי 18:00?', 'זה כולל פריקה בקומה 4?']) {
     const state = sampleOwnerState();
     const sent = applyOwnerAction(state, approve(state), now);
@@ -165,6 +170,8 @@ test('conditional acceptance falls through extraction and unextracted conditions
     assert.equal(changed.quotes[0].status, 'INVALIDATED');
     assert.equal(changed.quotes[0].acceptance, null);
     assert.equal(changed.customer.lead.status, 'HUMAN_HANDOFF');
+    assert.match(changed.customer.responseText, /האוטומציה בהדגמה נעצרה/);
+    assert.match(changed.customer.responseText, /בשיחת ההדגמה הזמנית/);
   }
 });
 
@@ -182,6 +189,9 @@ test('later accepted-scope changes preserve the accepted record and hand off coo
   assert.equal(changed.coordinationSummary!.status, 'REVIEW_REQUIRED');
   assert.equal(changed.customer.lead.status, 'HUMAN_HANDOFF');
   assert.equal(changed.customer.nextQuestion, null);
+  assert.match(changed.customer.responseText, /האישור הקודם נשמר/);
+  assert.match(changed.customer.responseText, /מחוץ להדגמה/);
+  assert.doesNotMatch(changed.customer.responseText, /נציג יבדוק|ימשיך איתך|יחזור אליך/);
   const conditionText = 'אפשר רק אחרי 18:00?';
   assert.equal(handleQuoteReply(accepted, conditionText, acceptedAt), null);
   const unresolved = await processCustomerMessageWithExtractor(accepted.customer.lead, conditionText, {
@@ -208,6 +218,25 @@ test('outdated quote tokens and incompatible scope cannot be accepted', () => {
   const refusedUnapproved = handleQuoteReply(unapproved, 'כן', acceptedAt)!;
   assert.equal(refusedUnapproved.quotes[0].status, 'INVALIDATED');
   assert.equal(refusedUnapproved.quotes[0].acceptance, null);
+});
+
+test('natural approval phrases keep quote identity and version protection', () => {
+  const state = sampleOwnerState();
+  const sent = applyOwnerAction(state, approve(state), now);
+  for (const reply of ['אני מאשר', 'מאשר את ההצעה', 'אני מאשרת את ההצעה']) {
+    assert.throws(() => handleQuoteReply(sent, reply, acceptedAt, { quoteId: 'old-quote', quoteVersion: 1 }), /השתנתה/);
+    assert.throws(() => handleQuoteReply(sent, reply, acceptedAt, { quoteId: sent.currentQuoteId!, quoteVersion: 2 }), /השתנתה/);
+    assert.equal(sent.quotes[0].acceptance, null);
+  }
+});
+
+test('generic response for a stopped conversation promises only temporary demo storage', () => {
+  const state = sampleOwnerState();
+  state.customer.lead.status = 'HUMAN_HANDOFF';
+  const response = buildConversationResponse(state.customer.lead, { ...state.customer.requirements, nextQuestion: null });
+  assert.match(response.responseText, /בשיחת ההדגמה הזמנית בלבד/);
+  assert.match(response.responseText, /מחוץ להדגמה/);
+  assert.doesNotMatch(response.responseText, /הצוות ימשיך|נציג יבדוק|ימשיך איתך|יחזור אליך/);
 });
 
 test('new session clears quote, acceptance, owner review and coordination state', () => {

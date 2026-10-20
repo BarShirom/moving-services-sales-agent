@@ -7,13 +7,14 @@
   "scripts": {
     "dev": "tsx watch src/server.ts",
     "typecheck": "tsc --noEmit && tsc --project tsconfig.test.json",
-    "test": "tsx --test tests/lead.test.ts tests/requirements.test.ts tests/extraction.test.ts tests/mergeExtraction.test.ts tests/conversation.test.ts tests/aiExtraction.test.ts tests/demo.test.ts tests/conversationReplies.test.ts tests/offScript.test.ts tests/evals.test.ts tests/evalRunner.test.ts tests/pricing.test.ts tests/ownerWorkflow.test.ts tests/quoteWorkflow.test.ts tests/quoteDemo.test.ts tests/pricingEvidence.test.ts tests/cors.test.ts tests/sessions.test.ts tests/protection.test.ts tests/clientIdentity.test.ts",
+    "test": "node --import ./tests/offlineGuard.mjs --import tsx --test tests/lead.test.ts tests/requirements.test.ts tests/extraction.test.ts tests/mergeExtraction.test.ts tests/conversation.test.ts tests/aiExtraction.test.ts tests/aiDiagnostics.test.ts tests/recordedDomainFailure.test.ts tests/validationMetadata.test.ts tests/demo.test.ts tests/conversationReplies.test.ts tests/offScript.test.ts tests/evals.test.ts tests/evalRunner.test.ts tests/pricing.test.ts tests/ownerWorkflow.test.ts tests/quoteWorkflow.test.ts tests/quoteDemo.test.ts tests/pricingEvidence.test.ts tests/cors.test.ts tests/sessions.test.ts tests/protection.test.ts tests/clientIdentity.test.ts tests/aiWindow.test.ts tests/aiWindowIntegration.test.ts tests/readiness.test.ts tests/publicBeta.test.ts",
     "build": "tsc",
     "start": "node dist/server.js",
     "demo:ai": "tsx src/scripts/demoAIExtraction.ts",
     "demo:quote": "tsx src/scripts/demoQuoteFixture.ts",
     "eval": "node --import tsx src/evals/runEvals.ts",
-    "eval:json": "node --import tsx src/evals/runEvals.ts --json"
+    "eval:json": "node --import tsx src/evals/runEvals.ts --json",
+    "check:ai-readiness": "tsx src/scripts/checkAIReadiness.ts"
   },
   "dependencies": {
     "express": "^5.3.0",

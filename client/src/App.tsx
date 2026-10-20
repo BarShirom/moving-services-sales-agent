@@ -3,9 +3,27 @@ import { ConversationMessages } from './ConversationMessages';
 import { Icon } from './Icon';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AgentState, statusLabel } from './AgentState';
-import { demoRequest, ownerRequest, type OwnerSnapshot, type DemoSnapshot } from './api';
+import { CustomerQuoteOverview } from './QuoteOverview';
+import { DemoApiError, demoRequest, ownerRequest, ownerSample, type OwnerSnapshot, type DemoSnapshot } from './api';
 
 const example = 'צריך להעביר מקרר גדול מרמת גן לתל אביב.\nהאיסוף מביאליק 20, קומה 2 בלי מעלית.\nיש גם בערך 15 ארגזים.';
+const stages = ['שיחה ואיסוף פרטים', 'בדיקת בעל העסק ואישור מחיר', 'אישור הלקוח', 'ממתינים לתיאום ידני'];
+
+function hasProgress(state: DemoSnapshot | null, owner: OwnerSnapshot | null): boolean {
+  if (!state) return false;
+  const move = state.lead.moveDetails;
+  return !!(state.lead.messages.length || state.quote || state.lead.status !== 'COLLECTING_INFORMATION'
+    || move.items.length || Object.values(move.pickup).some(value => value !== null)
+    || Object.values(move.dropoff).some(value => value !== null) || move.requestedDate || move.requestedTime
+    || move.specialAccessNotes || owner?.reviews.length || owner?.pricingEvaluation);
+}
+function currentStage(state: DemoSnapshot | null): number | null {
+  if (!state || ['HUMAN_HANDOFF', 'LOST'].includes(state.lead.status)) return null;
+  if (state.lead.status === 'WON') return 3;
+  if (state.lead.status === 'QUOTE_SENT') return 2;
+  if (['AWAITING_REVIEW', 'READY_FOR_PRICING'].includes(state.lead.status)) return 1;
+  return 0;
+}
 
 export default function App() {
   const [state, setState] = useState<DemoSnapshot | null>(null);
@@ -14,118 +32,274 @@ export default function App() {
   const [ownerBusy, setOwnerBusy] = useState(false);
   const [text, setText] = useState('');
   const [error, setError] = useState('');
+  const [errorCode, setErrorCode] = useState('');
+  const [notice, setNotice] = useState('');
+  const [expired, setExpired] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [pending, setPending] = useState<'send' | 'reset' | null>(null);
-  const bottom = useRef<HTMLDivElement>(null);
+  const [pending, setPending] = useState<'send' | 'accept' | 'reset' | 'sample' | null>(null);
+  const [retryUntil, setRetryUntil] = useState(0);
+  const [aiRetryUntil, setAiRetryUntil] = useState(0);
+  const [now, setNow] = useState(Date.now);
+  const [confirmation, setConfirmation] = useState<'reset' | 'sample' | null>(null);
+  const messageArea = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
+  const confirmPanel = useRef<HTMLElement>(null);
+  const recoveryButton = useRef<HTMLButtonElement>(null);
+  const focusRecoveredDraft = useRef(false);
+  const trigger = useRef<HTMLElement | null>(null);
   const busy = loading || pending !== null || ownerBusy;
+  const retrySeconds = Math.max(0, Math.ceil((retryUntil - now) / 1000));
+  const aiRetrySeconds = Math.max(0, Math.ceil((aiRetryUntil - now) / 1000));
+  const messageCooldown = aiRetrySeconds > 0 && state?.lead.status !== 'HUMAN_HANDOFF';
+  const blocked = busy || expired || confirmation !== null || retrySeconds > 0;
+  const stage = currentStage(state);
+  const aiUnavailable = ['AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED', 'AI_NOT_CONFIGURED', 'AI_BUSY', 'AI_RATE_LIMITED', 'EXTRACTION_FAILED', 'AI_INPUT_LIMIT'].includes(errorCode);
+  const photoRequested = state?.nextQuestion?.requirements.some(requirement => requirement.id === 'item.photo');
 
+  function clearError() { setError(''); setErrorCode(''); }
+  function handleError(error: unknown) {
+    const code = error instanceof DemoApiError ? error.code : '';
+    setErrorCode(code);
+    setError(error instanceof Error ? error.message : 'לא ניתן להשלים את הפעולה כרגע.');
+    if (error instanceof DemoApiError && error.retryAfterSeconds && ['SESSION_RATE_LIMITED', 'SESSION_CAPACITY', 'RATE_LIMITED', 'PROTECTION_CAPACITY'].includes(code)) {
+      const receivedAt = Date.now();
+      setNow(receivedAt); setRetryUntil(receivedAt + error.retryAfterSeconds * 1000);
+    }
+    if (error instanceof DemoApiError && error.retryAfterSeconds && ['AI_RATE_LIMITED', 'AI_BUSY'].includes(code)) {
+      const receivedAt = Date.now();
+      setNow(receivedAt); setAiRetryUntil(receivedAt + error.retryAfterSeconds * 1000);
+    }
+    if (code === 'SESSION_EXPIRED') {
+      // Clear every stale quote/review binding, retaining only the unsent draft.
+      setState(null); setOwner(null); setView('customer'); setConfirmation(null); setExpired(true); setNotice('');
+    }
+  }
+  useEffect(() => {
+    if (now >= Math.max(retryUntil, aiRetryUntil)) return;
+    const timer = window.setInterval(() => setNow(Date.now()), 1000);
+    return () => window.clearInterval(timer);
+  }, [retryUntil, aiRetryUntil, now >= Math.max(retryUntil, aiRetryUntil)]);
   useEffect(() => {
     let active = true;
     demoRequest().then(result => { if (active) setState(result); })
-      .catch(error => { if (active) setError(error instanceof Error ? error.message : 'לא ניתן להתחבר לשרת.'); })
+      .catch(error => { if (active) handleError(error); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, []);
   useEffect(() => {
+    if (!state?.lead.messages.length && pending !== 'send') return;
     const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
-    bottom.current?.scrollIntoView({ block: 'nearest', behavior });
+    // Scroll only the transcript, keeping the introduction and controls in place.
+    const area = messageArea.current;
+    area?.scrollTo?.({ top: area.scrollHeight, behavior });
   }, [state?.lead.messages.length, pending]);
-
+  useEffect(() => { if (confirmation) confirmPanel.current?.focus(); else trigger.current?.focus(); }, [confirmation]);
+  useEffect(() => { if (expired && !busy) recoveryButton.current?.focus(); }, [expired, busy]);
+  useEffect(() => {
+    if (focusRecoveredDraft.current && !loading && !expired && state) {
+      input.current?.focus(); focusRecoveredDraft.current = false;
+    }
+  }, [loading, expired, state?.lead.id]);
   useLayoutEffect(() => {
     const textarea = input.current;
     if (!textarea) return;
     const resize = () => {
       textarea.style.height = 'auto';
-      // Include borders; CSS caps the height and allows scrolling for longer drafts.
-      textarea.style.height = `${textarea.scrollHeight + textarea.offsetHeight - textarea.clientHeight}px`;
+      textarea.style.height = (textarea.scrollHeight + textarea.offsetHeight - textarea.clientHeight) + 'px';
     };
     resize();
     window.addEventListener('resize', resize);
     return () => window.removeEventListener('resize', resize);
-  }, [text]);
+  }, [text, view]);
 
   async function send() {
-    if (busy || !text.trim() || !state) return;
-    setError(''); setPending('send');
+    if (blocked || messageCooldown || !text.trim() || !state) return;
+    clearError(); setNotice(''); setPending('send');
     try {
       const displayedQuote = state.quote && ['SENT', 'ACCEPTED'].includes(state.quote.status) ? state.quote : undefined;
       setState(await demoRequest('/message', text, displayedQuote)); setText('');
-    }
-    catch (error) { setError(error instanceof Error ? error.message : 'לא הצלחנו לעבד את ההודעה.'); }
+    } catch (error) { handleError(error); }
+    finally { setPending(null); }
+  }
+  async function acceptQuote() {
+    const quote = state?.quote;
+    if (blocked || !state || !quote || quote.status !== 'SENT' || state.lead.status !== 'QUOTE_SENT' || quote.leadId !== state.lead.id) return;
+    clearError(); setNotice(''); setPending('accept');
+    try {
+      // The same deterministic endpoint and current displayed quote binding as a typed acceptance.
+      // Never send or clear the customer's separate unsent draft.
+      setState(await demoRequest('/message', 'מאשר', quote));
+      if (text.trim()) setNotice('אישור ההצעה נשלח. טיוטת ההודעה נשמרה ולא נשלחה.');
+    } catch (error) { handleError(error); }
     finally { setPending(null); }
   }
   async function reset() {
-    if (busy || !state) return;
-    setError(''); setPending('reset');
-    try { setState(await demoRequest('/reset')); setOwner(null); setView('customer'); setText(''); }
-    catch (error) { setError(error instanceof Error ? error.message : 'לא ניתן לאפס כרגע.'); }
+    if (busy || expired || !state || retrySeconds > 0) return;
+    setConfirmation(null); clearError(); setPending('reset');
+    try {
+      setState(await demoRequest('/reset')); setOwner(null); setView('customer'); setText('');
+      setNotice('התחלנו הדגמה חדשה. השיחה וההצעה הקודמות הוסרו.');
+    } catch (error) { handleError(error); }
     finally { setPending(null); }
   }
   async function reconnect() {
-    if (busy) return;
-    setLoading(true); setError('');
-    try { setState(await demoRequest()); }
-    catch (error) { setError(error instanceof Error ? error.message : 'לא ניתן להתחבר לשרת.'); }
+    if (busy || retrySeconds > 0) return;
+    // GET only. Never replay a customer message, quote acceptance or owner action.
+    setLoading(true); clearError(); setState(null); setOwner(null); setView('customer'); setConfirmation(null);
+    try {
+      setState(await demoRequest()); setExpired(false); focusRecoveredDraft.current = true;
+      setNotice('ההדגמה פתוחה. אם נשמרה טיוטה, בדקו אותה ולחצו על שלח כשתרצו. שום הודעה לא נשלחה שוב.');
+    } catch (error) { handleError(error); }
+    finally { setLoading(false); }
+  }
+  function requestReplacement(kind: 'reset' | 'sample') {
+    if (blocked || !state) return;
+    trigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    if (hasProgress(state, owner) || text.trim()) setConfirmation(kind);
+    else if (kind === 'sample') void loadSample();
+    else void reset();
+  }
+  function cancelReplacement() { setConfirmation(null); }
+  async function loadSample() {
+    if (busy || expired || !state || retrySeconds > 0) return;
+    setConfirmation(null); clearError(); setPending('sample');
+    try {
+      const latest = await ownerRequest();
+      // Review a changed server/tab snapshot before replacing its progress.
+      if ((latest.customer.lead.id !== state.lead.id || latest.customer.lead.updatedAt !== state.lead.updatedAt)
+        && hasProgress(latest.customer, latest)) {
+        setState(latest.customer); setOwner(latest); setConfirmation('sample');
+        setNotice('הפנייה השתנתה מאז שהוצגה. בדקו אותה לפני אישור ההחלפה.');
+        return;
+      }
+      const result = await ownerSample({ leadId: latest.customer.lead.id, revision: latest.revision });
+      setOwner(result); setState(result.customer); setText(''); setView('owner');
+      setNotice('נטענה פנייה מוכנה לבדיקה. זו דוגמה סינתטית, לא שיחה שנוצרה עכשיו בעזרת AI.');
+    } catch (error) { handleError(error); }
+    finally { setPending(null); }
+  }
+  async function switchView(next: 'customer' | 'owner') {
+    if (blocked || view === next) return;
+    setLoading(true); clearError();
+    try {
+      const result = next === 'owner' ? await ownerRequest() : null;
+      const customer = result?.customer ?? await demoRequest();
+      // Cookie-issuing GETs can replace an expired session without a 401 response.
+      if (state && customer.lead.id !== state.lead.id) {
+        handleError(new DemoApiError('SESSION_EXPIRED', 'ההדגמה הקודמת הסתיימה או הוחלפה. התחילו הדגמה חדשה.'));
+        return;
+      }
+      setState(customer); setOwner(result);
+      setView(next);
+    } catch (error) { handleError(error); }
     finally { setLoading(false); }
   }
 
-  async function switchView(next: 'customer' | 'owner') {
-    if (busy || view === next) return;
-    setLoading(true); setError('');
-    try {
-      if (next === 'owner') { const result = await ownerRequest(); setOwner(result); setState(result.customer); }
-      else setState(await demoRequest());
-      setView(next);
-    } catch (error) { setError(error instanceof Error ? error.message : 'לא ניתן להחליף תצוגה.'); }
-    finally { setLoading(false); }
-  }
+  const errorPanel = error && !expired && <div className="error-banner" role="alert">
+    <strong>לא הצלחנו להשלים את הפעולה</strong><p>{error}</p>
+    {!state && <button type="button" onClick={() => void reconnect()} disabled={busy || retrySeconds > 0}>ניסיון חיבור נוסף</button>}
+    {retrySeconds > 0 && <p className="retry-wait">יש להמתין עוד {retrySeconds} שניות לפני ניסיון נוסף. לא ננסה שוב אוטומטית.</p>}
+    {state && aiUnavailable && <div className="error-actions">
+      <button type="button" disabled={blocked} onClick={() => requestReplacement('sample')}>לטעינת פנייה מוכנה ללא AI</button>
+      {view === 'customer' && <button type="button" disabled={blocked} onClick={() => void switchView('owner')}>לבדיקת הפנייה הקיימת</button>}
+    </div>}
+  </div>;
+
   return <div className="app-shell" dir="rtl">
+    <a className="skip-link" href="#main-content">דילוג להדגמה</a>
     <header className="page-header">
-      <h1 dir="ltr">Moving Services Sales Agent</h1>
-      <p>סוכן מכירות חכם לשירותי הובלה</p>
+      <p className="hero-kicker">סוכן מכירות לשירותי הובלה</p>
+      <h1>מפניית לקוח להצעת מחיר באישור בעל העסק</h1>
+      <p className="hero-copy">נסו את שני צדי התהליך: פרטי ההובלה בשיחת הלקוח, בדיקת מחיר ואישור בעל העסק.</p>
     </header>
-    <nav className="view-switch" aria-label="תצוגת ההדגמה">
-      <button type="button" aria-pressed={view === 'customer'} disabled={busy} onClick={() => void switchView('customer')}>לקוח</button>
-      <button type="button" aria-pressed={view === 'owner'} disabled={busy} onClick={() => void switchView('owner')}>בעל העסק</button>
-    </nav>
-    <main id="main-content">
+    <section className="demo-start" aria-labelledby="demo-start-heading">
+      <div><h2 id="demo-start-heading">רוצים להכיר את התהליך בלי לכתוב הודעות?</h2>
+        <p>טענו פנייה סינתטית מוכנה, אשרו מחיר כבעל העסק ואז אשרו את ההצעה כלקוח. ללא שיחת AI חדשה.</p></div>
+      <button type="button" className="primary-button sample-button" disabled={blocked || !state} onClick={() => requestReplacement('sample')}>{pending === 'sample' ? 'טוענים פנייה…' : 'טעינת פנייה מוכנה ללא AI'}</button>
+    </section>
+    <section className="how-it-works" aria-labelledby="how-heading">
+      <h2 id="how-heading">איך זה עובד?</h2>
+      <ul><li>ה-AI מחלץ את פרטי ההובלה מהשיחה.</li><li>מנוע התמחור מחשב המלצת מחיר לפי כללים מוגדרים.</li><li>בעל העסק בודק ומאשר את המחיר לפני שליחת ההצעה.</li></ul>
+    </section>
+    <main id="main-content" tabIndex={-1}>
+      <div className="workflow-guide" aria-label="שלבי ההדגמה">
+        <ol>{stages.map((label, index) => <li key={label} className={'workflow-step' + (stage === index ? ' current' : stage !== null && index < stage ? ' complete' : '')} aria-current={stage === index ? 'step' : undefined}>
+          <span className="step-index" aria-hidden="true">{index + 1}</span><span className="step-label">{label}</span>
+        </li>)}</ol>
+        {state?.lead.status === 'HUMAN_HANDOFF' && <p role="status">האוטומציה נעצרה. המשך הטיפול ידני ומתרחש מחוץ להדגמה.</p>}
+        {state?.lead.status === 'LOST' && <p role="status">הפנייה נסגרה. אפשר להתחיל הדגמה חדשה.</p>}
+      </div>
+      <nav className="view-switch" aria-label="תצוגת ההדגמה">
+        <button type="button" aria-pressed={view === 'customer'} disabled={blocked} onClick={() => void switchView('customer')}>לקוח</button>
+        <button type="button" aria-pressed={view === 'owner'} disabled={blocked} onClick={() => void switchView('owner')}>בעל העסק</button>
+      </nav>
+      {notice && <p className="owner-notice" role="status">{notice}</p>}
+      {expired && <section className="session-recovery" role="alert" aria-labelledby="session-heading">
+        <h2 id="session-heading">תוקף ההדגמה הסתיים</h2>
+        <p>השיחה וההצעה הקודמות אינן פעילות. התחילו הדגמה חדשה כדי להמשיך. הטיוטה שלא נשלחה נשמרה; שום הודעה או אישור לא יישלחו שוב אוטומטית.</p>
+        <button type="button" ref={recoveryButton} disabled={busy || retrySeconds > 0} onClick={() => void reconnect()}>התחלת הדגמה חדשה</button>
+        {retrySeconds > 0 && <p>יש להמתין עוד {retrySeconds} שניות לפני ניסיון נוסף. לא ננסה שוב אוטומטית.</p>}
+        {errorCode !== 'SESSION_EXPIRED' && error && <p>{error}</p>}
+      </section>}
+      {confirmation && <section className="confirmation-panel" role="alertdialog" aria-labelledby="replace-heading" aria-describedby="replace-description" tabIndex={-1} ref={confirmPanel} onKeyDown={event => { if (event.key === 'Escape') cancelReplacement(); }}>
+        <h2 id="replace-heading">{confirmation === 'sample' ? 'להחליף את השיחה בפנייה המוכנה?' : 'להתחיל מחדש ולמחוק את השיחה הנוכחית?'}</h2>
+        <p id="replace-description">הפרטים, ההחלטות וההצעה הנוכחיים יוחלפו, וגם הטיוטה תימחק. {confirmation === 'sample' ? 'תיטען פנייה סינתטית מוכנה לבדיקה, ללא שימוש ב-AI.' : 'תיפתח שיחה ריקה.'}</p>
+        <button type="button" className="confirm-replace" disabled={busy || retrySeconds > 0} onClick={() => void (confirmation === 'sample' ? loadSample() : reset())}>{confirmation === 'sample' ? 'אישור החלפה וטעינת הפנייה' : 'אישור איפוס ההדגמה'}</button>
+        <button type="button" disabled={busy} onClick={cancelReplacement}>ביטול והמשך השיחה</button>
+      </section>}
       {view === 'owner' && owner ? <>
-        {error && <p className="error-banner" role="alert">{error}</p>}
-        <OwnerView disabled={busy} owner={owner} onChange={value => { setOwner(value); setState(value.customer); }} onBusy={setOwnerBusy} onReset={reset} />
+        {errorPanel}
+        <OwnerView disabled={blocked} owner={owner} onChange={value => { setOwner(value); setState(value.customer); }} onBusy={setOwnerBusy}
+          onError={handleError} onSample={() => requestReplacement('sample')} onReset={async () => requestReplacement('reset')} onCustomer={() => void switchView('customer')} />
       </> : <>
-      <section className="conversation-card" aria-labelledby="conversation-heading">
-        <div className="conversation-header">
-          <div><h2 id="conversation-heading">השיחה שלכם</h2><span className="status-label" role="status">{loading ? 'מתחברים לשיחה…' : state ? statusLabel(state) : 'אין חיבור לשרת'}</span></div>
-          <button type="button" className="reset-button" onClick={reset} disabled={busy || !state}><Icon name="reset" />{pending === 'reset' ? 'מאפסים…' : 'איפוס הדגמה'}</button>
+        <div className="customer-layout">
+          <section className="conversation-card" aria-labelledby="conversation-heading">
+            <div className="conversation-header">
+              <div><h2 id="conversation-heading">השיחה שלכם</h2><span className="status-label" role="status">{loading ? 'מתחברים לשיחה…' : expired ? 'נדרשת הדגמה חדשה' : state ? statusLabel(state) : 'אין חיבור לשרת'}</span></div>
+              <button type="button" className="reset-button" onClick={() => requestReplacement('reset')} disabled={blocked || !state}><Icon name="reset" />{pending === 'reset' ? 'מאפסים…' : 'איפוס הדגמה'}</button>
+            </div>
+            {state && <CustomerQuoteOverview state={state} disabled={blocked} accepting={pending === 'accept'} onAccept={() => void acceptQuote()} />}
+            {state?.lead.status === 'HUMAN_HANDOFF' && <section className="handoff-help" aria-labelledby="handoff-heading">
+              <h3 id="handoff-heading">האוטומציה נעצרה</h3>
+              <p>המשך הטיפול מתבצע מחוץ להדגמה. אין כאן תיבת נציג או חזרה אוטומטית לשיחה. הודעות נוספות נשמרות רק בשיחת ההדגמה הזמנית.</p>
+              <button type="button" disabled={blocked} onClick={() => requestReplacement('sample')}>להתנסות בפנייה המוכנה</button>
+              <button type="button" disabled={blocked} onClick={() => requestReplacement('reset')}>להדגמה חדשה</button>
+            </section>}
+            <div ref={messageArea} className="message-area" role="log" aria-label="הודעות השיחה" aria-live="polite" aria-busy={busy}>
+              {loading ? <div className="conversation-empty"><Icon name="chat" /><p>טוענים את השיחה…</p></div> :
+                !state ? <div className="conversation-empty"><Icon name="chat" /><p>{expired ? 'השיחה הקודמת הסתיימה. התחילו הדגמה חדשה כדי להמשיך.' : 'השיחה תופיע כאן לאחר החיבור לשרת.'}</p></div> :
+                !state.lead.messages.length && pending !== 'send' && <div className="conversation-empty">
+                  <span className="welcome-symbol"><Icon name="chat" /></span>
+                  <h3>מה צריך להעביר?</h3><p>כתבו הודעה עם פרטי ההובלה.<br />הסוכן יאסוף את המידע החסר לפני בדיקת בעל העסק.</p>
+                  <button type="button" className="example-button" disabled={blocked} onClick={() => { setText(example); input.current?.focus(); }}>טעינת הודעה לדוגמה</button>
+                  <small>ההודעה תיכנס לטיוטה. עיבוד AI יתחיל רק לאחר לחיצה על שלח.</small>
+                </div>}
+              <ConversationMessages messages={state?.lead.messages ?? []} />
+              {pending === 'send' && <><div className="message customer"><span className="message-label">הלקוח · בעיבוד</span><div className="bubble pending-bubble">{text}</div></div><div className="processing" role="status"><span className="typing-dots" aria-hidden="true"><i /><i /><i /></span>{state?.lead.status === 'HUMAN_HANDOFF' ? 'שומרים את ההודעה בשיחת ההדגמה הזמנית…' : 'הסוכן מעבד את ההודעה…'}</div></>}
+            </div>
+            <form className="composer" onSubmit={event => { event.preventDefault(); void send(); }}>
+              {errorPanel}
+              {photoRequested && <div className="photo-help"><p>בהדגמה אין אפשרות להעלות תמונות. אם אין תמונה זמינה, אפשר לציין זאת; בעל העסק יצטרך לאשר המשך בלעדיה.</p>
+                <button type="button" disabled={blocked} onClick={() => { setText('אין לי כרגע'); input.current?.focus(); }}>הכנסת תשובה: אין לי תמונה כרגע</button>
+                <small>התשובה תיכנס לטיוטה ותישלח רק בלחיצה על שלח.</small>
+              </div>}
+              <label className="visually-hidden" htmlFor="customer-message">הודעת הלקוח</label>
+              <p className="composer-guidance">פרטים סינתטיים בלבד. עיבוד AI כפוף לתקציב משותף ומצטבר שאינו מתחדש אוטומטית.</p>
+              {messageCooldown && <p className="composer-guidance" role="status">עיבוד הודעות AI זמין לניסיון נוסף בעוד {aiRetrySeconds} שניות. אפשר להמשיך בפנייה המוכנה ללא AI או באישור הצעה קיימת.</p>}
+              <div className="composer-row">
+                <textarea ref={input} id="customer-message" value={text} onChange={event => setText(event.target.value)} maxLength={4000} disabled={blocked || !state} rows={1} placeholder="כתבו הודעה…" onKeyDown={event => {
+                  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); void send(); }
+                }} />
+                <button type="submit" className="send-button" disabled={blocked || messageCooldown || !text.trim() || !state}>{pending === 'send' ? 'מעבד…' : 'שלח'}<Icon name="send" /></button>
+              </div>
+            </form>
+          </section>
+          <AgentState state={state} />
         </div>
-        <div className="message-area" role="log" aria-label="הודעות השיחה" aria-live="polite" aria-busy={busy}>
-          {loading ? <div className="conversation-empty"><Icon name="chat" /><p>טוענים את השיחה…</p></div> :
-            !state ? <div className="conversation-empty"><Icon name="chat" /><p>השיחה תופיע כאן לאחר החיבור לשרת.</p></div> :
-            !state.lead.messages.length && pending !== 'send' && <div className="conversation-empty">
-              <span className="welcome-symbol"><Icon name="chat" /></span>
-              <h3>מה צריך להעביר?</h3><p>ספרו לנו על ההובלה.<br />הסוכן יאסוף את הפרטים ויעזור להתקדם.</p>
-              <button type="button" className="example-button" disabled={busy} onClick={() => { setText(example); input.current?.focus(); }}>טעינת הודעה לדוגמה</button>
-            </div>}
-          <ConversationMessages messages={state?.lead.messages ?? []} />
-          {pending === 'send' && <><div className="message customer"><span className="message-label">הלקוח · בעיבוד</span><div className="bubble pending-bubble">{text}</div></div><div className="processing" role="status"><span className="typing-dots" aria-hidden="true"><i /><i /><i /></span>{state?.lead.status === 'HUMAN_HANDOFF' ? 'שומרים את ההודעה לנציג…' : 'הסוכן מעבד את ההודעה…'}</div></>}
-          <div ref={bottom} />
-        </div>
-        <form className="composer" onSubmit={event => { event.preventDefault(); void send(); }}>
-          {error && <div className="error-banner" role="alert"><strong>לא הצלחנו להשלים את הפעולה</strong><p>{error}</p>{!state && <button type="button" onClick={reconnect} disabled={busy}>ניסיון חיבור נוסף</button>}</div>}
-          <label className="visually-hidden" htmlFor="customer-message">הודעת הלקוח</label>
-          <div className="composer-row">
-            <textarea ref={input} id="customer-message" value={text} onChange={event => setText(event.target.value)} maxLength={4000} disabled={busy || !state} rows={1} placeholder="כתבו הודעה…" onKeyDown={event => {
-              if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); void send(); }
-            }} />
-            <button type="submit" className="send-button" disabled={busy || !text.trim() || !state}>{pending === 'send' ? 'מעבד…' : 'שלח'}<Icon name="send" /></button>
-          </div>
-        </form>
-      </section>
-      <AgentState state={state} />
-      {state && <details className="debug-panel"><summary>נתונים למפתחים · JSON</summary><pre dir="ltr">{JSON.stringify(state, null, 2)}</pre></details>}
+        {state && ['AWAITING_REVIEW', 'READY_FOR_PRICING'].includes(state.lead.status) && <button className="primary-button continue-review" type="button" disabled={blocked} onClick={() => void switchView('owner')}>המשך לבדיקת בעל העסק</button>}
+        {state && <details className="debug-panel"><summary>נתונים למפתחים · JSON</summary><pre dir="ltr">{JSON.stringify(state, null, 2)}</pre></details>}
       </>}
     </main>
-    <footer dir="ltr">© 2026 Bar Shirom. All rights reserved.</footer>
+    <footer className="app-footer"><nav aria-label="מידע על הפרויקט"><a href="https://github.com/BarShirom/moving-services-sales-agent" target="_blank" rel="noopener noreferrer">קוד הפרויקט</a><a href="https://barshirom.com/" target="_blank" rel="noopener noreferrer">האתר של בר שירום</a></nav><p>© 2026 בר שירום · הדגמת מוצר לשירותי הובלה</p></footer>
   </div>;
 }

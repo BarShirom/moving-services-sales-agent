@@ -9,9 +9,18 @@ import { DEFAULT_OPENAI_MODEL, getOpenAIConfig } from '../src/config/openai.js';
 import { buildExtractionContext, EXTRACTION_CONTEXT_LIMITS } from '../src/integrations/openai/context.js';
 import { convertAIExtraction } from '../src/integrations/openai/convertExtraction.js';
 import { AIExtractionError, type AIExtractionErrorCode } from '../src/integrations/openai/errors.js';
-import { createAIExtractor, type StructuredResponseRequest } from '../src/integrations/openai/extractMessageWithAI.js';
+import { buildExtractionRequest, createAIExtractor, type StructuredResponseRequest } from '../src/integrations/openai/extractMessageWithAI.js';
 import { extractionTextFormat, type AIExtraction } from '../src/integrations/openai/schema.js';
 import type { NextQuestion } from '../src/domain/requirements/types.js';
+import type { AIWindow } from '../src/safety/aiWindow.js';
+
+// Transport mapping tests explicitly inject this test gate. Durable admission has separate integration tests.
+const sdkTestWindow: AIWindow = {
+  run: async (_request, dispatch) => dispatch(new AbortController().signal),
+  close: () => {},
+  snapshot: () => ({ state: 'closed', reason: 'disabled', windowId: null, expiresAt: null,
+    attempts: 0, reservedUnits: 0, reservedMicros: 0, active: false }),
+};
 
 const keep = () => ({ action: 'keep' as const });
 const set = <T>(value: T) => ({ action: 'set' as const, value });
@@ -262,6 +271,123 @@ test('missing or blank API keys produce a clear lazy configuration error', async
   assert.equal(getOpenAIConfig({ OPENAI_API_KEY: 'test-only', OPENAI_MODEL: ' custom-model ' }).model, 'custom-model');
   assert.equal(getOpenAIConfig({ OPENAI_API_KEY: 'test-only' }).maxRetries, 0);
 });
+
+test('production Luna request profile is explicit while other model requests remain unchanged', () => {
+  const input = { lead: createLead(), text: 'צריך להעביר מקרר גדול' };
+  const luna = buildExtractionRequest(input, 'gpt-6-luna');
+  assert.equal(luna.model, 'gpt-6-luna');
+  assert.deepEqual(luna.reasoning, { effort: 'none' });
+  assert.equal(luna.service_tier, 'default');
+  assert.equal(luna.max_output_tokens, 4000);
+  assert.equal(luna.store, false);
+  assert.equal(luna.text?.format, extractionTextFormat);
+  assert.equal(Object.hasOwn(luna, 'tools'), false);
+  const { reasoning: _reasoning, service_tier: _tier, ...withoutLunaSettings } = luna;
+  for (const model of [DEFAULT_OPENAI_MODEL, 'custom-model']) {
+    const request = buildExtractionRequest(input, model);
+    assert.deepEqual(request, { ...withoutLunaSettings, model });
+    assert.equal(Object.hasOwn(request, 'reasoning'), false);
+    assert.equal(Object.hasOwn(request, 'service_tier'), false);
+  }
+  const config = getOpenAIConfig({ OPENAI_API_KEY: 'test-only', OPENAI_MODEL: 'gpt-6-luna' });
+  assert.equal(config.timeout, 30_000);
+  assert.equal(config.maxRetries, 0);
+});
+
+test('production Luna rejects oversized context before lazy missing-key configuration', async () => {
+  const extractor = createAIExtractor({ env: { OPENAI_MODEL: 'gpt-6-luna' } });
+  await assert.rejects(extractor({ lead: createLead(), text: 'x'.repeat(4_001) }), hasCode('CONTEXT_TOO_LARGE'));
+  await assert.rejects(extractor({ lead: createLead(), text: 'שלום' }), hasCode('MISSING_API_KEY'));
+});
+
+test('production Luna keeps its configured model and profile across subsequent requests', async () => {
+  const env = { OPENAI_MODEL: ' gpt-6-luna ' };
+  let calls = 0;
+  const extractor = createAIExtractor({ env, request: async request => {
+    calls++;
+    assert.equal(request.model, 'gpt-6-luna');
+    assert.deepEqual(request.reasoning, { effort: 'none' });
+    assert.equal(request.service_tier, 'default');
+    return { status: 'completed', output: [], output_parsed: empty() };
+  } });
+  await extractor({ lead: createLead(), text: 'שלום' });
+  env.OPENAI_MODEL = 'custom-model';
+  await extractor({ lead: createLead(), text: 'שלום שוב' });
+  assert.equal(calls, 2);
+});
+
+test('production Luna SDK branch sends the pinned project and proven settings through a fake fetch', async t => {
+  // Swap the environment reference without inspecting or inheriting workstation credentials.
+  const environment = process.env;
+  process.env = { OPENAI_PROJECT_ID: 'proj_0tblXq3MWcYw5VSdCOjx6mBT', OPENAI_LOG: 'off' };
+  t.after(() => { process.env = environment; });
+  const data = empty();
+  data.items = [{ ...item('refrigerator'), quantity: set(1), sizeCategory: set('LARGE') }];
+  data.pickup = { city: set('רמת גן'), address: set('בדיקה 10'), floor: set(2), elevator: set(false) };
+  data.dropoff.city = set('תל אביב');
+  let calls = 0;
+  let admittedRequest = '';
+  let observed: { url: string; init: RequestInit } | undefined;
+  t.mock.method(globalThis, 'fetch', async (url: string | URL | Request, init?: RequestInit) => {
+    calls++;
+    observed = { url: String(url), init: init ?? {} };
+    return new Response(JSON.stringify({ status: 'completed', output: [{
+      type: 'message', role: 'assistant', status: 'completed',
+      content: [{ type: 'output_text', text: JSON.stringify(data), annotations: [] }],
+    }] }), { status: 200, headers: { 'content-type': 'application/json' } });
+  });
+  const extractor = createAIExtractor({ window: sdkTestWindow, env: { OPENAI_API_KEY: 'test-only', OPENAI_MODEL: 'gpt-6-luna',
+    OPENAI_PROJECT_ID: 'proj_0tblXq3MWcYw5VSdCOjx6mBT' } });
+  const result = await extractor({ lead: createLead(), text: 'צריך להעביר מקרר גדול מרמת גן לתל אביב' },
+    async (request, run) => { admittedRequest = JSON.stringify(request); return run(); });
+  assert.ok(observed);
+  assert.equal(observed.url, 'https://api.openai.com/v1/responses');
+  assert.equal(observed.init.method, 'POST');
+  const headers = new Headers(observed.init.headers);
+  assert.equal(headers.get('authorization'), 'Bearer test-only');
+  assert.equal(headers.get('openai-project'), 'proj_0tblXq3MWcYw5VSdCOjx6mBT');
+  assert.equal(headers.get('x-stainless-retry-count'), '0');
+  assert.ok(observed.init.signal instanceof AbortSignal);
+  const request = JSON.parse(String(observed.init.body));
+  assert.deepEqual(request, JSON.parse(admittedRequest));
+  assert.equal(request.model, 'gpt-6-luna');
+  assert.deepEqual(request.reasoning, { effort: 'none' });
+  assert.equal(request.service_tier, 'default');
+  assert.equal(request.max_output_tokens, 4000);
+  assert.equal(request.store, false);
+  assert.equal(request.text.format.type, 'json_schema');
+  assert.equal(request.text.format.strict, true);
+  assert.equal(Object.hasOwn(request, 'tools'), false);
+  assert.deepEqual(result, { moveDetails: {
+    items: [{ type: 'refrigerator', quantity: 1, sizeCategory: 'LARGE' }],
+    pickup: { city: 'רמת גן', address: 'בדיקה 10', floor: 2, elevator: false },
+    dropoff: { city: 'תל אביב' },
+  } });
+  assert.equal(calls, 1);
+});
+
+for (const outcome of [401, 500, 'network'] as const) {
+  test(`production Luna SDK branch makes one fetch on ${outcome} failure and exposes no provider details`, async t => {
+    const environment = process.env;
+    process.env = { OPENAI_PROJECT_ID: 'proj_0tblXq3MWcYw5VSdCOjx6mBT', OPENAI_LOG: 'off' };
+    t.after(() => { process.env = environment; });
+    let calls = 0;
+    t.mock.method(globalThis, 'fetch', async () => {
+      calls++;
+      if (outcome === 'network') throw new TypeError('private-provider-details');
+      return new Response(JSON.stringify({ error: { message: 'private-provider-details', type: 'api_error' } }),
+        { status: outcome, headers: { 'content-type': 'application/json' } });
+    });
+    const extractor = createAIExtractor({ window: sdkTestWindow, env: { OPENAI_API_KEY: 'test-only', OPENAI_MODEL: 'gpt-6-luna',
+      OPENAI_PROJECT_ID: 'proj_0tblXq3MWcYw5VSdCOjx6mBT' } });
+    await assert.rejects(extractor({ lead: createLead(), text: 'שלום' }), error => {
+      assert.ok(hasCode('REQUEST_FAILED')(error));
+      assert.doesNotMatch((error as Error).message, /private-provider-details/);
+      return true;
+    });
+    assert.equal(calls, 1);
+  });
+}
 
 test('provider failures are typed, do not leak raw errors, and leave the lead untouched', async (t) => {
   const errorLog = t.mock.method(console, 'error', () => {});

@@ -14,7 +14,7 @@ export function statusLabel(state: DemoSnapshot): string {
     QUOTE_SENT: 'הצעת המחיר נשלחה',
     WON: 'הלקוח אישר את המחיר',
     LOST: 'הפנייה נסגרה',
-    HUMAN_HANDOFF: 'בטיפול נציג אנושי',
+    HUMAN_HANDOFF: 'האוטומציה נעצרה',
   };
   return labels[state.lead.status];
 }
@@ -40,7 +40,7 @@ export function AgentState({ state }: { state: DemoSnapshot | null }) {
               item.photoStatus === 'NOT_AVAILABLE' && 'תמונה לא זמינה כרגע',
               item.photoStatus === 'RECEIVED' && 'תמונה התקבלה',
             ].filter(Boolean).join(' · ') || 'ממתינים לפרטים נוספים'}</div>
-          </div><span className="fact-check">✓</span>
+          </div>{state?.requirements.requirements.some(requirement => requirement.itemIndex === index && requirement.status === 'MISSING') && <span className="item-pending-label">להשלמה / בדיקה</span>}
         </div>)}</div>}
       <div className="locations">{(['pickup', 'dropoff'] as const).map((side, index) => {
         const location = details?.[side];

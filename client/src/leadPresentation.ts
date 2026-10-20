@@ -74,7 +74,7 @@ export function presentRequirements(state: DemoSnapshot): { customerMissing: str
 export function nextStepLabel(state: DemoSnapshot | null): string {
   if (!state) return 'המשך השיחה יופיע לאחר החיבור לשרת.';
   switch (state.lead.status) {
-    case 'HUMAN_HANDOFF': return 'המשך טיפול אצל הנציג.';
+    case 'HUMAN_HANDOFF': return 'המשך טיפול ידני מחוץ להדגמה.';
     case 'QUOTE_SENT': return 'ממתינים לתשובת הלקוח להצעה.';
     case 'WON': return 'ממתין לתיאום';
     case 'LOST': return 'הפנייה נסגרה.';

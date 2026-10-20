@@ -1,142 +1,41 @@
 # Moving Services Sales Agent
 
-Human-in-the-loop AI sales agent for moving services.
+[Try the public demo](https://sales.barshirom.com/) · [Portfolio](https://barshirom.com/) · [Engineering guide](docs/ENGINEERING_GUIDE.md)
 
-A Hebrew customer conversation becomes a structured lead, a pricing recommendation and an
-owner-approved quote. The local React demo follows the process through customer acceptance,
-with manual coordination still pending. Rick & GO provides the current pilot's business context.
+A Hebrew RTL sales-workflow demo: customer messages become structured move details, a deterministic pricing recommendation and an owner-approved quote. Customer acceptance means **pending manual coordination**, with no reserved date or crew.
 
-[Run locally](#run-locally) · [Product flow](#product-flow) · [Project status](#current-project-status) · [More detail](#more-detail)
+Built by Bar Shirom to explore a clear separation between AI extraction, business rules and human decisions. Rick & GO supplied the moving-business context; this repository does not claim ongoing commercial use or measured business results.
 
-## What it does
+## Try it without AI
 
-- Understands natural Hebrew messages about inventory, access and service needs.
-- Turns customer messages into structured move details while retaining known facts.
-- Asks for missing information and handles corrections or unavailable details.
-- Produces deterministic recommendations with a breakdown and unpriced components.
-- Routes every quote through owner approval.
-- Records acceptance of the final quote and prepares a manual-coordination summary.
+1. Choose **תרחיש מוכן ללא AI** to load an existing synthetic lead into owner review. This does not generate an AI conversation.
+2. Review the deterministic recommendation and acknowledge the missing-photo condition before approving the quote.
+3. Switch directly to the customer view and select **אישור ההצעה**. Approval uses the current quote identity/version through a deterministic path, without extraction.
+4. The accepted quote remains **ממתין לתיאום**. Coordination happens outside the demo.
 
-## Why I built it
+Use synthetic data only. The prepared scenario needs an available temporary session, but no provider request. Replacing meaningful progress requires confirmation. If a session expires, explicit recovery clears stale quote/review state and preserves the unsent draft without replaying messages or approvals.
 
-Moving leads often arrive as unstructured, WhatsApp-style messages. Customers send information
-out of order, correct themselves and may not know every detail. I built this project to explore
-how AI can understand the conversation while deterministic code and human approval remain
-responsible for business decisions.
+## Engineering boundaries
 
-## Product flow
+- **AI extracts facts.** OpenAI Responses, Structured Outputs, Zod and domain conversion form separate validation boundaries. Known facts are retained; corrections are explicit. Shape validation is not a claim that every extracted fact is accurate.
+- **Code calculates recommendations.** Versioned deterministic rules expose a breakdown and unsupported components. Prices and tariffs remain provisional; box/distance rates include engineering assumptions. See the [pricing evidence](data/evals/PRICING_EVIDENCE.md#current-pricing-engine-audit).
+- **The owner approves every quote.** Recommendations, final approved amounts, quote versions and acceptance remain separate records. Missing-photo and omitted-cost acknowledgements, scope checks and stale-quote rejection stay enforced.
+- **Acceptance is deterministic.** An explicit customer action carries the current quote identity/version. Conditional replies do not approve a quote. Recovery never replays acceptance or owner mutations.
+- **Handoff stops automation.** There is no representative inbox, live human chat or resume mechanism. Further messages stay only in the temporary demo session; any follow-up occurs outside the app.
 
-```mermaid
-flowchart TD
-    A[Customer inquiry] --> B[Structured extraction]
-    B --> C[Lead state]
-    C --> D[Missing-information engine]
-    D --> E[Deterministic pricing engine]
-    E --> F[Human owner review]
-    F --> G[Final quote]
-    G --> H[Customer acceptance]
-    H --> I[Manual coordination]
-```
+The deployed app serves HTTPS with isolated cookie sessions, request limits and bounded AI admission. Customer/lead sessions remain in memory and disappear on expiry or backend recreation. The public beta's separate cumulative AI ledger durably preserves consumed attempts and conservative reservations across backend recreation. It does not replenish automatically or guarantee the provider's billing total.
 
-## Key engineering decisions
+Local defaults use process-local request/token counters; they are distinct from the deployed cumulative public-beta controls. The public demo may stop AI admission when its shared allowance or fixed expiry is reached. The no-AI workflow remains usable when a session is available.
 
-### LLM for extraction only
+## Verification
 
-OpenAI Structured Outputs converts natural language into schema-constrained facts.
-Zod and domain validation check the result before it updates the Lead.
-A valid response shape does not guarantee that every extracted fact is correct.
+Offline tests use injected responses and synthetic fixtures. Conversation evals, pricing evidence, component tests and browser walkthroughs cover different boundaries; they do not establish live Hebrew extraction accuracy or commercial impact.
 
-The model does not:
-
-- Calculate prices.
-- Approve quotes.
-- Control lifecycle state.
-- Automatically send customer quotes.
-
-### Deterministic pricing
-
-<a id="pricing-engine-v01-complete-and-partial-recommendations"></a>
-<a id="provisional-pricing-assumptions"></a>
-
-Versioned rules produce explainable breakdowns, ranges and complete or partial recommendations.
-Unsupported components stay visible for manual pricing. Rules remain provisional; box and distance
-rates are engineering assumptions. The [pricing audit](data/evals/PRICING_EVIDENCE.md#current-pricing-engine-audit)
-contains the tariffs, evidence and composition limits.
-
-### Human in the loop
-
-The owner can approve, adjust, request more information or take over. A calculated subtotal and
-a final commercial quote are separate records. Partial pricing requires explicit whole-job
-finalization, and changed scope cannot silently accept an old quote.
-
-### Eval-driven development
-
-Observed bugs become regression cases, including date handling, unavailable dimensions and
-contextual quote acceptance. Offline tests, conversation evals and pricing evidence check different
-parts of the system. The [eval guide](data/evals/README.md) explains coverage and remaining gaps.
-
-## Demo flow
-
-1. The customer describes a move in Hebrew.
-2. The agent extracts known details and asks for missing information.
-3. The pricing engine calculates the supported portion of the move.
-4. The owner reviews omitted work and confirms the final price.
-5. The customer accepts the current quote.
-6. The lead remains pending manual coordination, without a reserved date or crew.
-
-Unsupported pricing components remain visible to the owner.
-The [offline walkthrough](docs/ENGINEERING_GUIDE.md#offline-demo-walkthrough) includes exact messages
-and a partial-subtotal-to-final-quote example.
-
-## Current project status
-
-Working local v0.1 demo. Verified on **2026-10-07**:
-
-- **419 automated tests passed:** 379 server and 40 frontend.
-- **Conversation evals:** 24 passed, 0 failed; two future-service cases not run.
-- **Pricing evals:** six evaluated, five partial and one unsupported; zero invalid,
-  with no complete whole-job accuracy scores.
-
-Tests use injected extraction/provider responses. They do not measure live Hebrew extraction
-accuracy, production usage or commercial impact.
-
-## Tech stack
-
-- **Client:** React 19, TypeScript, Vite 6, CSS and Hebrew RTL.
-- **Server:** Node.js, Express 5 and strict TypeScript.
-- **AI boundary:** OpenAI Responses API, Structured Outputs and Zod 4.
-- **Tests:** Node's built-in test runner through `tsx`, React DOM and JSDOM.
-- **Tooling:** npm workspaces and Git.
-
-## Demo screenshots
-
-Real browser captures of the local offline demo with synthetic data, not production usage.
-
-### Customer conversation
-
-![Customer conversation collecting missing move details in Hebrew](docs/screenshots/01-customer-conversation.jpg)
-
-Natural Hebrew conversation is converted into structured move details while the agent asks only for missing information.
-
-### Owner pricing and review
-
-![Owner review of a partial pricing recommendation and unpriced components](docs/screenshots/03-owner-pricing.jpg)
-
-The deterministic Pricing Engine exposes the calculated subtotal, pricing range, information-completeness confidence and components that still require manual review.
-
-### Customer acceptance
-
-![Accepted quote awaiting manual coordination, with the original engine subtotal shown separately](docs/screenshots/05-accepted-awaiting-coordination.jpg)
-
-After owner finalization, the customer accepts the approved quote and the lead moves to pending manual coordination.
-
-See the full five-step demo flow in [docs/screenshots/README.md](docs/screenshots/README.md).
+The previously deployed source checkpoint `5aa84bf1262dd03cc5c9498367024b0c73095384` passed **585 server and 64 frontend tests** in its exact committed Docker verification stage on 20 October 2026. Unrelated pending-work tests are excluded from those release counts. The [current change verification](docs/DEMO_APPROVAL_RELEASE_20261020.md) records this release's scoped checks and visual-verification limits.
 
 ## Run locally
 
-Requires Node.js 20.18+ and npm 9+. On Windows, use `npm.cmd` if PowerShell blocks `npm.ps1`.
-
-### Offline demo
+Requires Node.js 20.18+ and npm 9+. On Windows use `npm.cmd` if PowerShell blocks `npm.ps1`.
 
 ```sh
 npm install
@@ -144,54 +43,33 @@ npm run build
 npm run demo:quote --workspace server
 ```
 
-Open **http://127.0.0.1:3101**. No API key or OpenAI calls are needed.
-Use the [documented fixture messages](docs/ENGINEERING_GUIDE.md#offline-demo-walkthrough);
-this mode does not handle arbitrary free-form input.
+Open **http://127.0.0.1:3101**. No API key or provider request is needed. The fixture supports the prepared lead and [documented synthetic messages](docs/ENGINEERING_GUIDE.md#offline-demo-walkthrough), not arbitrary free-form extraction.
 
-### Development with OpenAI
-
-After installing dependencies, copy `.env.example` to a root `.env` and set `OPENAI_API_KEY`.
-The key stays server-side, never in a `VITE_` variable.
+For development with real extraction, follow the [configuration guide](docs/ENGINEERING_GUIDE.md#running-and-configuration). Keys remain server-side. Customer messages reaching the provider boundary can incur charges.
 
 ```sh
 npm run dev:server
-# In a second terminal:
+# In another terminal:
 npm run dev:client
 ```
 
-Open **http://localhost:5173** (or Vite's reported port). Customer messages can make real provider
-requests. See the [engineering guide](docs/ENGINEERING_GUIDE.md#running-and-configuration)
-for configuration, API routes, validation commands and build details.
+Validate with:
 
-For local backend container verification, see the [Docker deployment guide](docs/DEPLOYMENT.md).
-It covers production image packaging and future ECR/ECS preparation; no cloud deployment is included.
+```sh
+npm test
+npm run eval
+npm run typecheck
+npm run build
+git diff --check
+```
 
-## Current limitations
+## Stack and limitations
 
-- Temporary, cookie-isolated browser sessions in memory; reset affects only that browser.
-  Sessions expire after 30 minutes, and a server restart clears all sessions. Tabs in
-  the same browser profile share a session. See [session limits and security](docs/DEPLOYMENT.md#temporary-demo-sessions).
-- Server-side HTTP/session-creation limits, two concurrent AI calls by default and
-  conservative daily request/token reservations protect the demo. Limits reset on
-  process restart and are not a provider billing guarantee; see
-  [configuration and monitoring](docs/DEPLOYMENT.md#traffic-limits-and-ai-usage-cutoff).
-- No persistent database or authentication.
-- No WhatsApp integration yet.
-- Provisional pricing; unsupported furniture may require manual pricing.
-- No real maps, availability checks or scheduling integration.
+React 19, Vite 6, TypeScript, Node.js/Express 5, OpenAI Responses and Zod 4; npm workspaces, Node's test runner and JSDOM.
 
-## Roadmap
+The current demo has no authenticated owner access, durable lead database, photo uploads, WhatsApp, maps, availability checks, booking or scheduling. Browser tabs in one profile share the same temporary session. Supported pricing is provisional, and unsupported work requires owner review. Persistent business records and external integrations are future work.
 
-- Persistent storage and audit history.
-- WhatsApp Business integration.
-- Maps and distance integration.
-- Pilot feedback and stronger pricing evidence.
-- Production deployment and security.
-
-## More detail
-
-- [Engineering guide](docs/ENGINEERING_GUIDE.md)
-- [Portfolio summary and CV copy](docs/PORTFOLIO_SUMMARY.md)
-- [Interview notes](docs/INTERVIEW_NOTES.md)
-- [Pricing evidence](data/evals/PRICING_EVIDENCE.md)
-- [Eval documentation](data/evals/README.md)
+- [Architecture, workflow and setup](docs/ENGINEERING_GUIDE.md)
+- [Local container packaging and security controls](docs/DEPLOYMENT.md)
+- [Conversation and pricing evals](data/evals/README.md)
+- [Earlier local screenshots](docs/screenshots/README.md), historical synthetic captures rather than current production evidence
