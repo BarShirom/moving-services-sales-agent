@@ -4,7 +4,7 @@ const source = 'data/evals/README.md#historical-pricing-heuristics';
 export const pricingRules = Object.freeze({
   version: 'MOVING_PRICING_V0_1_3' as const,
   source,
-  assumptionSource: 'README.md#provisional-pricing-assumptions',
+  assumptionSource: 'data/evals/PRICING_EVIDENCE.md#engineering-assumptions',
   refrigerator: Object.freeze({
     SMALL: Object.freeze({ min: 300, max: 300 }), REGULAR: Object.freeze({ min: 350, max: 350 }),
     LARGE: Object.freeze({ min: 400, max: 450 }), FOUR_DOOR: Object.freeze({ min: 400, max: 450 }),

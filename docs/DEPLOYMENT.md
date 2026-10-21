@@ -1,9 +1,42 @@
-# Backend Docker deployment preparation
+# Runtime controls and Docker preparation history
 
-This packages the API with temporary isolated browser sessions for local Linux-container verification.
-No AWS resources are created. Authentication, durable storage and public production
-deployment remain future work. Every quote still needs human approval; acceptance
-still means manual coordination is pending.
+## Current runtime boundaries
+
+The public portfolio demo is deployed on AWS Lightsail using Docker Compose,
+Caddy HTTPS and private Amazon ECR images. Local development still binds to
+loopback; `npm run demo:quote --workspace server` uses injected synthetic fixtures
+without provider requests. The application has no authenticated business-owner
+role, durable lead/quote database or scheduling. Every quote requires owner
+approval; acceptance leaves manual coordination pending.
+
+Business sessions remain bounded and process-local. Restarting the backend loses
+leads, messages, evaluations, reviews and quotes. The separate operator-provisioned
+AI ledger in `server/src/safety/aiWindow.ts` persists cumulative public-beta
+reservations and fixed expiry across backend replacements. Process-local HTTP/AI
+counters are additional controls; restarting them does not replenish that durable
+allowance. Failed attempts can consume reservations. Health and static serving
+do not establish provider availability.
+
+The deployed controls retain an unpublished backend port, one exact Caddy peer,
+canonical HTTPS origin, Secure host-only cookies, CSRF admission, bounded container
+resources and logs, and operator-owned backend secrets. Preserve the existing
+ledger mount, permit, consumed reservations, expiry, credentials, TLS volumes and
+matching release/rollback evidence during deployment. The repository Compose file
+is a baseline: its local Caddy reference and absence of private ledger/permit
+mounts do not reproduce the full deployed operator configuration. Local defaults
+leave the AI gate closed, even when a provider key is present.
+
+Use the established operator release procedure and private overrides for an
+actual deployment. See the [engineering guide](ENGINEERING_GUIDE.md#local-and-deployed-runtime)
+for local/deployed differences. The dated [20 October release report](DEMO_APPROVAL_RELEASE_20261020.md)
+records workflow verification and accounting-preservation requirements; fresh
+health, artifact and browser checks must be recorded for each new release.
+
+The preparation and verification sections below preserve their original dated
+context. Their references to planned AWS publication, public launch or allowances
+that disappear on restart describe those earlier artifacts, not the current
+deployed beta. Historical image identities and scan results are not current
+release instructions or evidence of current provider readiness.
 
 ## Current image architecture - Chainguard adoption (2026-10-12)
 

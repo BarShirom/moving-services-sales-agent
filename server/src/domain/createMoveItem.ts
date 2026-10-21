@@ -1,4 +1,5 @@
 import type { MoveItem } from './lead.js';
+import { getItemRequirementProfile } from './requirements/itemRequirementProfiles.js';
 
 export function createMoveItem(type: string | null = null): MoveItem {
   return {
@@ -6,7 +7,7 @@ export function createMoveItem(type: string | null = null): MoveItem {
     quantity: null,
     description: null,
     sizeCategory: null,
-    photoStatus: type === 'refrigerator' ? 'REQUIRED' : 'NOT_APPLICABLE',
+    photoStatus: getItemRequirementProfile(type)?.initialPhotoRequired ? 'REQUIRED' : 'NOT_APPLICABLE',
     dimensions: { width: null, height: null, depth: null },
     dimensionsAvailable: null,
     requiresDisassembly: null,

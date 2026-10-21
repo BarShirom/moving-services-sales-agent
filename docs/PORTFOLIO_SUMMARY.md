@@ -19,7 +19,7 @@ An LLM extracts schema-constrained facts. A deterministic requirements engine co
 
 ## My role
 
-Independently designed and built the application: React customer/owner views, TypeScript domain models, Express API, OpenAI extraction boundary, deterministic pricing, quote workflow, regression tests, eval runner and evidence documentation. Rick & GO provides the current pilot's moving-business context.
+Independently designed and built the application: React customer/owner views, TypeScript domain models, Express API, OpenAI extraction boundary, deterministic pricing, quote workflow, regression tests, eval runner and evidence documentation. Historical moving-business references inform the provisional rules; there is no active business pilot.
 
 ## Technical highlights
 
@@ -41,7 +41,7 @@ Designed to reduce repetitive intake questions, retain customer details, expose 
 
 ## Current status
 
-Working local, single-session v0.1 demo. Verification on 2026-10-07: **419 automated tests passed** (379 server, 40 frontend); **24 of 26 conversation evals passed**, with two future-service cases not run. All six historical pricing cases are evaluated, but none qualifies for a complete whole-job accuracy score.
+Working v0.1 portfolio demo with a local offline fixture and public AWS Lightsail/Docker deployment behind Caddy HTTPS. Each browser cookie jar has a temporary in-memory session, shared by its tabs. The separately durable AI ledger retains cumulative reservations and fixed expiry; it does not persist business records. See the [engineering guide](ENGINEERING_GUIDE.md#local-and-deployed-runtime) for the runtime boundaries and dated [release verification](DEMO_APPROVAL_RELEASE_20261020.md#verification-on-20-october-2026) for scoped results. All six historical pricing cases are evaluated, but none qualifies for a complete whole-job accuracy score.
 
 The evidence registry has **29 records and 23 readiness categories**. Pricing remains provisional. There is no authentication, persistent database, WhatsApp delivery, maps integration or scheduling. Acceptance means commercial agreement awaiting manual coordination, not a booked move. See the [README](../README.md) for setup, limits and validation commands.
 
@@ -60,13 +60,13 @@ Detailed answers: [INTERVIEW_NOTES.md](INTERVIEW_NOTES.md).
 - Independently built a React/TypeScript/Node.js sales-agent demo covering Hebrew lead intake, owner-reviewed pricing, versioned quotes and contextual customer acceptance.
 - Integrated OpenAI Responses API Structured Outputs with Zod validation and bounded context to convert customer messages into structured facts without delegating pricing or approval to the LLM.
 - Designed deterministic, versioned pricing with component breakdowns and omitted-cost tracking, requiring explicit human finalization before a partial subtotal becomes a customer quote.
-- Established an offline evaluation and regression suite with 419 passing tests and 24 passing conversation evals, covering state preservation, off-script replies and stale-quote protection.
+- Established offline evaluations and regression tests covering state preservation, off-script replies, deterministic acceptance and stale-quote protection using injected provider responses and synthetic fixtures.
 
-Counts are a dated verification snapshot; rerun the repository checks before reusing them later. The final bullet describes automated workflow coverage, not live-model accuracy.
+Evidence counts describe the current register; test results belong to their dated release reports. Rerun repository checks before quoting results for another revision. The final bullet describes automated workflow coverage, not live-model accuracy.
 
 ## LinkedIn project description
 
-Independently built Moving Services Sales Agent, a human-in-the-loop AI workflow informed by a moving-business pilot. The React/TypeScript/Node.js demo converts Hebrew conversations into structured leads using OpenAI Structured Outputs, then applies deterministic requirements and provisional pricing rules. Owners explicitly finalize quotes, while versioned scope checks protect customer acceptance and keep coordination separate from booking. The project includes offline evals, regression tests and a pricing evidence registry; it is a local engineering demo, not a production deployment.
+Independently built Moving Services Sales Agent, a human-in-the-loop AI workflow informed by historical moving-business references. The React/TypeScript/Node.js demo converts Hebrew conversations into structured leads using OpenAI Structured Outputs, then applies deterministic requirements and provisional pricing rules. Owners explicitly finalize quotes, while versioned scope checks protect customer acceptance and keep coordination separate from booking. The portfolio demo includes offline evals, regression tests and a pricing evidence registry, with a public AWS Lightsail/Docker deployment and a reproducible local offline fixture. Temporary business sessions and operator-controlled AI availability remain explicit boundaries.
 
 ## GitHub description and topics
 

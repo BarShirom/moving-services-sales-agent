@@ -6,20 +6,23 @@ Current implementation reference for the [portfolio README](../README.md). This 
 
 | Area | Responsibility |
 | --- | --- |
-| `client/src/` | Customer conversation, lead presentation, owner finalization and coordination views |
+| `client/src/` | Customer conversation, session orchestration, owner finalization and coordination views |
 | `server/src/app.ts` / `server.ts` | Express app creation separate from the listener (loopback locally, all interfaces in production) |
 | `server/src/domain/` | Lead factories, extraction patches, requirements, pricing and quote types |
 | `server/src/integrations/openai/` | Bounded context, prompt, wire schema, provider boundary and domain conversion |
 | `server/src/demo/` | Single-session orchestration, owner actions, quote lifecycle and explicit distance adapter |
+| `server/src/safety/` | Durable operator-controlled AI admission, cumulative beta reservations and readiness checks |
 | `server/src/evals/` | Offline fixture runner, historical input adapters and evidence validation |
 | `data/evals/` | Public anonymized/synthetic datasets, evidence and provenance documentation |
 | `server/tests/`, `client/tests/` | Node test-runner suites, with no live provider calls |
 
 One root npm install and lockfile cover both workspaces. TypeScript is strict; server modules use Node ESM resolution and the client uses bundler resolution. Tests are typechecked separately from emitted server production code.
 
+See the [extension guide](EXTENDING.md) for the module-level architecture map, change/verification table and item identity limitations. Historical moving-business references inform the provisional rules; this portfolio demo does not represent an active business pilot.
+
 ## Running and configuration
 
-Use Node.js 20.18+ and npm 9+. The [offline walkthrough](#offline-demo-walkthrough) is the reproducible, credential-free entry point:
+Use Node.js 20.18+ and npm 9+. On Windows, use `npm.cmd` if PowerShell blocks `npm.ps1`. The [offline walkthrough](#offline-demo-walkthrough) is the reproducible, credential-free entry point:
 
 ```sh
 npm install
@@ -29,7 +32,7 @@ npm run demo:quote --workspace server
 
 `server/src/scripts/demoQuoteFixture.ts` binds to `127.0.0.1:3101`, serves `client/dist` and injects the exact synthetic messages in `quoteFixture.ts`. Date/photo/acceptance handlers also run normally. Other free-form messages may fail; this is a workflow fixture, not a language model. Rebuild after client edits before using it.
 
-For real extraction, copy root `.env.example` to `.env`, set `OPENAI_API_KEY`, then run `npm run dev:server` and `npm run dev:client` in separate terminals. These commands do not themselves send a message; customer messages that reach the provider boundary can make paid API requests.
+For ordinary development, run `npm run dev:server` and `npm run dev:client` in separate terminals. Copy root `.env.example` to `.env` only when configuration overrides are needed. Startup, view switching and draft/example loading do not send extraction requests. The default AI gate is closed: setting `OPENAI_API_KEY` alone does not enable real extraction. Use the fixture for a complete no-provider walkthrough.
 
 | Setting | Current behavior |
 | --- | --- |
@@ -38,14 +41,26 @@ For real extraction, copy root `.env.example` to `.env`, set `OPENAI_API_KEY`, t
 | `PORT` | Backend port, default 3001; changing it also requires updating the Vite dev proxy target |
 | `NODE_ENV` | `production` binds to `0.0.0.0` for containers; otherwise binds to `127.0.0.1` |
 | `CLIENT_ORIGIN` | Optional exact CORS origin; blank/unset keeps the existing same-origin/proxy behavior |
+| `AI_WINDOW_MODE` | Unset means extraction is disabled; `armed` and `public_beta` require separately provisioned operator permits and durable state |
 
 The server and CLI load the root `.env`; existing environment variables take precedence. `.env` files are ignored except `.env.example`. Never put secrets in the client or `VITE_` variables. Configuration is lazy, so health checks, offline tests and imports need no API key.
 
-The optional `npm run demo:ai -- "customer message"` CLI exercises one real extraction workflow and prints structured results. It does not approve or send a quote and is separate from tests/evals. Use synthetic messages when demonstrating it.
+The optional `npm run demo:ai -- "customer message"` CLI uses the same real extraction boundary and admission gate. It can make a paid provider request only with valid credentials, an authorized permit, durable state and matching configuration. It does not approve or send a quote and is separate from tests/evals. Permit provisioning, credential rotation and increasing or reopening an allowance are operator tasks outside ordinary development or this refactor. Use injected responses for tests and synthetic messages for separately authorized live work.
 
 `npm run build` writes `client/dist` and `server/dist`. `npm start` runs the compiled backend only. `npm run preview --workspace client` previews the client build; the backend must run for API interactions. The combined offline fixture is simpler for portfolio review. None of these commands is a production deployment.
 
-See [backend Docker preparation](DEPLOYMENT.md) for runtime environment injection, Linux image verification and the future ECR/ECS boundary.
+### Local and deployed runtime
+
+| Concern | Local defaults | Deployed public demo |
+| --- | --- | --- |
+| Serving | Loopback development servers, or the combined offline fixture on `127.0.0.1:3101` | AWS Lightsail, Docker Compose, Caddy HTTPS and private Amazon ECR images; matching client assets are served by Caddy |
+| Network admission | Direct mode ignores forwarded identity headers; local HTTP cookie | Canonical HTTPS origin, Secure host-only cookie, CSRF checks and one exact trusted Caddy peer; backend port 3001 is unpublished |
+| Business state | One temporary session per cookie jar, shared across that profile's tabs | The same bounded process-local sessions; backend replacement loses leads, conversations, reviews and quotes; one replica |
+| AI admission | Gate closed without operator provisioning; ordinary process-local HTTP/AI quotas still apply | Existing public-beta permit and durable cumulative ledger additionally restrict provider dispatch; fixed expiry and spent reservations survive backend replacement |
+
+The durable ledger in `server/src/safety/aiWindow.ts` records AI admission/accounting and allowlisted diagnostics. It is separate from lead/quote storage and does not make business state persistent. Process-local minute/hour/day counters may restart with the process; the beta ledger does not replenish, reset daily or refund failed attempts. Invalid/missing durable state, exhausted budget or expiry closes admission. Health and deterministic workflow paths do not prove live AI availability.
+
+Keep the existing ledger mount, permit, consumed reservations, expiry, credentials, Caddy/TLS and release/rollback evidence across a deployment. `deploy/compose.yaml` is the packaging/topology baseline; its local Caddy image reference and lack of operator ledger mounts mean it is not a complete copy of deployed private overrides. Use the established operator release configuration. See [deployment notes](DEPLOYMENT.md#current-runtime-boundaries) for runtime injection and the distinction between current controls and dated preparation reports.
 
 ### Offline demo walkthrough
 
@@ -179,8 +194,8 @@ not business-owner authentication. Tabs sharing cookies share a session. See
 Switching views/actions refreshes snapshots, not a live subscription. This is not
 durable tenant storage or a distributed lock. Server-side rate and AI reservation
 controls now protect the HTTP demo; see [limits and monitoring](DEPLOYMENT.md#traffic-limits-and-ai-usage-cutoff).
-Public release still needs a reviewed HTTPS ingress and operator/provider budget
-monitoring. Direct mode ignores forwarding headers. The optional Caddy mode uses
+The public demo uses Caddy HTTPS ingress and operator-controlled AI admission.
+Direct local mode ignores forwarding headers. The deployed Caddy mode uses
 only one dedicated header overwritten by Caddy, admitted from its exact configured
 private socket IP; Express proxy trust stays disabled. See the
 [topology, Compose template and local spoof tests](DEPLOYMENT.md#caddy-and-lightsail-deployment-template).
@@ -195,8 +210,8 @@ client drafts intact. No automatic retries or request queue are introduced.
 
 ## Verification and extension
 
-Run `npm test`, `npm run eval`, `npm run typecheck`, `npm run build` and `git diff --check` from the root. Test files are explicitly listed in workspace scripts for Windows/Node compatibility. Tests use Node's runner through `tsx`; frontend tests use React DOM and JSDOM, not Vitest.
+Run `npm test`, `npm run eval`, `npm run typecheck`, `npm run build` and `git diff --check` from the root. Test files are explicitly listed in workspace scripts for Windows/Node compatibility. Adding a file requires adding it to the relevant `client/package.json` or `server/package.json` test command and confirming it appears in actual test output. Server tests preload `tests/offlineGuard.mjs`. Tests use Node's runner through `tsx`; frontend tests use React DOM and JSDOM, not Vitest.
 
 See the [eval guide](../data/evals/README.md) for fixture authoring, privacy checks, exit codes, unscored constraints and source-quality semantics. [Pricing evidence validation](../server/src/evals/loadPricingEvidence.ts) runs through tests separately from the six pricing eval inputs. Compiled loaders still require repository-level `data/evals`; those JSON files are not bundled into `server/dist`.
 
-When extending the system, preserve extraction/workflow/pricing separation, add a regression for the actual failure, and keep requested dates distinct from scheduling. Production storage, channel adapters and authenticated roles should strengthen these boundaries rather than give the model control of money or lifecycle.
+Use the [practical extension guide](EXTENDING.md) before changing an item, collected field, tariff, lifecycle/quote action, recovery path or test registration. Preserve extraction/workflow/pricing separation, add a regression for the actual failure, and keep requested dates distinct from scheduling. Durable business storage, stable item identities, channel adapters and authenticated roles remain follow-up work. Dated release/security reports retain the results and limitations of their original revisions.

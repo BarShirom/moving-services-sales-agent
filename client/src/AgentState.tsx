@@ -2,22 +2,10 @@ import { Icon } from './Icon';
 import type { DemoSnapshot } from './api';
 import { itemNames, requirementLabels as labels, presentRequirements, nextStepLabel } from './leadPresentation';
 
-const sizes: Record<string, string> = { SMALL: 'קטן', REGULAR: 'רגיל', LARGE: 'גדול', FOUR_DOOR: 'ארבע דלתות' };
-const answer = (value: boolean | null) => value === null ? 'טרם צוין' : value ? 'כן' : 'לא';
+import { booleanLabel as answer, sizeLabels as sizes } from './displayFormatting';
+import { nextStepFootnote } from './leadPresentation';
 
-// Display labels only; the backend remains the source of status and readiness.
-export function statusLabel(state: DemoSnapshot): string {
-  const labels: Record<DemoSnapshot['lead']['status'], string> = {
-    COLLECTING_INFORMATION: state.nextQuestion ? 'איסוף מידע' : 'ממתין למידע נוסף',
-    READY_FOR_PRICING: 'מוכן לבדיקה ותמחור',
-    AWAITING_REVIEW: 'ממתין לבדיקה',
-    QUOTE_SENT: 'הצעת המחיר נשלחה',
-    WON: 'הלקוח אישר את המחיר',
-    LOST: 'הפנייה נסגרה',
-    HUMAN_HANDOFF: 'האוטומציה נעצרה',
-  };
-  return labels[state.lead.status];
-}
+export { statusLabel } from './leadPresentation';
 
 export function AgentState({ state }: { state: DemoSnapshot | null }) {
   const details = state?.lead.moveDetails;
@@ -64,7 +52,7 @@ export function AgentState({ state }: { state: DemoSnapshot | null }) {
     <section className="card next-card" aria-labelledby="next-heading" aria-live="polite" aria-atomic="true">
       <div className="next-heading"><span>✦</span><h2 id="next-heading">השלב הבא</h2><span className="next-line" /></div>
       <p>{nextStepLabel(state)}</p>
-      <span className="next-footnote">{state?.lead.status === 'WON' ? 'אישור המחיר אינו שריון מועד ההובלה.' : state?.lead.status === 'QUOTE_SENT' ? 'המועד המבוקש עדיין לא שוריין.' : 'כל הצעת מחיר מחייבת אישור של בעל העסק.'}</span>
+      <span className="next-footnote">{nextStepFootnote(state)}</span>
     </section>
   </div>;
 }

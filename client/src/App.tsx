@@ -1,94 +1,70 @@
 import { OwnerView } from './OwnerView';
 import { ConversationMessages } from './ConversationMessages';
 import { Icon } from './Icon';
-import { useEffect, useLayoutEffect, useRef, useState } from 'react';
-import { AgentState, statusLabel } from './AgentState';
+import { useEffect, useLayoutEffect, useRef } from 'react';
+import { AgentState } from './AgentState';
+import { currentStage, statusLabel } from './leadPresentation';
+import { useDemoSession } from './useDemoSession';
 import { CustomerQuoteOverview } from './QuoteOverview';
-import { DemoApiError, demoRequest, ownerRequest, type OwnerSnapshot, type DemoSnapshot } from './api';
+import type { DemoSnapshot } from './api';
 
 const example = 'צריך להעביר מקרר גדול מרמת גן לתל אביב.\nהאיסוף מביאליק 20, קומה 2 בלי מעלית.\nיש גם בערך 15 ארגזים.';
 const stages = ['שיחה ואיסוף פרטים', 'בדיקת בעל העסק ואישור מחיר', 'אישור הלקוח', 'ממתינים לתיאום ידני'];
 
-function hasProgress(state: DemoSnapshot | null, owner: OwnerSnapshot | null): boolean {
-  if (!state) return false;
-  const move = state.lead.moveDetails;
-  return !!(state.lead.messages.length || state.quote || state.lead.status !== 'COLLECTING_INFORMATION'
-    || move.items.length || Object.values(move.pickup).some(value => value !== null)
-    || Object.values(move.dropoff).some(value => value !== null) || move.requestedDate || move.requestedTime
-    || move.specialAccessNotes || owner?.reviews.length || owner?.pricingEvaluation);
+function conversationStatus(state: DemoSnapshot | null, loading: boolean, expired: boolean): string {
+  if (loading) return 'מתחברים לשיחה…';
+  if (expired) return 'נדרשת הדגמה חדשה';
+  return state ? statusLabel(state) : 'אין חיבור לשרת';
 }
-function currentStage(state: DemoSnapshot | null): number | null {
-  if (!state || ['HUMAN_HANDOFF', 'LOST'].includes(state.lead.status)) return null;
-  if (state.lead.status === 'WON') return 3;
-  if (state.lead.status === 'QUOTE_SENT') return 2;
-  if (['AWAITING_REVIEW', 'READY_FOR_PRICING'].includes(state.lead.status)) return 1;
-  return 0;
+
+function ConversationPlaceholder({ state, loading, expired, sending, aiUnavailable, blocked, onExample }: {
+  state: DemoSnapshot | null;
+  loading: boolean;
+  expired: boolean;
+  sending: boolean;
+  aiUnavailable: boolean;
+  blocked: boolean;
+  onExample: () => void;
+}) {
+  if (loading) return <div className="conversation-empty">
+    <Icon name="chat" />
+    <p>טוענים את השיחה…</p>
+  </div>;
+  if (!state) return <div className="conversation-empty">
+    <Icon name="chat" />
+    <p>{expired ? 'השיחה הקודמת הסתיימה. התחילו הדגמה חדשה כדי להמשיך.' : 'השיחה תופיע כאן לאחר החיבור לשרת.'}</p>
+  </div>;
+  if (state.lead.messages.length || sending) return null;
+  return <div className="conversation-empty">
+    <span className="welcome-symbol"><Icon name="chat" /></span>
+    <h3>מה צריך להעביר?</h3>
+    <p>{aiUnavailable ? 'אפשר לערוך טיוטה. איסוף פרטים חדשים דורש עיבוד AI זמין.' : <>
+      כתבו הודעה עם פרטי ההובלה.<br />הסוכן יאסוף את המידע החסר לפני בדיקת בעל העסק.
+    </>}</p>
+    <button type="button" className="example-button" disabled={blocked} onClick={onExample}>טעינת הודעה לדוגמה</button>
+    <small>ההודעה תיכנס לטיוטה. עיבוד AI יתחיל רק לאחר לחיצה על שלח.</small>
+  </div>;
 }
 
 export default function App() {
-  const [state, setState] = useState<DemoSnapshot | null>(null);
-  const [view, setView] = useState<'customer' | 'owner'>('customer');
-  const [owner, setOwner] = useState<OwnerSnapshot | null>(null);
-  const [ownerBusy, setOwnerBusy] = useState(false);
-  const [text, setText] = useState('');
-  const [error, setError] = useState('');
-  const [errorCode, setErrorCode] = useState('');
-  const [knownAiUnavailable, setKnownAiUnavailable] = useState(false);
-  const [notice, setNotice] = useState('');
-  const [expired, setExpired] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [pending, setPending] = useState<'send' | 'accept' | 'reset' | null>(null);
-  const [retryUntil, setRetryUntil] = useState(0);
-  const [aiRetryUntil, setAiRetryUntil] = useState(0);
-  const [now, setNow] = useState(Date.now);
-  const [confirmation, setConfirmation] = useState(false);
+  const {
+    state, owner, view, text, setText, error, errorCode, notice, expired, loading,
+    pending, confirmation, busy, blocked, retrySeconds, aiRetrySeconds,
+    messageCooldown, knownAiUnavailable, aiUnavailableError, aiUnavailable,
+    recoveryVersion, hasProgress, send, acceptQuote, reset, reconnect,
+    requestReset: requestSessionReset, cancelReset, switchView, updateOwner,
+    setOwnerBusy, handleError,
+  } = useDemoSession();
   const messageArea = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const confirmPanel = useRef<HTMLElement>(null);
   const recoveryButton = useRef<HTMLButtonElement>(null);
-  const focusRecoveredDraft = useRef(false);
   const trigger = useRef<HTMLElement | null>(null);
-  const busy = loading || pending !== null || ownerBusy;
-  const retrySeconds = Math.max(0, Math.ceil((retryUntil - now) / 1000));
-  const aiRetrySeconds = Math.max(0, Math.ceil((aiRetryUntil - now) / 1000));
-  const messageCooldown = aiRetrySeconds > 0 && state?.lead.status !== 'HUMAN_HANDOFF';
-  const blocked = busy || expired || confirmation || retrySeconds > 0;
+  const focusedRecovery = useRef(0);
   const stage = currentStage(state);
-  const aiUnavailableError = ['AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED', 'AI_NOT_CONFIGURED', 'AI_BUSY', 'AI_RATE_LIMITED', 'EXTRACTION_FAILED', 'AI_INPUT_LIMIT'].includes(errorCode);
-  const aiUnavailable = knownAiUnavailable || aiUnavailableError;
+  const conversationStatusText = conversationStatus(state, loading, expired);
   const photoRequested = state?.nextQuestion?.requirements.some(requirement => requirement.id === 'item.photo');
 
-  function clearError() { setError(''); setErrorCode(''); }
-  function handleError(error: unknown) {
-    const code = error instanceof DemoApiError ? error.code : '';
-    setErrorCode(code);
-    if (['AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED', 'AI_NOT_CONFIGURED'].includes(code)) setKnownAiUnavailable(true);
-    setError(error instanceof Error ? error.message : 'לא ניתן להשלים את הפעולה כרגע.');
-    if (error instanceof DemoApiError && error.retryAfterSeconds && ['SESSION_RATE_LIMITED', 'SESSION_CAPACITY', 'RATE_LIMITED', 'PROTECTION_CAPACITY'].includes(code)) {
-      const receivedAt = Date.now();
-      setNow(receivedAt); setRetryUntil(receivedAt + error.retryAfterSeconds * 1000);
-    }
-    if (error instanceof DemoApiError && error.retryAfterSeconds && ['AI_RATE_LIMITED', 'AI_BUSY'].includes(code)) {
-      const receivedAt = Date.now();
-      setNow(receivedAt); setAiRetryUntil(receivedAt + error.retryAfterSeconds * 1000);
-    }
-    if (code === 'SESSION_EXPIRED') {
-      // Clear every stale quote/review binding, retaining only the unsent draft.
-      setState(null); setOwner(null); setView('customer'); setConfirmation(false); setExpired(true); setNotice('');
-    }
-  }
-  useEffect(() => {
-    if (now >= Math.max(retryUntil, aiRetryUntil)) return;
-    const timer = window.setInterval(() => setNow(Date.now()), 1000);
-    return () => window.clearInterval(timer);
-  }, [retryUntil, aiRetryUntil, now >= Math.max(retryUntil, aiRetryUntil)]);
-  useEffect(() => {
-    let active = true;
-    demoRequest().then(result => { if (active) setState(result); })
-      .catch(error => { if (active) handleError(error); })
-      .finally(() => { if (active) setLoading(false); });
-    return () => { active = false; };
-  }, []);
   useEffect(() => {
     if (!state?.lead.messages.length && pending !== 'send') return;
     const behavior = window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth';
@@ -96,13 +72,19 @@ export default function App() {
     const area = messageArea.current;
     area?.scrollTo?.({ top: area.scrollHeight, behavior });
   }, [state?.lead.messages.length, pending]);
-  useEffect(() => { if (confirmation) confirmPanel.current?.focus(); else trigger.current?.focus(); }, [confirmation]);
-  useEffect(() => { if (expired && !busy) recoveryButton.current?.focus(); }, [expired, busy]);
   useEffect(() => {
-    if (focusRecoveredDraft.current && !loading && !expired && state) {
-      input.current?.focus(); focusRecoveredDraft.current = false;
+    if (confirmation) confirmPanel.current?.focus();
+    else trigger.current?.focus();
+  }, [confirmation]);
+  useEffect(() => {
+    if (expired && !busy) recoveryButton.current?.focus();
+  }, [expired, busy]);
+  useEffect(() => {
+    if (recoveryVersion > focusedRecovery.current && !loading && !expired && state) {
+      input.current?.focus();
+      focusedRecovery.current = recoveryVersion;
     }
-  }, [loading, expired, state?.lead.id]);
+  }, [loading, expired, state?.lead.id, recoveryVersion]);
   useLayoutEffect(() => {
     const textarea = input.current;
     if (!textarea) return;
@@ -115,79 +97,28 @@ export default function App() {
     return () => window.removeEventListener('resize', resize);
   }, [text, view]);
 
-  async function send() {
-    if (blocked || messageCooldown || !text.trim() || !state) return;
-    clearError(); setNotice(''); setPending('send');
-    try {
-      const displayedQuote = state.quote && ['SENT', 'ACCEPTED'].includes(state.quote.status) ? state.quote : undefined;
-      setState(await demoRequest('/message', text, displayedQuote)); setText('');
-      // Quote replies and handoff messages can succeed without any AI processing.
-      if (!displayedQuote && state.lead.status !== 'HUMAN_HANDOFF') setKnownAiUnavailable(false);
-    } catch (error) { handleError(error); }
-    finally { setPending(null); }
-  }
-  async function acceptQuote() {
-    const quote = state?.quote;
-    if (blocked || !state || !quote || quote.status !== 'SENT' || state.lead.status !== 'QUOTE_SENT' || quote.leadId !== state.lead.id) return;
-    clearError(); setNotice(''); setPending('accept');
-    try {
-      // The same deterministic endpoint and current displayed quote binding as a typed acceptance.
-      // Never send or clear the customer's separate unsent draft.
-      setState(await demoRequest('/message', 'מאשר', quote));
-      if (text.trim()) setNotice('אישור ההצעה נשלח. טיוטת ההודעה נשמרה ולא נשלחה.');
-    } catch (error) { handleError(error); }
-    finally { setPending(null); }
-  }
-  async function reset() {
-    if (busy || expired || !state || retrySeconds > 0) return;
-    setConfirmation(false); clearError(); setPending('reset');
-    try {
-      setState(await demoRequest('/reset')); setOwner(null); setView('customer'); setText('');
-      setNotice('התחלנו הדגמה חדשה. השיחה וההצעה הקודמות הוסרו.');
-    } catch (error) { handleError(error); }
-    finally { setPending(null); }
-  }
-  async function reconnect() {
-    if (busy || retrySeconds > 0) return;
-    // GET only. Never replay a customer message, quote acceptance or owner action.
-    setLoading(true); clearError(); setState(null); setOwner(null); setView('customer'); setConfirmation(false);
-    try {
-      setState(await demoRequest()); setExpired(false); focusRecoveredDraft.current = true;
-      setNotice('ההדגמה פתוחה. אם נשמרה טיוטה, בדקו אותה ולחצו על שלח כשתרצו. שום הודעה לא נשלחה שוב.');
-    } catch (error) { handleError(error); }
-    finally { setLoading(false); }
-  }
   function requestReset() {
-    if (blocked || !state) return;
     trigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    if (hasProgress(state, owner) || text.trim()) setConfirmation(true);
-    else void reset();
+    requestSessionReset();
   }
-  function cancelReset() { setConfirmation(false); }
-  async function switchView(next: 'customer' | 'owner') {
-    if (blocked || view === next) return;
-    setLoading(true); clearError();
-    try {
-      const result = next === 'owner' ? await ownerRequest() : null;
-      const customer = result?.customer ?? await demoRequest();
-      // Cookie-issuing GETs can replace an expired session without a 401 response.
-      if (state && customer.lead.id !== state.lead.id) {
-        handleError(new DemoApiError('SESSION_EXPIRED', 'ההדגמה הקודמת הסתיימה או הוחלפה. התחילו הדגמה חדשה.'));
-        return;
-      }
-      setState(customer); setOwner(result);
-      setView(next);
-    } catch (error) { handleError(error); }
-    finally { setLoading(false); }
+
+  function loadDraft(value: string) {
+    setText(value);
+    input.current?.focus();
   }
 
   const errorPanel = error && !expired && <div className="error-banner" role="alert">
-    <strong>לא הצלחנו להשלים את הפעולה</strong><p>{error}</p>
-    {!state && <button type="button" onClick={() => void reconnect()} disabled={busy || retrySeconds > 0}>ניסיון חיבור נוסף</button>}
+    <strong>לא הצלחנו להשלים את הפעולה</strong>
+    <p>{error}</p>
+    {!state && <button type="button" onClick={() => void reconnect()} disabled={busy || retrySeconds > 0}>
+      ניסיון חיבור נוסף
+    </button>}
     {retrySeconds > 0 && <p className="retry-wait">יש להמתין עוד {retrySeconds} שניות לפני ניסיון נוסף. לא ננסה שוב אוטומטית.</p>}
     {state && aiUnavailableError && <>
       <p>השיחה והטיוטה נשמרו. איסוף פרטים מהודעות חדשות דורש עיבוד AI זמין. אפשר לבדוק מידע קיים ולאשר הצעה רק כשמצב הפנייה מאפשר זאת. איפוס ההדגמה אינו מחדש את התקציב המשותף.</p>
-      {view === 'customer' && hasProgress(state, owner) && <div className="error-actions"><button type="button" disabled={blocked} onClick={() => void switchView('owner')}>לבדיקת הפנייה הקיימת</button></div>}
+      {view === 'customer' && hasProgress && <div className="error-actions">
+        <button type="button" disabled={blocked} onClick={() => void switchView('owner')}>לבדיקת הפנייה הקיימת</button>
+      </div>}
     </>}
   </div>;
 
@@ -200,13 +131,23 @@ export default function App() {
     </header>
     <section className="how-it-works" aria-labelledby="how-heading">
       <h2 id="how-heading">איך זה עובד?</h2>
-      <ul><li>ה-AI מחלץ את פרטי ההובלה מהשיחה.</li><li>מנוע התמחור מחשב המלצת מחיר לפי כללים מוגדרים.</li><li>בעל העסק בודק ומאשר את המחיר לפני שליחת ההצעה.</li></ul>
+      <ul>
+        <li>ה-AI מחלץ את פרטי ההובלה מהשיחה.</li>
+        <li>מנוע התמחור מחשב המלצת מחיר לפי כללים מוגדרים.</li>
+        <li>בעל העסק בודק ומאשר את המחיר לפני שליחת ההצעה.</li>
+      </ul>
     </section>
     <main id="main-content" tabIndex={-1}>
       <div className="workflow-guide" aria-label="שלבי ההדגמה">
-        <ol>{stages.map((label, index) => <li key={label} className={'workflow-step' + (stage === index ? ' current' : stage !== null && index < stage ? ' complete' : '')} aria-current={stage === index ? 'step' : undefined}>
-          <span className="step-index" aria-hidden="true">{index + 1}</span><span className="step-label">{label}</span>
-        </li>)}</ol>
+        <ol>{stages.map((label, index) => {
+          const current = stage === index;
+          const complete = stage !== null && index < stage;
+          const className = 'workflow-step' + (current ? ' current' : complete ? ' complete' : '');
+          return <li key={label} className={className} aria-current={current ? 'step' : undefined}>
+            <span className="step-index" aria-hidden="true">{index + 1}</span>
+            <span className="step-label">{label}</span>
+          </li>;
+        })}</ol>
         {state?.lead.status === 'HUMAN_HANDOFF' && <p role="status">האוטומציה נעצרה. המשך הטיפול ידני ומתרחש מחוץ להדגמה.</p>}
         {state?.lead.status === 'LOST' && <p role="status">הפנייה נסגרה. אפשר להתחיל הדגמה חדשה.</p>}
       </div>
@@ -223,7 +164,9 @@ export default function App() {
         {retrySeconds > 0 && <p>יש להמתין עוד {retrySeconds} שניות לפני ניסיון נוסף. לא ננסה שוב אוטומטית.</p>}
         {errorCode !== 'SESSION_EXPIRED' && error && <p>{error}</p>}
       </section>}
-      {confirmation && <section className="confirmation-panel" role="alertdialog" aria-labelledby="replace-heading" aria-describedby="replace-description" tabIndex={-1} ref={confirmPanel} onKeyDown={event => { if (event.key === 'Escape') cancelReset(); }}>
+      {confirmation && <section className="confirmation-panel" role="alertdialog" aria-labelledby="replace-heading" aria-describedby="replace-description" tabIndex={-1} ref={confirmPanel} onKeyDown={event => {
+        if (event.key === 'Escape') cancelReset();
+      }}>
         <h2 id="replace-heading">להתחיל מחדש ולמחוק את השיחה הנוכחית?</h2>
         <p id="replace-description">הפרטים, ההחלטות וההצעה הנוכחיים יוסרו, וגם הטיוטה תימחק. תיפתח שיחה ריקה. איפוס ההדגמה אינו מחדש את תקציב ה-AI המשותף.</p>
         <button type="button" className="confirm-replace" disabled={busy || retrySeconds > 0} onClick={() => void reset()}>אישור איפוס ההדגמה</button>
@@ -231,14 +174,26 @@ export default function App() {
       </section>}
       {view === 'owner' && owner ? <>
         {errorPanel}
-        <OwnerView disabled={blocked} owner={owner} onChange={value => { setOwner(value); setState(value.customer); }} onBusy={setOwnerBusy}
-          onError={handleError} onReset={async () => requestReset()} onCustomer={() => void switchView('customer')} />
+        <OwnerView
+          disabled={blocked}
+          owner={owner}
+          onChange={updateOwner}
+          onBusy={setOwnerBusy}
+          onError={handleError}
+          onReset={async () => requestReset()}
+          onCustomer={() => void switchView('customer')}
+        />
       </> : <>
         <div className="customer-layout">
           <section className="conversation-card" aria-labelledby="conversation-heading">
             <div className="conversation-header">
-              <div><h2 id="conversation-heading">השיחה שלכם</h2><span className="status-label" role="status">{loading ? 'מתחברים לשיחה…' : expired ? 'נדרשת הדגמה חדשה' : state ? statusLabel(state) : 'אין חיבור לשרת'}</span></div>
-              <button type="button" className="reset-button" onClick={requestReset} disabled={blocked || !state}><Icon name="reset" />{pending === 'reset' ? 'מאפסים…' : 'איפוס הדגמה'}</button>
+              <div>
+                <h2 id="conversation-heading">השיחה שלכם</h2>
+                <span className="status-label" role="status">{conversationStatusText}</span>
+              </div>
+              <button type="button" className="reset-button" onClick={requestReset} disabled={blocked || !state}>
+                <Icon name="reset" />{pending === 'reset' ? 'מאפסים…' : 'איפוס הדגמה'}
+              </button>
             </div>
             {state && <CustomerQuoteOverview state={state} disabled={blocked} accepting={pending === 'accept'} onAccept={() => void acceptQuote()} />}
             {state?.lead.status === 'HUMAN_HANDOFF' && <section className="handoff-help" aria-labelledby="handoff-heading">
@@ -247,21 +202,35 @@ export default function App() {
               <button type="button" disabled={blocked} onClick={requestReset}>איפוס והתחלת שיחה חדשה</button>
             </section>}
             <div ref={messageArea} className="message-area" role="log" aria-label="הודעות השיחה" aria-live="polite" aria-busy={busy}>
-              {loading ? <div className="conversation-empty"><Icon name="chat" /><p>טוענים את השיחה…</p></div> :
-                !state ? <div className="conversation-empty"><Icon name="chat" /><p>{expired ? 'השיחה הקודמת הסתיימה. התחילו הדגמה חדשה כדי להמשיך.' : 'השיחה תופיע כאן לאחר החיבור לשרת.'}</p></div> :
-                !state.lead.messages.length && pending !== 'send' && <div className="conversation-empty">
-                  <span className="welcome-symbol"><Icon name="chat" /></span>
-                  <h3>מה צריך להעביר?</h3><p>{aiUnavailable ? 'אפשר לערוך טיוטה. איסוף פרטים חדשים דורש עיבוד AI זמין.' : <>כתבו הודעה עם פרטי ההובלה.<br />הסוכן יאסוף את המידע החסר לפני בדיקת בעל העסק.</>}</p>
-                  <button type="button" className="example-button" disabled={blocked} onClick={() => { setText(example); input.current?.focus(); }}>טעינת הודעה לדוגמה</button>
-                  <small>ההודעה תיכנס לטיוטה. עיבוד AI יתחיל רק לאחר לחיצה על שלח.</small>
-                </div>}
+              <ConversationPlaceholder
+                state={state}
+                loading={loading}
+                expired={expired}
+                sending={pending === 'send'}
+                aiUnavailable={aiUnavailable}
+                blocked={blocked}
+                onExample={() => loadDraft(example)}
+              />
               <ConversationMessages messages={state?.lead.messages ?? []} />
-              {pending === 'send' && <><div className="message customer"><span className="message-label">הלקוח · בעיבוד</span><div className="bubble pending-bubble">{text}</div></div><div className="processing" role="status"><span className="typing-dots" aria-hidden="true"><i /><i /><i /></span>{state?.lead.status === 'HUMAN_HANDOFF' ? 'שומרים את ההודעה בשיחת ההדגמה הזמנית…' : 'הסוכן מעבד את ההודעה…'}</div></>}
+              {pending === 'send' && <>
+                <div className="message customer">
+                  <span className="message-label">הלקוח · בעיבוד</span>
+                  <div className="bubble pending-bubble">{text}</div>
+                </div>
+                <div className="processing" role="status">
+                  <span className="typing-dots" aria-hidden="true"><i /><i /><i /></span>
+                  {state?.lead.status === 'HUMAN_HANDOFF' ? 'שומרים את ההודעה בשיחת ההדגמה הזמנית…' : 'הסוכן מעבד את ההודעה…'}
+                </div>
+              </>}
             </div>
-            <form className="composer" onSubmit={event => { event.preventDefault(); void send(); }}>
+            <form className="composer" onSubmit={event => {
+              event.preventDefault();
+              void send();
+            }}>
               {errorPanel}
-              {photoRequested && <div className="photo-help"><p>בהדגמה אין אפשרות להעלות תמונות. אם אין תמונה זמינה, אפשר לציין זאת; בעל העסק יצטרך לאשר המשך בלעדיה.</p>
-                <button type="button" disabled={blocked} onClick={() => { setText('אין לי כרגע'); input.current?.focus(); }}>הכנסת תשובה: אין לי תמונה כרגע</button>
+              {photoRequested && <div className="photo-help">
+                <p>בהדגמה אין אפשרות להעלות תמונות. אם אין תמונה זמינה, אפשר לציין זאת; בעל העסק יצטרך לאשר המשך בלעדיה.</p>
+                <button type="button" disabled={blocked} onClick={() => loadDraft('אין לי כרגע')}>הכנסת תשובה: אין לי תמונה כרגע</button>
                 <small>התשובה תיכנס לטיוטה ותישלח רק בלחיצה על שלח.</small>
               </div>}
               <label className="visually-hidden" htmlFor="customer-message">הודעת הלקוח</label>
@@ -269,7 +238,10 @@ export default function App() {
               {messageCooldown && <p className="composer-guidance" role="status">אפשר לנסות לשלוח שוב בעוד {aiRetrySeconds} שניות. לא ננסה שוב אוטומטית. אפשר לבדוק מידע קיים ולאשר הצעה כשמצב הפנייה מאפשר זאת.</p>}
               <div className="composer-row">
                 <textarea ref={input} id="customer-message" value={text} onChange={event => setText(event.target.value)} maxLength={4000} disabled={blocked || !state} rows={1} placeholder="כתבו הודעה…" onKeyDown={event => {
-                  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); void send(); }
+                  if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') {
+                    event.preventDefault();
+                    void send();
+                  }
                 }} />
                 <button type="submit" className="send-button" disabled={blocked || messageCooldown || !text.trim() || !state}>{pending === 'send' ? 'מעבד…' : 'שלח'}<Icon name="send" /></button>
               </div>
@@ -278,9 +250,18 @@ export default function App() {
           <AgentState state={state} />
         </div>
         {state && ['AWAITING_REVIEW', 'READY_FOR_PRICING'].includes(state.lead.status) && <button className="primary-button continue-review" type="button" disabled={blocked} onClick={() => void switchView('owner')}>המשך לבדיקת בעל העסק</button>}
-        {state && <details className="debug-panel"><summary>נתונים למפתחים · JSON</summary><pre dir="ltr">{JSON.stringify(state, null, 2)}</pre></details>}
+        {state && <details className="debug-panel">
+          <summary>נתונים למפתחים · JSON</summary>
+          <pre dir="ltr">{JSON.stringify(state, null, 2)}</pre>
+        </details>}
       </>}
     </main>
-    <footer className="app-footer"><nav aria-label="מידע על הפרויקט"><a href="https://github.com/BarShirom/moving-services-sales-agent" target="_blank" rel="noopener noreferrer">קוד הפרויקט</a><a href="https://barshirom.com/" target="_blank" rel="noopener noreferrer">האתר של בר שירום</a></nav><p>© 2026 בר שירום · הדגמת מוצר לשירותי הובלה</p></footer>
+    <footer className="app-footer">
+      <nav aria-label="מידע על הפרויקט">
+        <a href="https://github.com/BarShirom/moving-services-sales-agent" target="_blank" rel="noopener noreferrer">קוד הפרויקט</a>
+        <a href="https://barshirom.com/" target="_blank" rel="noopener noreferrer">האתר של בר שירום</a>
+      </nav>
+      <p>© 2026 בר שירום · הדגמת מוצר לשירותי הובלה</p>
+    </footer>
   </div>;
 }

@@ -17,6 +17,7 @@ export interface Dimensions {
 }
 
 export interface MoveItem {
+  // Extraction recognizes ItemType identifiers; unknown types remain available for manual review.
   type: string | null;
   quantity: number | null;
   // A structured, accepted size classification; free-text description is not assessed here.

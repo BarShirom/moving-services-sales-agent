@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { zodTextFormat } from 'openai/helpers/zod';
+import { ITEM_TYPES } from '../../domain/itemTypes.js';
 
 // Nested anyOf is supported by strict Structured Outputs. No dummy or null values.
 function update<T extends z.ZodType>(value: T) {
@@ -19,7 +20,7 @@ const location = z.object({
 // Wire shape is separate from domain validation (calendar dates, positive values, etc.).
 export const AIExtractionSchema = z.object({
   items: z.array(z.object({
-    type: z.enum(['refrigerator', 'box', 'washing_machine', 'wardrobe', 'bed', 'dresser']),
+    type: z.enum(ITEM_TYPES),
     quantity: update(z.number()).describe('Explicit positive integer total, including approximate totals such as בערך 15, כ-15, משהו כמו 15. Unknown, incremental or ranged counts use keep.'),
     sizeCategory: update(z.enum(['SMALL', 'REGULAR', 'LARGE', 'FOUR_DOOR'])),
     photoStatus: update(z.literal('NOT_AVAILABLE')).describe('Explicit photo refusal/unavailability for this item. Never infer receipt or completion of photo review.'),

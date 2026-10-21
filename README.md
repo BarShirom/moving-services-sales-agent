@@ -1,38 +1,18 @@
 # Moving Services Sales Agent
 
-[Try the public demo](https://sales.barshirom.com/) · [Portfolio](https://barshirom.com/) · [Engineering guide](docs/ENGINEERING_GUIDE.md)
+[Public demo](https://sales.barshirom.com/) · [Portfolio](https://barshirom.com/) · [Engineering guide](docs/ENGINEERING_GUIDE.md) · [Extension guide](docs/EXTENDING.md)
 
-A Hebrew RTL sales-workflow demo: customer messages become structured move details, a deterministic pricing recommendation and an owner-approved quote. Customer acceptance means **pending manual coordination**, with no reserved date or crew.
+A Hebrew RTL sales-workflow demo built by Bar Shirom. Customer messages become structured move details, deterministic pricing recommendations and owner-approved quotes. Acceptance means **pending manual coordination**, with no reserved date or crew. Historical moving-business references inform the provisional rules; there is no active business pilot.
 
-Built by Bar Shirom to make incomplete moving requests reviewable without giving an AI model control over prices or quote approval.
+## Try the workflow
 
-## Start with the customer conversation
+1. Start in the customer conversation with synthetic move details. Loading the example only fills an editable draft; submit it deliberately to begin collection.
+2. Answer the relevant missing questions, then switch to the owner view to review pricing, complete required acknowledgements and approve a final quote.
+3. Switch back to the customer view and explicitly accept the current quote. Coordination remains manual outside the demo.
 
-1. **Start a customer conversation.** Describe a synthetic move and deliberately send the message. You can load an example message into the editable draft first; loading it does not submit a message or create structured move details.
-2. Answer the conversation's relevant questions to build the structured move details.
-3. **Switch to the owner view.** Review the pricing recommendation, complete any required price and acknowledgements, and approve the quote.
-4. **Accept the quote in the customer view.** Use the explicit acceptance action for the current quote.
-5. The accepted quote is **pending manual coordination** outside the demo. No date or crew is reserved.
+Sending messages can invoke AI extraction when the operator-controlled allowance is available. Loading an example, switching views and accepting an unchanged quote do not call the provider. Reset requires confirmation when meaningful progress exists. Recovery preserves an unsent draft and never replays messages or approvals.
 
-Use synthetic data only. The application interface is in Hebrew with right-to-left layout; the instructions here describe its actions in English. Sending customer messages can invoke AI extraction. Resetting meaningful progress requires confirmation, and session recovery preserves an unsent draft without replaying messages or approvals.
-
-## Engineering boundaries
-
-- **AI extracts facts.** OpenAI Responses, Structured Outputs, Zod and domain conversion form separate validation boundaries. Known facts are retained; corrections are explicit. Shape validation is not a claim that every extracted fact is accurate.
-- **Code calculates recommendations.** Versioned deterministic rules expose a breakdown and unsupported components. Prices and tariffs remain provisional; box/distance rates include engineering assumptions. See the [pricing evidence](data/evals/PRICING_EVIDENCE.md#current-pricing-engine-audit).
-- **The owner approves every quote.** Recommendations, final approved amounts, quote versions and acceptance remain separate records. Missing-photo and omitted-cost acknowledgements, scope checks and stale-quote rejection stay enforced.
-- **Acceptance is deterministic.** An explicit customer action carries the current quote identity/version. Conditional replies do not approve a quote. Recovery never replays acceptance or owner mutations.
-- **Handoff stops automation.** There is no representative inbox, live human chat or resume mechanism. Further messages stay only in the temporary demo session; any follow-up occurs outside the app.
-
-Sessions are temporary and stored in memory; expiry or backend recreation removes their lead and conversation state. AI availability is bounded by shared limits that resetting does not replenish. When AI is unavailable, existing information and drafts remain available, with deterministic quote actions permitted by the current workflow. See [availability and recovery](docs/ENGINEERING_GUIDE.md#guided-interface-and-recovery) and [technical usage controls](docs/DEPLOYMENT.md#traffic-limits-and-ai-usage-cutoff) for details.
-
-## Verification
-
-Offline validation covers workflow and component tests, conversation and pricing evals, strict typechecking and production builds using injected responses and synthetic fixtures. Browser walkthroughs check interactions and layout separately. Neither establishes live AI extraction accuracy.
-
-The latest committed [workflow verification report](docs/DEMO_APPROVAL_RELEASE_20261020.md#verification-on-20-october-2026), dated 20 October 2026, records its scoped checks, browser observations and mobile visual-verification limits.
-
-## Run locally
+## Run offline
 
 Requires Node.js 20.18+ and npm 9+. On Windows use `npm.cmd` if PowerShell blocks `npm.ps1`.
 
@@ -42,23 +22,22 @@ npm run build
 npm run demo:quote --workspace server
 ```
 
-Open **http://127.0.0.1:3101** and start in the customer conversation. No API key or provider request is needed. The fixture supports the [documented synthetic messages](docs/ENGINEERING_GUIDE.md#offline-demo-walkthrough), not arbitrary free-form extraction. Internal synthetic lead fixtures remain available for automated tests and guarded verification; they are not visitor-facing entry points.
+Open **http://127.0.0.1:3101**. The fixture supports the [documented synthetic messages](docs/ENGINEERING_GUIDE.md#offline-demo-walkthrough), with no API key or provider requests. Internal prepared-lead fixtures support automated verification; the public interface starts with a conversation.
 
-For development with real extraction, follow the [configuration guide](docs/ENGINEERING_GUIDE.md#running-and-configuration). Keys remain server-side. Customer messages reaching the provider boundary can incur charges.
+For development, run `npm run dev:server` and `npm run dev:client` in separate terminals. Local defaults leave the AI gate closed. A provider key alone does not enable extraction; see [configuration and admission controls](docs/ENGINEERING_GUIDE.md#running-and-configuration).
 
-Start the backend in one terminal:
+## Boundaries
 
-```sh
-npm run dev:server
-```
+- **AI extracts facts.** Structured Outputs, Zod and domain conversion restrict proposed updates. Schema validation does not prove factual accuracy.
+- **Code prices the work.** Versioned rules expose calculated components and omissions. All tariffs remain provisional; [pricing evidence and engineering assumptions](data/evals/PRICING_EVIDENCE.md#current-pricing-engine-audit) are recorded separately.
+- **Owners approve every quote.** Recommendations, owner decisions, quote versions and accepted amounts stay separate. Scope, freshness and missing-photo safeguards run on the server.
+- **Acceptance is deterministic.** The explicit action carries the current quote ID/version. Changed or conditional replies retain review protections. Handoff stops automation; follow-up occurs outside the app.
 
-Start the frontend in another terminal:
+The public demo runs on AWS Lightsail with Docker, Caddy HTTPS and private Amazon ECR images. Browser sessions remain in memory: expiry or backend replacement removes leads, conversations and quotes. The separate durable AI ledger preserves cumulative reservations and fixed expiry across deployments. Resetting a session does not restore the allowance. See [local versus deployed controls](docs/ENGINEERING_GUIDE.md#local-and-deployed-runtime).
 
-```sh
-npm run dev:client
-```
+There is no authenticated owner access, durable lead database, photo upload, WhatsApp, maps, availability check, booking or scheduling. Tabs in one browser profile share a session. Multiple items of the same type have [identity limitations](docs/EXTENDING.md#item-identity-limitation).
 
-Validate with:
+## Verify
 
 ```sh
 npm test
@@ -68,17 +47,6 @@ npm run build
 git diff --check
 ```
 
-## Stack and limitations
+Tests and evals use synthetic fixtures and injected responses with no live provider calls. Browser interaction checks and screenshot inspection are separate evidence; offline checks do not establish live extraction or whole-job pricing accuracy. Dated [release reports](docs/DEMO_APPROVAL_RELEASE_20261020.md) retain their original scope and results.
 
-- **Frontend:** React 19, Vite 6 and TypeScript.
-- **Backend:** Node.js, Express 5 and npm workspaces.
-- **AI and validation:** OpenAI Responses, Structured Outputs and Zod 4.
-- **Testing:** Node's test runner, tsx, React DOM, JSDOM and offline evals.
-- **Packaging and hosting:** Docker, Docker Compose, Caddy HTTPS, AWS Lightsail and Amazon ECR.
-
-The current demo has no authenticated owner access, durable lead database, photo uploads, WhatsApp, maps, availability checks, booking or scheduling. Browser tabs in one profile share the same temporary session. Supported pricing is provisional, and unsupported work requires owner review. Persistent business records and external integrations are future work.
-
-- [Architecture, workflow and setup](docs/ENGINEERING_GUIDE.md)
-- [Local container packaging and security controls](docs/DEPLOYMENT.md)
-- [Conversation and pricing evals](data/evals/README.md)
-- [Earlier local screenshots](docs/screenshots/README.md), historical synthetic captures rather than current production evidence
+The stack is React 19, Vite 6, strict TypeScript, Express 5, OpenAI Responses, Zod 4, Node's test runner, React DOM and JSDOM. See the [engineering guide](docs/ENGINEERING_GUIDE.md) for architecture, API and setup, the [extension guide](docs/EXTENDING.md) for safe changes, [deployment notes](docs/DEPLOYMENT.md) for runtime controls, and the [eval guide](data/evals/README.md) for evidence limits.

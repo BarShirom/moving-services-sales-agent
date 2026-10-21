@@ -20,7 +20,7 @@ The same facts and rule version should produce the same components, amount and o
 
 ## How does state management work?
 
-The Express demo router holds one in-memory session containing the Lead, evaluation/review history and quotes. Known fields use explicit `null` for unknown values; `false` and floor `0` remain meaningful. Extraction runs against detached snapshots, and the router assigns the new state after successful processing. React renders server snapshots and refreshes when switching views; it does not decide prices or acceptance.
+The Express demo router holds bounded in-memory sessions, one per browser cookie jar, containing the Lead, evaluation/review history and quotes. Tabs sharing cookies share the session. Known fields use explicit `null` for unknown values; `false` and floor `0` remain meaningful. Extraction runs against detached snapshots, and the router assigns the new state after successful processing. The React session hook owns snapshots, draft, requests, recovery and cooldowns; views render server state without deciding prices or acceptance. Owner form fields remain local. A separate durable AI ledger persists admission/accounting, not business records.
 
 ## What happens when a customer replies off-script?
 
@@ -48,7 +48,7 @@ Only a clear answer to the current quote question can accept that quote. “כן
 
 ## Why use evals?
 
-They make regressions visible beyond a plausible chat response. The suite checks preserved facts, missing questions, failure atomicity, pricing omissions and quote identity. The 2026-10-07 baseline is 419 passing tests and 24 passing conversation cases, with two future-service cases not run. The six pricing cases are incomplete whole-job comparisons; none yields a full accuracy score. Injected extraction does not measure live Hebrew understanding, and some natural-language constraints still need manual review.
+They make regressions visible beyond a plausible chat response. The suite checks preserved facts, missing questions, failure atomicity, pricing omissions and quote identity. Dated [release reports](DEMO_APPROVAL_RELEASE_20261020.md#verification-on-20-october-2026) retain their exact revision's results; run the current commands before quoting new counts. The six pricing cases are incomplete whole-job comparisons; none yields a full accuracy score. Injected extraction does not measure live Hebrew understanding, and some natural-language constraints still need manual review.
 
 ## What would you change for production?
 
@@ -56,7 +56,7 @@ Add authenticated roles and tenant isolation, durable state/audit storage, trans
 
 ## Why no database yet?
 
-The current objective is a reproducible local workflow, so one in-memory session keeps setup and inspection simple. It loses data on restart, shares state across tabs and cannot serve as a multi-user production store. A database milestone should preserve the existing domain boundaries and add durable concurrency/audit guarantees rather than make database documents the workflow engine.
+The portfolio demo keeps business sessions in memory for a reproducible workflow and simple inspection. Sessions lose business data on restart and share state across tabs with the same cookies. They cannot serve as a durable multi-user business store. The deployed AI ledger is a separate cost-control journal, with no recoverable lead/quote state. A database milestone should preserve the existing domain boundaries and add durable concurrency/audit guarantees rather than make database documents the workflow engine.
 
 ## Where would Python fit later?
 
@@ -68,7 +68,7 @@ A future channel adapter would validate provider webhooks, map a conversation to
 
 ## How would production deployment differ from demo deployment?
 
-The demo binds to loopback and has no authentication; the offline fixture serves a built client with exact synthetic messages. Production would require HTTPS, controlled ingress, authenticated/authorized endpoints, secret management, persistent storage, health/observability checks and a release/rollback process. Multiple instances need shared concurrency control instead of the current process-local busy flag. No cloud deployment, Docker or scheduling is part of this milestone.
+Local development binds to loopback, and the offline fixture serves a built client with exact synthetic messages and no provider request. The public demo already runs on AWS Lightsail with Docker, private ECR images, Caddy HTTPS, unpublished backend ingress, Secure cookies, CSRF checks, rate limits and operator-controlled cumulative AI accounting. It still has no authenticated owner role, durable business database or scheduling. A business production service would need those capabilities, stronger audit/retention guarantees and shared concurrency controls before multiple replicas. See [runtime differences](ENGINEERING_GUIDE.md#local-and-deployed-runtime); a successful health check does not prove live extraction readiness.
 
 ## Useful code to show
 

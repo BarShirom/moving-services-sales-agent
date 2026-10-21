@@ -1,14 +1,7 @@
 import type { Lead } from '../lead.js';
 import type { RequirementContext, RequirementEvaluation, RequirementResult } from './types.js';
 import { selectNextQuestion } from './nextQuestion.js';
-
-const profiles: Record<string, { label: string; size: boolean; assembly: boolean; supported: boolean }> = {
-  refrigerator: { label: 'המקרר', size: true, assembly: false, supported: true },
-  box: { label: 'הארגזים', size: false, assembly: false, supported: true },
-  wardrobe: { label: 'הארון', size: true, assembly: true, supported: false },
-  bed: { label: 'המיטה', size: true, assembly: true, supported: false },
-  washing_machine: { label: 'מכונת הכביסה', size: false, assembly: false, supported: true },
-};
+import { getItemRequirementProfile } from './itemRequirementProfiles.js';
 
 const hasText = (value: string | null): boolean => value !== null && value.trim().length > 0;
 const positive = (value: number | null): boolean => value !== null && Number.isFinite(value) && value > 0;
@@ -44,36 +37,36 @@ export function evaluateRequirements(lead: Lead, context: RequirementContext = {
   add('requestedDate', hasText(move.requestedDate), 'באיזה תאריך תרצו לבצע את ההובלה?');
 
   move.items.forEach((item, itemIndex) => {
-    const profile = item.type !== null && Object.hasOwn(profiles, item.type) ? profiles[item.type] : undefined;
+    const profile = getItemRequirementProfile(item.type);
     const hints = context.items?.[itemIndex] ?? {};
     const label = `${profile?.label ?? 'הפריט'}${move.items.length > 1 ? ` (פריט ${itemIndex + 1})` : ''}`;
     const options = { itemIndex, conditional: true };
     const typed = hasText(item.type);
     add('item.type', typed, `מה סוג ${label}?`, { itemIndex });
     // Unsupported types need a human-defined policy, not another customer type question.
-    add('item.support', profile?.supported === true, null, { ...options, applicable: typed });
+    add('item.support', profile?.transportReview === 'STANDARD', null, { ...options, applicable: typed });
     add('item.quantity', positive(item.quantity) && Number.isInteger(item.quantity),
-      `מה הכמות של ${label}?`, { ...options, applicable: item.type === 'box' || hints.quantityRequired === true });
+      `מה הכמות של ${label}?`, { ...options, applicable: profile?.quantityRequired === true || hints.quantityRequired === true });
 
     const completeDimensions = Object.values(item.dimensions).every(positive);
     const partialDimensions = Object.values(item.dimensions).some(value => value !== null);
     const sizeKnown = hasText(item.sizeCategory) || completeDimensions;
     const dimensionOptions = { ...options, temporarilyUnavailable: item.dimensionsAvailable === false };
-    const dimensionsNeeded = hints.dimensionsRequired === true || (profile?.size === true && !sizeKnown && (partialDimensions || item.dimensionsAvailable === true));
+    const dimensionsNeeded = hints.dimensionsRequired === true || (profile?.sizeRelevant === true && !sizeKnown && (partialDimensions || item.dimensionsAvailable === true));
     // Accept offered measurements without turning optional review information into
     // a new pricing policy. Availability alone never satisfies a measurement.
     const dimensionsOffered = item.dimensionsAvailable !== null
       || (item.photoStatus === 'NOT_AVAILABLE' && partialDimensions && item.dimensionsAvailable !== false);
     add('item.size', sizeKnown, dimensionsNeeded ? null : `מה הגודל או סוג הדגם של ${label}?`,
-      { ...dimensionOptions, applicable: profile?.size === true });
+      { ...dimensionOptions, applicable: profile?.sizeRelevant === true });
     for (const [axis, title] of [['width', 'הרוחב'], ['height', 'הגובה'], ['depth', 'העומק']] as const) {
       add(`item.${axis}`, positive(item.dimensions[axis]), `מה ${title} של ${label} בסנטימטרים?`,
         { ...dimensionOptions, applicable: dimensionsNeeded || dimensionsOffered, stage: dimensionsNeeded ? 'PRICING' : 'REVIEW' });
     }
     add('item.disassembly', item.requiresDisassembly !== null, `האם נדרש פירוק של ${label}?`,
-      { ...options, applicable: hints.disassemblyRelevant ?? profile?.assembly ?? false });
+      { ...options, applicable: hints.disassemblyRelevant ?? profile?.serviceQuestionsRelevant ?? false });
     add('item.assembly', item.requiresAssembly !== null, `האם נדרשת הרכבה של ${label} ביעד?`,
-      { ...options, applicable: hints.assemblyRelevant ?? profile?.assembly ?? false });
+      { ...options, applicable: hints.assemblyRelevant ?? profile?.serviceQuestionsRelevant ?? false });
     // Unavailable photos still need human review, but must not be requested again automatically.
     add('item.photo', item.photoStatus === 'RECEIVED', item.photoStatus === 'NOT_AVAILABLE' ? null : `אפשר לצרף תמונה של ${label} לבדיקה?`,
       { ...options, stage: 'REVIEW', applicable: item.photoStatus !== 'NOT_APPLICABLE' });

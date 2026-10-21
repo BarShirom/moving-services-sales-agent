@@ -2,7 +2,7 @@ import assert from 'node:assert/strict';
 import { test, type TestContext } from 'node:test';
 import { readFile } from 'node:fs/promises';
 import { JSDOM } from 'jsdom';
-import { act } from 'react';
+import { act, StrictMode } from 'react';
 import { createLead } from '../../server/src/domain/createLead';
 import { evaluateRequirements } from '../../server/src/domain/requirements/evaluateRequirements';
 import type { DemoSnapshot } from '../src/api';
@@ -34,13 +34,13 @@ function deferred() {
   const promise = new Promise<Response>(done => { resolve = done; });
   return { promise, resolve };
 }
-async function mount(t: TestContext, fetcher: (url: string, init?: RequestInit) => Promise<Response>) {
+async function mount(t: TestContext, fetcher: (url: string, init?: RequestInit) => Promise<Response>, strictMode = false) {
   t.mock.method(globalThis, 'fetch', fetcher);
   const container = document.createElement('div');
   document.body.append(container);
   const root = createRoot(container);
   t.after(async () => { await act(async () => root.unmount()); container.remove(); });
-  await act(async () => root.render(<App />));
+  await act(async () => root.render(strictMode ? <StrictMode><App /></StrictMode> : <App />));
   return container;
 }
 function element<T extends Element>(container: Element, selector: string): T {
@@ -1425,3 +1425,143 @@ test('AI Retry-After preserves the draft and prevents another dispatch or automa
   assert.equal(messages, 1, 'Cooldown expiry cannot resubmit the failed draft');
   assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, false);
 });
+
+test('StrictMode bootstrap and role switches only read; loading an example remains an editable draft', async t => {
+  const transport = ownerTransport(freshOwnerState());
+  const bootstrap = deferred();
+  const requests: Array<{ url: string; method: string }> = [];
+  const container = await mount(t, async (url, init) => {
+    requests.push({ url, method: init?.method ?? 'GET' });
+    if (requests.length === 1) return bootstrap.promise;
+    return transport.fetch(url, init);
+  }, true);
+  assert.deepEqual(requests, [{ url: '/api/demo', method: 'GET' }]);
+  await act(async () => bootstrap.resolve(Response.json(transport.current.customer)));
+  await buttonNamed(container, 'טעינת הודעה לדוגמה');
+  const exampleDraft = element<HTMLTextAreaElement>(container, '#customer-message').value;
+  assert.match(exampleDraft, /צריך להעביר מקרר/);
+  await draft(container, exampleDraft + ' תוספת לטיוטה');
+  await buttonNamed(container, 'בעל העסק');
+  await buttonNamed(container, 'לקוח');
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, exampleDraft + ' תוספת לטיוטה');
+  assert.deepEqual(requests, [
+    { url: '/api/demo', method: 'GET' },
+    { url: '/api/demo/owner', method: 'GET' },
+    { url: '/api/demo', method: 'GET' },
+  ]);
+  assert.equal(transport.current.customer.lead.messages.length, 0);
+  assert.equal(transport.current.quotes.length, 0);
+});
+
+test('owner refresh replacement discards local finalization and preserves only the customer draft through recovery', async t => {
+  const transport = ownerTransport();
+  const replacement = freshOwnerState();
+  let ownerReads = 0;
+  let replaced = false;
+  const mutations: string[] = [];
+  const container = await mount(t, async (url, init) => {
+    if (init?.method === 'POST') mutations.push(url);
+    if (url === '/api/demo/owner' && ++ownerReads > 1) replaced = true;
+    if (replaced) {
+      assert.equal(init?.method, 'GET');
+      return Response.json(url === '/api/demo/owner' ? ownerSnapshot(replacement) : replacement.customer);
+    }
+    return transport.fetch(url, init);
+  });
+  await draft(container, 'טיוטת לקוח שלא נשלחה');
+  await buttonNamed(container, 'בעל העסק');
+  await buttonNamed(container, 'שנה מחיר');
+  await fill(container, '#approved-amount', '1350');
+  await click(container, '#scope-confirmation');
+  await buttonNamed(container, 'רענון הפנייה');
+  assert.ok(container.querySelector('.session-recovery'));
+  assert.equal(container.querySelector('.finalization-form'), null);
+  assert.equal(container.querySelector('.pricing-card'), null);
+  assert.equal(container.querySelector('.customer-quote-summary'), null);
+  await buttonNamed(container, 'התחלת הדגמה חדשה');
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטת לקוח שלא נשלחה');
+  assert.equal(document.activeElement, element(container, '#customer-message'));
+  await buttonNamed(container, 'בעל העסק');
+  assert.equal(container.querySelector('.finalization-form'), null);
+  assert.equal(container.querySelector('.final-quote-card'), null);
+  assert.match(element(container, '.owner-price-summary').textContent!, /טרם נקבע מחיר/);
+  assert.deepEqual(mutations, []);
+});
+
+test('AI cooldown blocks message processing while current deterministic quote approval preserves the draft', async t => {
+  const initial = sampleOwnerState();
+  const owner = ownerSnapshot(initial);
+  const sent = applyOwnerAction(initial, {
+    action: 'APPROVE', leadId: owner.customer.lead.id, revision: owner.revision,
+    pricingEvaluationId: owner.pricingEvaluation!.id, scopeConfirmed: true,
+    reviewedPhotoItemIndices: owner.pendingPhotoItemIndices,
+  });
+  const transport = ownerTransport(sent);
+  let messages = 0;
+  const container = await mount(t, async (url, init) => {
+    if (url === '/api/demo/message' && ++messages === 1) {
+      return Response.json({ error: { code: 'AI_BUSY', message: 'עיבוד AI אינו זמין כרגע.' } },
+        { status: 503, headers: { 'Retry-After': '30' } });
+    }
+    return transport.fetch(url, init);
+  });
+  await draft(container, 'טיוטה נפרדת מהאישור');
+  await click(container, '.send-button');
+  assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, true);
+  assert.equal(element<HTMLButtonElement>(container, '.accept-quote-button').disabled, false);
+  await click(container, '.accept-quote-button');
+  assert.equal(messages, 2);
+  assert.deepEqual(transport.messages, [{ message: 'מאשר', quoteId: sent.customer.quote!.id, quoteVersion: sent.customer.quote!.version }]);
+  assert.equal(transport.current.customer.lead.status, 'WON');
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה נפרדת מהאישור');
+  assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, true);
+  assert.match(element(container, '.owner-notice').textContent!, /טיוטת ההודעה נשמרה/);
+});
+
+test('reopening finalization starts a fresh local draft and explicit cancellation sends no owner action', async t => {
+  const transport = await partialQuoteTransport();
+  let ownerActions = 0;
+  const container = await mount(t, async (url, init) => {
+    if (url === '/api/demo/owner/action') ownerActions++;
+    return transport.fetch(url, init);
+  });
+  await buttonNamed(container, 'בעל העסק');
+  await buttonNamed(container, 'השלם ואשר מחיר סופי');
+  await fill(container, '#approved-amount', '1350');
+  await fill(container, '#internal-reason', 'טיוטת החלטה פנימית');
+  await click(container, '#scope-confirmation');
+  await click(container, '#photo-confirmation-0');
+  await buttonNamed(container, 'השלם ואשר מחיר סופי');
+  assert.equal(element<HTMLInputElement>(container, '#approved-amount').value, String(transport.current.pricingEvaluation!.suggestedAmount));
+  assert.equal(element<HTMLInputElement>(container, '#internal-reason').value, '');
+  assert.equal(element<HTMLInputElement>(container, '#scope-confirmation').checked, false);
+  assert.equal(element<HTMLInputElement>(container, '#photo-confirmation-0').checked, false);
+  assert.equal(element<HTMLButtonElement>(container, '.finalization-form button[type="submit"]').disabled, true);
+  await buttonNamed(container, 'ביטול');
+  assert.equal(container.querySelector('.finalization-form'), null);
+  assert.equal(ownerActions, 0);
+});
+
+for (const [status, stage, guidance] of [
+  ['COLLECTING_INFORMATION', 0, 'המשך איסוף הפרטים מהלקוח.'],
+  ['READY_FOR_PRICING', 1, 'המשך לבדיקת בעל העסק ולתמחור.'],
+  ['AWAITING_REVIEW', 1, 'המשך לבדיקת בעל העסק ולתמחור.'],
+  ['QUOTE_SENT', 2, 'ממתינים לתשובת הלקוח להצעה.'],
+  ['WON', 3, 'ממתין לתיאום'],
+  ['LOST', null, 'הפנייה נסגרה.'],
+  ['HUMAN_HANDOFF', null, 'המשך טיפול ידני מחוץ להדגמה.'],
+] as const) {
+  test(`lifecycle ${status} keeps its workflow stage and next action`, async t => {
+    const state = snapshot();
+    state.lead.status = status;
+    if (status === 'READY_FOR_PRICING' || status === 'AWAITING_REVIEW') state.nextQuestion = null;
+    const container = await mount(t, async () => Response.json(state));
+    const steps = [...container.querySelectorAll('.workflow-step')];
+    assert.equal(steps.findIndex(step => step.getAttribute('aria-current') === 'step'), stage ?? -1);
+    assert.equal(steps.filter(step => step.classList.contains('complete')).length, stage ?? 0);
+    assert.equal(element(container, '.next-card > p').textContent, guidance);
+    const footnote = status === 'WON' ? 'אישור המחיר אינו שריון מועד ההובלה.'
+      : status === 'QUOTE_SENT' ? 'המועד המבוקש עדיין לא שוריין.' : 'כל הצעת מחיר מחייבת אישור של בעל העסק.';
+    assert.equal(element(container, '.next-footnote').textContent, footnote);
+  });
+}

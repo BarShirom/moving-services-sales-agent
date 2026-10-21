@@ -19,7 +19,7 @@ are a separate register, not 29 newly executable pricing cases.
 ## Provenance and interpretation
 
 Sources are the six existing pricing cases, the [historical heuristic notes](README.md#historical-pricing-heuristics),
-the [root pricing documentation](../../README.md#pricing-engine-v01-complete-and-partial-recommendations),
+the [pricing implementation guide](../../docs/ENGINEERING_GUIDE.md#pricing-and-evidence-boundaries),
 the current [rule configuration](../../server/src/domain/pricing/pricingRules.ts) and
 [calculator](../../server/src/domain/pricing/calculatePrice.ts), and the historical pricing sections
 supplied for this evidence-table task. Source references identify those sanitized records/sections;
@@ -144,14 +144,23 @@ rules retain owner approval and their existing component applicability checks.
 | --- | --- | --- | --- | --- | --- |
 | Refrigerator | SMALL 300; REGULAR 350; LARGE/FOUR_DOOR 400–450, midpoint 425, per eligible unit | `ref-fridge-small/regular/large`; historical A | MEDIUM reference | PROVISIONAL | Retain unchanged; validate isolated jobs and access scope. |
 | Washing machine | 280–320, midpoint 300, per known unit | `ref-washing-machine`; historical B | MEDIUM reference | PROVISIONAL | Retain unchanged; disputed stair job does not replace this band. |
-| Boxes | Aggregate 1–10: 50–100 (75); 11–20: 100–200 (150); 21–30: 200–300 (250); no box item adds no charge | Three `engineering-boxes-*` records; root provisional assumptions | WEAK; no isolated historical box rate | PROVISIONAL | Engineering assumption only; retain unchanged and collect load/volume evidence. |
-| Distance | First 10 km included; excess km 5–10/km (midpoint 7.5), including fractional km | `engineering-distance`; root provisional assumptions | WEAK; no historical kilometer tariff | PROVISIONAL | Engineering assumption only; require external numeric distance, never infer real geography. |
+| Boxes | Aggregate 1–10: 50–100 (75); 11–20: 100–200 (150); 21–30: 200–300 (250); no box item adds no charge | Three `engineering-boxes-*` records; [engineering assumptions](#engineering-assumptions) | WEAK; no isolated historical box rate | PROVISIONAL | Engineering assumption only; retain unchanged and collect load/volume evidence. |
+| Distance | First 10 km included; excess km 5–10/km (midpoint 7.5), including fractional km | `engineering-distance`; [engineering assumptions](#engineering-assumptions) | WEAK; no historical kilometer tariff | PROVISIONAL | Engineering assumption only; require external numeric distance, never infer real geography. |
 | Stairs | 100–150 (125 midpoint) per positive floor at each eligible endpoint, once for the supported load | `ref-stairs`; historical G | MEDIUM band; WEAK composition assumption | PROVISIONAL | Retain band and composition unchanged; validate load/access effects. |
 | Bed service | 180–350 (265 midpoint), one bundle if either/both services are explicitly required | `ref-bed-service`; historical H | MEDIUM service reference | PROVISIONAL | Retain eligibility: quantity 1, STANDARD complexity, no explicitly pending dimensions; transport remains separate. |
 | Wardrobe service | 350–600 (475 midpoint), same one-bundle eligibility | `ref-wardrobe-service`; historical H | MEDIUM service reference | PROVISIONAL | Retain unchanged; this never establishes a wardrobe transport rate. |
 | Extra stop | 200–300 (250 midpoint) for each pickup/dropoff point beyond the initial two | `ref-extra-stop`; historical F | MEDIUM rule reference | PROVISIONAL | Retain unchanged; additional access remains omitted. |
 | Waiting | 150 × ceiling(explicit waitingMinutes / 30) | `ref-waiting`; historical I and task's explicit started-half-hour wording | MEDIUM rule reference | PROVISIONAL | Retain unchanged; no waiting inferred from duration. |
 | Student discount | 10% once, last, on all priced components when explicitly eligible | `ref-student-discount`; historical J | MEDIUM percentage; scope/composition remains provisional | PROVISIONAL | Retain unchanged; review eligibility and discount scope with the owner. |
+
+### Engineering assumptions
+
+This is the stable source reference for assumptions implemented by the current
+`MOVING_PRICING_V0_1_3` rules. It replaces the removed root README assumptions anchor
+without changing a tariff or evidence classification. The box bands and numeric
+distance rates in the audit above are engineering assumptions, with no isolated
+historical tariff evidence. The explicit fixture route adapter's assumed 20 km is
+synthetic demo input, not a map measurement.
 
 Composition is part of the audit, not new historical fact. Appliance references include normal
 handling/base transport labor; the engine adds eligible item, box, stair, distance, service, stop

@@ -1,6 +1,7 @@
 ﻿import { z } from 'zod';
 import { fingerprintPricingInput, pricingInputSchema } from './buildPricingInput.js';
 import { midpoint, money, pricingRules as rules, sumRanges } from './pricingRules.js';
+import { countsTowardApplianceLimit, getItemPricingPolicy, hasTransportTariff, ordinaryStairBandApplies, usesBoxVolumeBand } from './itemPricingPolicy.js';
 import type { EvaluationMetadata, PriceRange, PricingComponent, PricingEvaluation, PricingInput, ReviewReason, OmittedComponent } from './types.js';
 
 /** Facts only, no I/O, clock, random IDs, geocoding or LLM calls. */
@@ -37,7 +38,7 @@ export function calculatePrice(input: PricingInput, metadata: EvaluationMetadata
   if (move.items.length === 0) review('NO_ITEMS', 'No inventory is available.', score.unsupported, true);
   if (move.requestedDate === null) review('MISSING_DATE', 'Requested date is unknown; no seasonal surcharge is assumed.', score.missing);
   if (new Set(move.items.map(item => item.type)).size > rules.review.maxItemTypes) review('MANY_ITEM_TYPES', 'Inventory exceeds the simple three-type scope.', score.complexity, true);
-  const appliances = move.items.filter(item => item.type === 'refrigerator' || item.type === 'washing_machine');
+  const appliances = move.items.filter(item => countsTowardApplianceLimit(item.type));
   const applianceCount = appliances.reduce((sum, item) => sum + (item.quantity ?? 0), 0);
   const complexInventory = applianceCount > rules.review.maxAppliances;
   if (complexInventory) review('HIGH_VOLUME', 'More than two appliances needs manual load planning.', score.complexity, true);
@@ -53,14 +54,16 @@ export function calculatePrice(input: PricingInput, metadata: EvaluationMetadata
   move.items.forEach((item, index) => {
     const prefix = `ITEM_${index}`;
     const quantity = item.quantity;
-    const supportedTransport = ['refrigerator', 'washing_machine', 'box'].includes(item.type ?? '');
+    const policy = getItemPricingPolicy(item.type);
+    const transport = policy?.transport ?? null;
     const dimensionsPending = item.dimensionsAvailable === false && Object.values(item.dimensions).some(value => value === null);
     if (dimensionsPending) {
       review(prefix + '_DIMENSIONS_UNAVAILABLE', 'Customer cannot supply all dimensions yet; measurements remain pending for owner review.', score.missing);
-      if (!supportedTransport) omit('ITEM_DIMENSIONS', quantity, `Item ${index}: dimensions remain unavailable for manual assessment.`, index);
+      if (!hasTransportTariff(item.type)) omit('ITEM_DIMENSIONS', quantity, `Item ${index}: dimensions remain unavailable for manual assessment.`, index);
     }
     if (quantity === null) review(prefix + '_QUANTITY', 'Item quantity is unknown and cannot use the singular-item pricing assumption.', score.missing, true);
-    const service = Object.hasOwn(rules.services, item.type ?? '') ? rules.services[item.type as keyof typeof rules.services] : null;
+    const serviceKey = policy?.serviceTariff;
+    const service = serviceKey ? rules.services[serviceKey] : null;
     if (item.requiresAssembly === true || item.requiresDisassembly === true) {
       if (service && quantity === 1 && context.serviceComplexity[String(index)] === 'STANDARD' && !dimensionsPending) {
         component('ASSEMBLY_DISASSEMBLY', `${item.type}: requested service bundle`, service,
@@ -76,29 +79,29 @@ export function calculatePrice(input: PricingInput, metadata: EvaluationMetadata
       review(prefix + '_SERVICES_UNKNOWN', 'Whether assembly/disassembly is needed remains unknown; clarify before pricing any applicable service.', score.manualService, true);
       omit('SERVICE_REQUIREMENTS', quantity, `Item ${index}: clarify whether assembly/disassembly is needed; no required service is assumed.`, index);
     }
-    if (item.type === 'box') return; // Aggregate all box rows before selecting one volume band.
-    if (item.type !== 'refrigerator' && item.type !== 'washing_machine') {
+    if (transport === 'BOXES') return; // Aggregate all box rows before selecting one volume band.
+    if (transport === null) {
       unsupportedItemIndices.push(index);
       review(prefix + '_UNSUPPORTED', `Unsupported transport item: ${item.type ?? 'unknown'}. Services do not price its transport.`, score.unsupported, true);
       omit('UNSUPPORTED_ITEM', quantity, `Item ${index}: no transport tariff for ${item.type ?? 'unknown'}.`, index);
       return;
     }
     if (item.photoStatus !== 'RECEIVED' && !Object.values(item.dimensions).every(value => value !== null)) review(prefix + '_VISUAL_EVIDENCE', 'Neither a received photo nor complete dimensions are available.', score.noVisualEvidence);
-    const band = item.type === 'washing_machine' ? rules.washingMachine
+    const band = transport === 'WASHING_MACHINE' ? rules.washingMachine
       : item.sizeCategory !== null && Object.hasOwn(rules.refrigerator, item.sizeCategory)
         ? rules.refrigerator[item.sizeCategory as keyof typeof rules.refrigerator] : null;
     if (!band) review(prefix + '_SIZE', 'A supported fridge category is needed; dimensions do not imply a size category.', score.missing, true);
     if (band && quantity !== null && !complexInventory) {
       pricedTransportItems.add(index);
-      component(item.type === 'refrigerator' ? 'REFRIGERATOR' : 'WASHING_MACHINE', `${item.type === 'refrigerator' ? item.sizeCategory : 'Washing machine'} x ${quantity}`,
-        { min: band.min * quantity, max: band.max * quantity }, `${quantity} x historical item band; base handling included, no separate BASE charge.`, historical(item.type === 'refrigerator' ? 'A' : 'B'));
-    } else omit(item.type === 'refrigerator' ? 'REFRIGERATOR' : 'WASHING_MACHINE', quantity, 'Missing category/quantity or inventory exceeds simple appliance limit.', index);
+      component(transport, `${transport === 'REFRIGERATOR' ? item.sizeCategory : 'Washing machine'} x ${quantity}`,
+        { min: band.min * quantity, max: band.max * quantity }, `${quantity} x historical item band; base handling included, no separate BASE charge.`, historical(transport === 'REFRIGERATOR' ? 'A' : 'B'));
+    } else omit(transport, quantity, 'Missing category/quantity or inventory exceeds simple appliance limit.', index);
   });
 
-  const boxes = move.items.filter(item => item.type === 'box');
+  const boxes = move.items.filter(item => usesBoxVolumeBand(item.type));
   const boxQuantity = boxes.some(item => item.quantity === null) ? null : boxes.reduce((sum, item) => sum + item.quantity!, 0);
   if (boxes.length && boxQuantity !== null && boxQuantity <= rules.review.maxBoxes) {
-    move.items.forEach((item, index) => { if (item.type === 'box') pricedTransportItems.add(index); });
+    move.items.forEach((item, index) => { if (usesBoxVolumeBand(item.type)) pricedTransportItems.add(index); });
     const band = rules.boxes.find(rule => boxQuantity <= rule.upTo)!;
     component('BOXES', `${boxQuantity} boxes`, band, `${boxQuantity} total boxes: one job-level volume band, not a large-item fee per box.`, rules.assumptionSource);
     assumption('PROVISIONAL_BOX_RATE', 'Box bands are explicit engineering assumptions; historical mixed jobs do not isolate a box tariff.');
@@ -119,7 +122,7 @@ export function calculatePrice(input: PricingInput, metadata: EvaluationMetadata
     assumption('PROVISIONAL_DISTANCE_RATE', 'Included distance and per-km bands are engineering assumptions, not inferred historical route costs.');
   }
   const stairScope = hasTransport && !complexInventory && boxQuantity !== null && boxQuantity <= rules.review.maxBoxes
-    && move.items.every((item, index) => !['refrigerator', 'washing_machine', 'box'].includes(item.type ?? '')
+    && move.items.every((item, index) => !ordinaryStairBandApplies(item.type)
       || (item.quantity !== null && pricedTransportItems.has(index)));
   let supportedStairsPriced = false;
   for (const side of ['pickup', 'dropoff'] as const) {

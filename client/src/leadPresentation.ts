@@ -2,6 +2,40 @@ import type { DemoSnapshot } from './api';
 import type { MoveItem } from '../../server/src/domain/lead';
 import { pricingRules } from '../../server/src/domain/pricing/pricingRules';
 
+type LeadStatus = DemoSnapshot['lead']['status'];
+
+// Every lifecycle status needs an explicit stage and customer-facing footnote.
+const lifecyclePresentation: Record<LeadStatus, { stage: number | null; footnote: string }> = {
+  COLLECTING_INFORMATION: { stage: 0, footnote: 'כל הצעת מחיר מחייבת אישור של בעל העסק.' },
+  READY_FOR_PRICING: { stage: 1, footnote: 'כל הצעת מחיר מחייבת אישור של בעל העסק.' },
+  AWAITING_REVIEW: { stage: 1, footnote: 'כל הצעת מחיר מחייבת אישור של בעל העסק.' },
+  QUOTE_SENT: { stage: 2, footnote: 'המועד המבוקש עדיין לא שוריין.' },
+  WON: { stage: 3, footnote: 'אישור המחיר אינו שריון מועד ההובלה.' },
+  LOST: { stage: null, footnote: 'כל הצעת מחיר מחייבת אישור של בעל העסק.' },
+  HUMAN_HANDOFF: { stage: null, footnote: 'כל הצעת מחיר מחייבת אישור של בעל העסק.' },
+};
+
+export function currentStage(state: DemoSnapshot | null): number | null {
+  return state ? lifecyclePresentation[state.lead.status].stage : null;
+}
+
+export function nextStepFootnote(state: DemoSnapshot | null): string {
+  return state ? lifecyclePresentation[state.lead.status].footnote : 'כל הצעת מחיר מחייבת אישור של בעל העסק.';
+}
+
+export function statusLabel(state: DemoSnapshot): string {
+  const labels: Record<DemoSnapshot['lead']['status'], string> = {
+    COLLECTING_INFORMATION: state.nextQuestion ? 'איסוף מידע' : 'ממתין למידע נוסף',
+    READY_FOR_PRICING: 'מוכן לבדיקה ותמחור',
+    AWAITING_REVIEW: 'ממתין לבדיקה',
+    QUOTE_SENT: 'הצעת המחיר נשלחה',
+    WON: 'הלקוח אישר את המחיר',
+    LOST: 'הפנייה נסגרה',
+    HUMAN_HANDOFF: 'האוטומציה נעצרה',
+  };
+  return labels[state.lead.status];
+}
+
 export const itemNames: Record<string, string> = {
   refrigerator: 'מקרר', box: 'ארגזים', washing_machine: 'מכונת כביסה', wardrobe: 'ארון', bed: 'מיטה', dresser: 'שידה',
 };
@@ -73,12 +107,24 @@ export function presentRequirements(state: DemoSnapshot): { customerMissing: str
 
 export function nextStepLabel(state: DemoSnapshot | null): string {
   if (!state) return 'המשך השיחה יופיע לאחר החיבור לשרת.';
-  switch (state.lead.status) {
+  const status = state.lead.status;
+  switch (status) {
     case 'HUMAN_HANDOFF': return 'המשך טיפול ידני מחוץ להדגמה.';
     case 'QUOTE_SENT': return 'ממתינים לתשובת הלקוח להצעה.';
     case 'WON': return 'ממתין לתיאום';
     case 'LOST': return 'הפנייה נסגרה.';
+    case 'COLLECTING_INFORMATION':
+    case 'AWAITING_REVIEW':
+    case 'READY_FOR_PRICING':
+      return collectionNextStep(state);
+    default: {
+      const unhandled: never = status;
+      throw new Error(`Unhandled lifecycle status: ${unhandled}`);
+    }
   }
+}
+
+function collectionNextStep(state: DemoSnapshot): string {
   if (state.nextQuestion) return 'המשך איסוף הפרטים מהלקוח.';
   const missing = state.requirements.missingRequired;
   const manualReview = missing.length > 0 && missing.every(requirement =>

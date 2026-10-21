@@ -2,6 +2,8 @@ import { createHash } from 'node:crypto';
 import { z } from 'zod';
 import { pricingRules } from './pricingRules.js';
 import type { Lead } from '../lead.js';
+import { ITEM_TYPES } from '../itemTypes.js';
+import { getItemPricingPolicy } from './itemPricingPolicy.js';
 import type { PricingContext, PricingEvaluation, PricingInput } from './types.js';
 
 const text = z.string().min(1).refine(value => value.trim().length > 0);
@@ -56,7 +58,9 @@ export function buildPricingInput(lead: Lead, context: PricingContext = {}): Pri
   // Apply the convention independently by type: unpriced furniture or high box
   // volume does not erase what is known about a unique refrigerator (or wardrobe).
   if (input.context.inventoryComplete && items.every(item => item.type !== null)) {
-    for (const [type, key] of [['refrigerator', 'singularRefrigeratorQuantity'], ['wardrobe', 'singularWardrobeQuantity']] as const) {
+    for (const type of ITEM_TYPES) {
+      const key = getItemPricingPolicy(type)?.singularQuantityAssumption;
+      if (key === null || key === undefined) continue;
       const matches = items.filter(item => item.type === type);
       if (matches.length === 1 && matches[0].quantity === null && matches[0].description === null) {
         matches[0].quantity = 1;

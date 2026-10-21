@@ -844,7 +844,7 @@
       "sourceReference": [
         "data/evals/README.md#historical-pricing-heuristics",
         "User-supplied Pricing Evidence Table task: Floors / stairs without elevator",
-        "README.md#provisional-pricing-assumptions"
+        "data/evals/PRICING_EVIDENCE.md#engineering-assumptions"
       ],
       "priceRange": {
         "min": 100,
@@ -876,7 +876,7 @@
       "sourceReference": [
         "data/evals/README.md#historical-pricing-heuristics",
         "User-supplied Pricing Evidence Table task: Waiting",
-        "README.md#provisional-pricing-assumptions"
+        "data/evals/PRICING_EVIDENCE.md#engineering-assumptions"
       ],
       "referencePrice": 150,
       "rule": {
@@ -1134,7 +1134,7 @@
       ],
       "sourceReference": [
         "server/src/domain/pricing/pricingRules.ts#boxes",
-        "README.md#provisional-pricing-assumptions"
+        "data/evals/PRICING_EVIDENCE.md#engineering-assumptions"
       ],
       "priceRange": {
         "min": 50,
@@ -1164,7 +1164,7 @@
       ],
       "sourceReference": [
         "server/src/domain/pricing/pricingRules.ts#boxes",
-        "README.md#provisional-pricing-assumptions"
+        "data/evals/PRICING_EVIDENCE.md#engineering-assumptions"
       ],
       "priceRange": {
         "min": 100,
@@ -1194,7 +1194,7 @@
       ],
       "sourceReference": [
         "server/src/domain/pricing/pricingRules.ts#boxes",
-        "README.md#provisional-pricing-assumptions"
+        "data/evals/PRICING_EVIDENCE.md#engineering-assumptions"
       ],
       "priceRange": {
         "min": 200,
@@ -1224,7 +1224,7 @@
       ],
       "sourceReference": [
         "server/src/domain/pricing/pricingRules.ts#distance",
-        "README.md#provisional-pricing-assumptions",
+        "data/evals/PRICING_EVIDENCE.md#engineering-assumptions",
         "server/src/demo/distanceAdapter.ts"
       ],
       "priceRange": {

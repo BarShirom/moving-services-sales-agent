@@ -1,9 +1,7 @@
 import type { DemoSnapshot, OwnerSnapshot } from './api';
 import { itemLabel } from './leadPresentation';
 
-const money = (amount: number) => `${amount.toLocaleString('he-IL')} ₪`;
-const yesNo = (value: boolean | null) => value === null ? 'טרם צוין' : value ? 'כן' : 'לא';
-const sizes: Record<string, string> = { LARGE: 'גדול', REGULAR: 'רגיל', SMALL: 'קטן', FOUR_DOOR: 'ארבע דלתות' };
+import { quoteMoney as money, booleanLabel as yesNo, sizeLabels as sizes } from './displayFormatting';
 
 /** Customer-safe projection only; the server still validates scope, status and version. */
 export function CustomerQuoteOverview({ state, disabled, accepting, onAccept }: {

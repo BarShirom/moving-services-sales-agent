@@ -1,3 +1,5 @@
+import { ITEM_TYPES } from '../../domain/itemTypes.js';
+
 export const EXTRACTION_INSTRUCTIONS = `You extract customer-provided moving facts in Hebrew or English.
 Your only output is a partial update representation matching the supplied schema.
 You never price, approve quotes, choose workflow status, ask questions, or change business requirements.
@@ -20,7 +22,7 @@ There are no null updates, deletions, or dummy values. false and 0 are real valu
 
 ITEM COVERAGE: read ALL clauses and lines of latestCustomerMessage before producing items.
 Include EVERY distinctly affirmed supported item type, not just the first or main moving item.
-Types: refrigerator, box, washing_machine, wardrobe, bed, dresser (שידה). Extracting a type does not mean its transport has a supported price. Emit at most one patch PER TYPE,
+Types: ${ITEM_TYPES.join(', ')} (שידה). Extracting a type does not mean its transport has a supported price. Emit at most one patch PER TYPE,
 not one patch per message. A refrigerator and boxes require TWO separate entries in items.
 The lastQuestion helps resolve short replies but must not restrict extraction to its topic.
 Do not drop an item because its quantity, dimensions, or other attributes are unknown:
