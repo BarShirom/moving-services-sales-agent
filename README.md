@@ -4,17 +4,17 @@
 
 A Hebrew RTL sales-workflow demo: customer messages become structured move details, a deterministic pricing recommendation and an owner-approved quote. Customer acceptance means **pending manual coordination**, with no reserved date or crew.
 
-Built by Bar Shirom to explore a clear separation between AI extraction, business rules and human decisions. Rick & GO supplied the moving-business context; this repository does not claim ongoing commercial use or measured business results.
+Built by Bar Shirom to make incomplete moving requests reviewable without giving an AI model control over prices or quote approval.
 
 ## Start with the customer conversation
 
-1. In **מה צריך להעביר?**, describe a synthetic move and deliberately send the message. **טעינת הודעה לדוגמה** only fills an editable draft; it does not submit a message or create a structured lead.
+1. **Start a customer conversation.** Describe a synthetic move and deliberately send the message. You can load an example message into the editable draft first; loading it does not submit a message or create structured move details.
 2. Answer the conversation's relevant questions to build the structured move details.
-3. Switch to **בעל העסק**, review the deterministic recommendation, complete any required price and acknowledgements, and approve the quote.
-4. Return directly to the customer view and select **אישור ההצעה**. Approval uses the current quote identity/version through a deterministic path, without extraction.
-5. The accepted quote remains **ממתין לתיאום**. Coordination happens outside the demo.
+3. **Switch to the owner view.** Review the pricing recommendation, complete any required price and acknowledgements, and approve the quote.
+4. **Accept the quote in the customer view.** Use the explicit acceptance action for the current quote.
+5. The accepted quote is **pending manual coordination** outside the demo. No date or crew is reserved.
 
-Use synthetic data only. Sending customer messages can invoke AI extraction. Resetting meaningful conversation progress requires confirmation. If a session expires, explicit recovery clears stale quote/review state and preserves the unsent draft without replaying messages or approvals.
+Use synthetic data only. The application interface is in Hebrew with right-to-left layout; the instructions here describe its actions in English. Sending customer messages can invoke AI extraction. Resetting meaningful progress requires confirmation, and session recovery preserves an unsent draft without replaying messages or approvals.
 
 ## Engineering boundaries
 
@@ -24,15 +24,13 @@ Use synthetic data only. Sending customer messages can invoke AI extraction. Res
 - **Acceptance is deterministic.** An explicit customer action carries the current quote identity/version. Conditional replies do not approve a quote. Recovery never replays acceptance or owner mutations.
 - **Handoff stops automation.** There is no representative inbox, live human chat or resume mechanism. Further messages stay only in the temporary demo session; any follow-up occurs outside the app.
 
-The deployed app serves HTTPS with isolated cookie sessions, request limits and bounded AI admission. Customer/lead sessions remain in memory and disappear on expiry or backend recreation. The public beta's separate cumulative AI ledger durably preserves consumed attempts and conservative reservations across backend recreation. It does not replenish automatically or guarantee the provider's billing total.
-
-Local defaults use process-local request/token counters; they are distinct from the deployed cumulative public-beta controls. The public demo may stop AI admission when its shared allowance or fixed expiry is reached. When AI is unavailable, the conversation and unsent draft are retained. Existing information remains reviewable, and deterministic quote actions remain available where the server permits them. An empty conversation cannot collect move details without extraction, and resetting does not restore the shared allowance.
+Sessions are temporary and stored in memory; expiry or backend recreation removes their lead and conversation state. AI availability is bounded by shared limits that resetting does not replenish. When AI is unavailable, existing information and drafts remain available, with deterministic quote actions permitted by the current workflow. See [availability and recovery](docs/ENGINEERING_GUIDE.md#guided-interface-and-recovery) and [technical usage controls](docs/DEPLOYMENT.md#traffic-limits-and-ai-usage-cutoff) for details.
 
 ## Verification
 
-Offline tests use injected responses and synthetic fixtures. Conversation evals, pricing evidence, component tests and browser walkthroughs cover different boundaries; they do not establish live Hebrew extraction accuracy or commercial impact.
+Offline validation covers workflow and component tests, conversation and pricing evals, strict typechecking and production builds using injected responses and synthetic fixtures. Browser walkthroughs check interactions and layout separately. Neither establishes live AI extraction accuracy.
 
-The previously deployed source checkpoint `5aa84bf1262dd03cc5c9498367024b0c73095384` passed **585 server and 64 frontend tests** in its exact committed Docker verification stage on 20 October 2026. Unrelated pending-work tests are excluded from those release counts. The [20 October approval release verification](docs/DEMO_APPROVAL_RELEASE_20261020.md) records that release's scoped checks and visual-verification limits.
+The latest committed [workflow verification report](docs/DEMO_APPROVAL_RELEASE_20261020.md#verification-on-20-october-2026), dated 20 October 2026, records its scoped checks, browser observations and mobile visual-verification limits.
 
 ## Run locally
 
@@ -48,9 +46,15 @@ Open **http://127.0.0.1:3101** and start in the customer conversation. No API ke
 
 For development with real extraction, follow the [configuration guide](docs/ENGINEERING_GUIDE.md#running-and-configuration). Keys remain server-side. Customer messages reaching the provider boundary can incur charges.
 
+Start the backend in one terminal:
+
 ```sh
 npm run dev:server
-# In another terminal:
+```
+
+Start the frontend in another terminal:
+
+```sh
 npm run dev:client
 ```
 
@@ -66,7 +70,11 @@ git diff --check
 
 ## Stack and limitations
 
-React 19, Vite 6, TypeScript, Node.js/Express 5, OpenAI Responses and Zod 4; npm workspaces, Node's test runner and JSDOM.
+- **Frontend:** React 19, Vite 6 and TypeScript.
+- **Backend:** Node.js, Express 5 and npm workspaces.
+- **AI and validation:** OpenAI Responses, Structured Outputs and Zod 4.
+- **Testing:** Node's test runner, tsx, React DOM, JSDOM and offline evals.
+- **Packaging and hosting:** Docker, Docker Compose, Caddy HTTPS, AWS Lightsail and Amazon ECR.
 
 The current demo has no authenticated owner access, durable lead database, photo uploads, WhatsApp, maps, availability checks, booking or scheduling. Browser tabs in one profile share the same temporary session. Supported pricing is provisional, and unsupported work requires owner review. Persistent business records and external integrations are future work.
 
