@@ -2,3 +2,6 @@
 # Some captured output uses CRLF; recognize that terminator without rewriting it.
 docs/security/** -text whitespace=blank-at-eol,blank-at-eof,space-before-tab,cr-at-eol
 deploy/releases/*.json -text
+
+# The protected host collector is installed and reviewed by its exact byte hash.
+deploy/maintainability-release-20261021/*.py -text
