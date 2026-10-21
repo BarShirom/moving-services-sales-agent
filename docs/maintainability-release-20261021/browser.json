@@ -1,0 +1,82 @@
+{
+  "result": "PASS_PRODUCTION_BROWSER_WORKFLOW_WITH_VISUAL_LIMITS",
+  "applicationSourceCommit": "9027d0f53e38a7f2eea700d93615bab731d16134",
+  "browser": "Actual Chrome",
+  "directPublicChecks": [
+    "Deployed JavaScript and CSS match the reviewed release",
+    "Conversation-first public entry loads"
+  ],
+  "guardedFixtureEnvironment": "Separate reviewed production proxy with synthetic ILS900 seed and provider-capable requests blocked",
+  "guardedFixtureChecks": [
+    "Unsent draft survives owner navigation",
+    "Explicit missing-photo acknowledgement permits owner approval at ILS900",
+    "Bound customer acceptance records ILS900 and pending manual coordination",
+    "External explicit fixture reset followed by owner refresh detects session replacement",
+    "Recovery clears stale quotes and owner form state",
+    "Explicit GET recovery preserves the draft with an empty conversation and no quote",
+    "No message or mutation is automatically replayed",
+    "Reset cancellation preserves the draft"
+  ],
+  "proxyCounts": {
+    "providerCapableRequestsForwarded": 0,
+    "automaticRetries": 0,
+    "cookiesTokensIdsAndRawBodiesPersisted": false,
+    "counts": {
+      "ownerGets": 6,
+      "upstreamRequests": 17,
+      "seedSubmissions": 1,
+      "assetGets": 4,
+      "manifestStaticResponsesVerified": 4,
+      "customerGets": 3,
+      "ownerActions": 1,
+      "acceptanceSubmissions": 1,
+      "resets": 1
+    }
+  },
+  "separateHttpSmoke": {
+    "result": "PASS",
+    "upstreamRequests": 15,
+    "providerRequests": 0,
+    "evidenceBasis": "Separate synthetic HTTP smoke observed by the release operator"
+  },
+  "browserConsoleErrorsObserved": {
+    "directPublic": [],
+    "guardedFixture": [],
+    "checkLimit": 10
+  },
+  "screenshots": [
+    {
+      "file": "production-release-desktop.jpg",
+      "mediaType": "image/jpeg",
+      "sha256": "e9eea8abb53158efa67812c54cf4234b79c86bfc388676ecbcebdac656bde86f",
+      "bytes": 56308,
+      "inspected": true,
+      "capture": "desktop viewport",
+      "shows": "Direct public entry and deployed assets"
+    },
+    {
+      "file": "production-fixture-accepted.jpg",
+      "mediaType": "image/jpeg",
+      "sha256": "cfbe9ed9d3e7fc779a4c93cf84f8401b25c55a8c14e32b8afe112921a0d52892",
+      "bytes": 89140,
+      "inspected": true,
+      "capture": "desktop viewport",
+      "shows": "Guarded fixture acceptance at ILS900"
+    },
+    {
+      "file": "production-fixture-recovery.jpg",
+      "mediaType": "image/jpeg",
+      "sha256": "6e1e613ab9b9b06867717bf076b7b9e0e029498a4e25b416cf2ff4fbd21eda87",
+      "bytes": 63423,
+      "inspected": true,
+      "capture": "desktop viewport",
+      "shows": "Explicit recovery prompt and preserved draft"
+    }
+  ],
+  "screenshotFormatNote": "Desktop captures use JPEG/JFIF bytes and .jpg filenames.",
+  "fullPageFixtureCapture": "Timed out; inspected successful captures are desktop viewport screenshots",
+  "mobileScreenshotVerified": false,
+  "currentNarrowLayoutVerified": false,
+  "proxyBridgeStoppedBeforeFinalStability": true,
+  "providerRequests": 0
+}

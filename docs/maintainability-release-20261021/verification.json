@@ -1,0 +1,388 @@
+{
+  "source": {
+    "baseline": "507366e9c294a9215b31e8e31b10edb88a1cb43e",
+    "refactor": "715376fe02b049e6019718801ca43283b12a8cf2",
+    "final": "9027d0f53e38a7f2eea700d93615bab731d16134",
+    "isolatedWorktree": true,
+    "unrelatedOriginalWorkPreserved": true,
+    "remoteMainAtApplicationDeployment": "9027d0f53e38a7f2eea700d93615bab731d16134",
+    "collectorCommit": "df3da4b1af80865d6b5cfe7ce47fcdf2b3a9340d",
+    "remoteMainConfirmedBeforeOperationsPush": "9027d0f53e38a7f2eea700d93615bab731d16134"
+  },
+  "checks": {
+    "serverTests": {
+      "passed": 608,
+      "failed": 0,
+      "skipped": 0
+    },
+    "clientTests": {
+      "passed": 88,
+      "failed": 0,
+      "skipped": 0
+    },
+    "conversationEvals": {
+      "passed": 24,
+      "failed": 0,
+      "futureCasesNotRun": 2
+    },
+    "pricingEvals": {
+      "evaluated": 6,
+      "partial": 5,
+      "unsupported": 1,
+      "invalid": 0,
+      "wholeJobAccuracyScored": 0
+    },
+    "typecheck": "PASS",
+    "build": "PASS",
+    "whitespace": "PASS",
+    "newItemTestExplicitlyEnumeratedOnWindows": true,
+    "hebrewPhraseAudit": "No wording additions or removals",
+    "providerRequests": 0,
+    "applicationChecksReusedFromUnchangedApplicationRevision": true,
+    "applicationTestsRerunForOperationsOnlyChange": false,
+    "applicationTestTotal": 696,
+    "newOperationalTests": {
+      "collectorPassed": 9,
+      "integrationPassed": 14,
+      "totalPassed": 23,
+      "failed": 0
+    },
+    "priorWrapperTests": {
+      "passed": 32,
+      "failed": 0
+    },
+    "originalDirtyTrackedFiles": {
+      "result": "PASS_UNCHANGED",
+      "filesChecked": 23,
+      "baselineSha256": "52c3ca5f8773fadfa201ef1ce20e7dd1a7e308c64f0328aaa897dd84a2b215bc"
+    }
+  },
+  "browser": {
+    "result": "PASS_PRODUCTION_BROWSER_WORKFLOW_WITH_VISUAL_LIMITS",
+    "applicationSourceCommit": "9027d0f53e38a7f2eea700d93615bab731d16134",
+    "browser": "Actual Chrome",
+    "directPublicChecks": [
+      "Deployed JavaScript and CSS match the reviewed release",
+      "Conversation-first public entry loads"
+    ],
+    "guardedFixtureEnvironment": "Separate reviewed production proxy with synthetic ILS900 seed and provider-capable requests blocked",
+    "guardedFixtureChecks": [
+      "Unsent draft survives owner navigation",
+      "Explicit missing-photo acknowledgement permits owner approval at ILS900",
+      "Bound customer acceptance records ILS900 and pending manual coordination",
+      "External explicit fixture reset followed by owner refresh detects session replacement",
+      "Recovery clears stale quotes and owner form state",
+      "Explicit GET recovery preserves the draft with an empty conversation and no quote",
+      "No message or mutation is automatically replayed",
+      "Reset cancellation preserves the draft"
+    ],
+    "proxyCounts": {
+      "providerCapableRequestsForwarded": 0,
+      "automaticRetries": 0,
+      "cookiesTokensIdsAndRawBodiesPersisted": false,
+      "counts": {
+        "ownerGets": 6,
+        "upstreamRequests": 17,
+        "seedSubmissions": 1,
+        "assetGets": 4,
+        "manifestStaticResponsesVerified": 4,
+        "customerGets": 3,
+        "ownerActions": 1,
+        "acceptanceSubmissions": 1,
+        "resets": 1
+      }
+    },
+    "separateHttpSmoke": {
+      "result": "PASS",
+      "upstreamRequests": 15,
+      "providerRequests": 0,
+      "evidenceBasis": "Separate synthetic HTTP smoke observed by the release operator"
+    },
+    "browserConsoleErrorsObserved": {
+      "directPublic": [],
+      "guardedFixture": [],
+      "checkLimit": 10
+    },
+    "screenshots": [
+      {
+        "file": "production-release-desktop.jpg",
+        "mediaType": "image/jpeg",
+        "sha256": "e9eea8abb53158efa67812c54cf4234b79c86bfc388676ecbcebdac656bde86f",
+        "bytes": 56308,
+        "inspected": true,
+        "capture": "desktop viewport",
+        "shows": "Direct public entry and deployed assets"
+      },
+      {
+        "file": "production-fixture-accepted.jpg",
+        "mediaType": "image/jpeg",
+        "sha256": "cfbe9ed9d3e7fc779a4c93cf84f8401b25c55a8c14e32b8afe112921a0d52892",
+        "bytes": 89140,
+        "inspected": true,
+        "capture": "desktop viewport",
+        "shows": "Guarded fixture acceptance at ILS900"
+      },
+      {
+        "file": "production-fixture-recovery.jpg",
+        "mediaType": "image/jpeg",
+        "sha256": "6e1e613ab9b9b06867717bf076b7b9e0e029498a4e25b416cf2ff4fbd21eda87",
+        "bytes": 63423,
+        "inspected": true,
+        "capture": "desktop viewport",
+        "shows": "Explicit recovery prompt and preserved draft"
+      }
+    ],
+    "screenshotFormatNote": "Desktop captures use JPEG/JFIF bytes and .jpg filenames.",
+    "fullPageFixtureCapture": "Timed out; inspected successful captures are desktop viewport screenshots",
+    "mobileScreenshotVerified": false,
+    "currentNarrowLayoutVerified": false,
+    "proxyBridgeStoppedBeforeFinalStability": true,
+    "providerRequests": 0
+  },
+  "securityPatch": {
+    "package": "vite",
+    "from": "6.4.3",
+    "to": "6.4.4",
+    "changedLockFields": [
+      "version",
+      "resolved",
+      "integrity"
+    ],
+    "manifestsAndOtherDependencyEntriesUnchanged": true,
+    "reason": "Fresh full audit blocked the first candidate on three bundled launch-editor advisories",
+    "finalFullAndProductionAudits": "Zero findings",
+    "failedCandidateEvidencePreserved": "../security/bounded-public-release-20261020/r4"
+  },
+  "artifact": {
+    "sourceCommit": "9027d0f53e38a7f2eea700d93615bab731d16134",
+    "ociDigest": "sha256:566f8c8415d06e39edaf2d8f0d92bb490229128d5c97715e00ae623a7982a283",
+    "releaseGateSha256": "7d0e02676ca6d71e414400cc4eb23f9187202393f9702392fc741df2da49acd9",
+    "publishedAndHostPulled": true,
+    "nativeCaptureScenarios": 9,
+    "packagedCumulativeBudgetTests": 15,
+    "activeScannerFindings": 0,
+    "retainedBundledNpmFinding": "One unchanged ignored high finding with fresh scoped reachability and technical disposition",
+    "evidence": "../security/bounded-public-release-20261020/r5",
+    "runtimeDigest": "sha256:c63d8fa254bf9110f482a490de77f6e8f3c408a4995b8319e96103435f52393e",
+    "configDigest": "sha256:d461532942d37b3f8ff565693a91aca09ad932e950c17e2c3cb32479af968035",
+    "contextSha256": "9cdca04e8c02ea959a135d5992b7a9111ffc8662a7a85a90bfb671d632705172",
+    "rebuiltForCollectorCompletion": false,
+    "freshReadOnlyEcrProvenance": "PASS_FRESH_READ_ONLY_ECR_SOURCE_BINDING",
+    "freshEcrVerifiedAt": "2026-10-21T06:46:59.418578+00:00",
+    "applicationIndependentlySigned": false
+  },
+  "deployment": {
+    "result": "PASS_DEPLOYED_AND_VERIFIED",
+    "applicationSourceCommit": "9027d0f53e38a7f2eea700d93615bab731d16134",
+    "collectorCommit": "df3da4b1af80865d6b5cfe7ce47fcdf2b3a9340d",
+    "candidateManifestSha256": "7663362d1574843c35fe7ce71fb6be898c648bdb680f3ca3bc36fdeedba5549f",
+    "previousManifestSha256": "c4107d444d9f41f3d0c22cc48fe7d810cbff7aff8b8242b1df5252fff1651edb",
+    "backendId": "91fe7d1025bddabf47737af9e448aa53b2323f47ccda400923a02932418696e7",
+    "backendImage": "438298964276.dkr.ecr.eu-north-1.amazonaws.com/moving-services-sales-agent-server@sha256:566f8c8415d06e39edaf2d8f0d92bb490229128d5c97715e00ae623a7982a283",
+    "backendStartedAt": "2026-10-21T06:57:30.197953066Z",
+    "backendHealthy": true,
+    "backendRestarts": 0,
+    "backendOom": false,
+    "stabilityVerifiedAt": "2026-10-21T07:04:48.733800+00:00",
+    "backendCgroupMemoryEvents": {
+      "high": 0,
+      "low": 0,
+      "max": 0,
+      "oom": 0,
+      "oom_group_kill": 0,
+      "oom_kill": 0,
+      "sock_throttled": 0
+    },
+    "backendMemoryCurrentBytes": 50339840,
+    "collectorSha256": "aa7f22c8b42617204bc7e58988a7afa3cebf54073670b2418574bfad0cbf9540",
+    "historyCapture": {
+      "acceptedBytes": 1222820,
+      "records": 4924,
+      "commands": 17,
+      "acceptedIntervals": 17,
+      "splitIntervals": 0,
+      "queryByteBound": 131072,
+      "rejectedEvents": 0,
+      "transportComplete": true,
+      "lifetimeStartsAt": "2026-10-20T14:20:59.807723744Z",
+      "currentStartedAt": "2026-10-21T06:29:30.798142683Z",
+      "maximumObservedQueryBytes": 74596
+    },
+    "successfulAttempt": "completion-r2",
+    "historicalReadOnlyCollectorTrial": {
+      "attempt": "completion-r1",
+      "collectorSha256": "fab46a256e9dfe1e3cce5503d2d4cd077e13fd9c7988aa2962f446f398074142",
+      "result": "PASS_READ_ONLY_PREFLIGHT",
+      "backendReplacement": false,
+      "evidencePreserved": true
+    },
+    "automaticUpdateRetries": 0,
+    "durableEvidenceAfterCleanup": "PASS_DURABLE_UPDATE_EVIDENCE_AFTER_CLEANUP",
+    "ledger": {
+      "releaseId": "moving-public-beta-20261020-r1",
+      "attempts": 1,
+      "reservedUnits": 31169,
+      "reservedMicros": 17849,
+      "remainingAttempts": 24,
+      "remainingMicros": 482151,
+      "journalBytes": 1983,
+      "journalSha256": "c2d4cfb2e1c8f15c7926401745b54aaadb06a369db1c068f7ce08de0ca0caba5"
+    },
+    "journalUnchangedSinceCandidateVerification": true,
+    "ledgerPrefixHistoricalHoldsExpiryAndAllowancePreserved": true,
+    "caddyTlsCredentialsAndSecurityControlsPreserved": true,
+    "frontendAllFourReviewedAssetsInstalled": true,
+    "frontendBackupDirectory": "/opt/moving-demo/config/maintainability-frontend-20261021",
+    "previousStaticAssetsPreserved": true,
+    "finalPublicGetChecks": {
+      "result": "PASS_GET_ONLY_UX_PUBLIC_RELEASE",
+      "checkedAt": "2026-10-21T07:04:48.089127+00:00",
+      "targets": 5,
+      "allStatus200": true,
+      "tlsAndSecurityHeadersVerified": true,
+      "allAssetHashesMatch": true,
+      "demoSessionsCreated": 0
+    },
+    "providerRequests": 0,
+    "remainingDeploymentBlocker": null
+  },
+  "remainingLimitations": [
+    "Business sessions and records remain in memory",
+    "Multiple same-type items have no stable identity and ambiguous patches remain unapplied",
+    "No live extraction accuracy or whole-job pricing accuracy claim",
+    "Mobile screenshot verification remains incomplete"
+  ],
+  "localBrowser": {
+    "environment": "Local production assets with injected fixture and network-denying preloader",
+    "passed": [
+      "Conversation-first flow and editable sample draft without submission",
+      "Reset cancellation preserves draft",
+      "Synthetic collection retains known facts and handles unavailable photo",
+      "Deterministic partial subtotal is ILS950",
+      "Owner final ILS1200 quote requires scope and missing-photo acknowledgements",
+      "Explicit bound acceptance retains a separate unsent draft",
+      "Accepted amount and pending manual coordination remain separate from engine subtotal",
+      "Narrow layout role switching and reset cancellation",
+      "Effective390px DOM measurement has no horizontal overflow"
+    ],
+    "desktopScreenshotInspected": "local-desktop.png",
+    "mobileScreenshotVerified": false,
+    "mobileScreenshotBlocker": "Page.captureScreenshot timed out at the narrow viewport",
+    "localAssetsMatchFinalPatchedBuild": true,
+    "providerRequests": 0
+  },
+  "previousAttempt": {
+    "result": "BLOCKED_BEFORE_REPLACEMENT",
+    "code": "UPDATE_HISTORICAL_COMMAND_FAILED",
+    "cause": "Complete retained Docker log output was 1187968 bytes, exceeding the frozen 1048576 byte command-output bound",
+    "dockerLogCommandExitCode": 0,
+    "newBackendOrFrontendInstalled": false,
+    "automaticUpdateRetries": 0,
+    "originalBackendRetained": true,
+    "recovery": "PASS_SAME_RETAINED_ORIGINAL_RESTARTED",
+    "sameOriginalBackendHealthy": true,
+    "containerRecreations": 0,
+    "accountingAttemptsAfterRecovery": 1,
+    "reservedUnitsAfterRecovery": 31169,
+    "reservedMicrosAfterRecovery": 17849,
+    "remainingAttemptsAfterRecovery": 24,
+    "remainingMicrosAfterRecovery": 482151,
+    "ledgerPrefixAndHistoricalHoldsPreserved": true,
+    "sameImagePermitCredentialsExpiryAndSecurityControls": true,
+    "publicHttpsHealthAndFourPriorAssetHashes": "PASS_GET_ONLY_UX_PUBLIC_RELEASE",
+    "productionBrowserChecks": [
+      "Retained conversation-first entry loads",
+      "Loading example keeps zero conversation messages and no collected items",
+      "Owner and customer navigation preserves the unsent draft"
+    ],
+    "productionScreenshot": "retained-production-draft.png",
+    "retainedFrontendSource": "68c0c3c93383ec9defa12a4b8e5aebd598141bd7",
+    "retainedBackendSource": "ceec1fdca72199d59bbdc02831c47280b1dfbe1f",
+    "nextRequiredWork": "Review a bounded complete-history collector before any new deployment attempt; do not replay the failed update or remove the retained original logs",
+    "caddyUnchangedAndRunning": true,
+    "providerRequests": 0
+  },
+  "curatedEvidenceHashes": {
+    "completion-r1/provenance/backend-registry-preflight.json": {
+      "sha256": "d438e56031afc435d0e66be852a02dd7aa845e2b5c804980f87ec2c1de195b45",
+      "bytes": 10210
+    },
+    "completion-r1/provenance/completion-provenance.json": {
+      "sha256": "3f54e836e35008862f6a372754cc8dcc5341d21eef888f82a7607055ffa91fb2",
+      "bytes": 1051
+    },
+    "completion-r1/history-preflight.json": {
+      "sha256": "2614ffd4119f482fbe1de73a3f62d5515bededcc32a60d94c0cfb356500b4898",
+      "bytes": 3888
+    },
+    "completion-r2/confirm.json": {
+      "sha256": "8ad9ea0b4de80c88a5a57570bd7de2f1509dfdbfbfff136160b752fd36db87a5",
+      "bytes": 8329
+    },
+    "completion-r2/readback.json": {
+      "sha256": "10ac7436ce946a3c9ec60616a86d6880dd5e9bbbb3080440cd12a85f816f0090",
+      "bytes": 1180
+    },
+    "completion-r2/history-preflight.json": {
+      "sha256": "1f23342f9701a872bfc2ece4b7c06b241e79569d1a1586f20a13bc891f5195a5",
+      "bytes": 3888
+    },
+    "completion-r2/update.json": {
+      "sha256": "11b65d9e4534badf4e3d22a1e2a2b8c7a1b358a98c6b7a6c45be55e23f0481d6",
+      "bytes": 15821
+    },
+    "completion-r2/verify.json": {
+      "sha256": "768ae289f946bbe38932ea732ae4cc2e27eaf97964c1ca11148cf95d6fb81dc0",
+      "bytes": 8733
+    },
+    "completion-r2/evidence.json": {
+      "sha256": "c038d6df46a43762b910d94a8caaf1fb973536968e65d0f721305a883b662b9d",
+      "bytes": 2115
+    },
+    "completion-r2/stability.json": {
+      "sha256": "0658096f831a0b9a3d5452b636720d3aae2b75013302c15806d83392aad53a5c",
+      "bytes": 8329
+    },
+    "completion-r2/public-final.json": {
+      "sha256": "37f82e9a6dc423d3ded01886521dcf4f36db0e3c24d0fad0264892ba91cebaa9",
+      "bytes": 1396
+    },
+    "frontend-reviewed-release.json": {
+      "sha256": "c2e64017064c55e6b923317166b87be483feffe336824975d723bb561b0481a3",
+      "bytes": 3933
+    },
+    "frontend-install.json": {
+      "sha256": "c79cff1d441f98a0c82cc6b9b490fd31ce3161eb6ec6c6d4e96c26a71f84b0ae",
+      "bytes": 2592
+    },
+    "frontend-inspect-before.json": {
+      "sha256": "275d57af2f8f0248bd1b170976c1108cf3ad1982a82fab78444449f12d337a2b",
+      "bytes": 8477
+    },
+    "frontend-inspect-after.json": {
+      "sha256": "e651c266a1f30ae799f894d40e679d28fc5ada26287e395e4cda4d2e8269ceba",
+      "bytes": 8477
+    },
+    "frontend-verify.json": {
+      "sha256": "4427c7416c59997275afccd85463d0bb059c9185fdcd644971b573a7b8491943",
+      "bytes": 1396
+    },
+    "backend-update.json": {
+      "sha256": "a82b9e41c7299f04798f84f452f60480193cd5b3d0a8c87ff371de10906b20ad",
+      "bytes": 5534
+    },
+    "update-failure-diagnosis.json": {
+      "sha256": "206a4b62e096f181f9ff5f205611be52300611adcf709fffe2fb399fcffff595",
+      "bytes": 1695
+    },
+    "retained-original-restart.json": {
+      "sha256": "2d116c3b239fe47c9136ad2760bf59cc2c5e58ab43521adc41bccaf507e63c82",
+      "bytes": 6217
+    },
+    "production-browser-proxy-counts.json": {
+      "source": "deploy/maintainability-release-20261021/production-browser-proxy-counts.json",
+      "sha256": "e26139be8e5e08d07ea3b289ee13971347e4082849b096b9a2e30445e80a041e",
+      "bytes": 384
+    }
+  }
+}
