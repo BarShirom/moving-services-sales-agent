@@ -58,25 +58,35 @@ With the fixture server running at `http://127.0.0.1:3101`, send these synthetic
 
 The engine produces a **₪950 partial subtotal**: refrigerator 425 + boxes 150 + pickup stairs 250 + dropoff stairs 125. Dresser transport/access and distance remain unpriced.
 
-Switch to **בעל העסק**, choose **השלם ואשר מחיר סופי**, enter **1200**, confirm whole-job scope/omitted costs and proceeding without the photo, then send the local demo quote. Switch to **לקוח** and reply **כן**. Both views show accepted **₪1,200** and pending coordination; the original **₪950** calculation stays separate. Reset clears the session. The requested date is not a reserved appointment.
+Switch to **בעל העסק**, choose **השלם ואשר מחיר סופי**, enter **1200**, confirm whole-job scope/omitted costs and proceeding without the photo, then send the local demo quote. Switch to **לקוח** and choose **אישור ההצעה**. Both views show accepted **₪1,200** and pending coordination; the original **₪950** calculation stays separate. Reset clears the session after confirmation when meaningful progress exists. The requested date is not a reserved appointment.
 
 ### Guided interface and recovery
 
-The landing screen offers **טעינת פנייה מוכנה**, using the existing
-`POST /api/demo/owner/sample` route to load a prepared synthetic lead for owner review.
-It does not invoke extraction, invent customer messages or consume AI allowance. It is also
-offered after AI-availability errors. This differs from filling the conversation's example
-draft, which is sent only when the visitor submits it.
+The public demonstration starts with **מה צריך להעביר?** and the customer conversation.
+**טעינת הודעה לדוגמה** fills an editable message draft only. It creates no structured lead,
+and processing starts only when the visitor deliberately submits the message. Structured
+collection leads to owner review and price approval, explicit customer acceptance and pending
+manual coordination. There is no visitor-facing prepared-lead loading action.
+
+The synthetic `POST /api/demo/owner/sample` route remains useful for automated tests and
+guarded verification. It does not invoke extraction or consume AI allowance; it is not an
+entry point offered by the public interface.
 
 The progress guide derives its current step from the server's lead/quote state. The owner
 overview keeps workflow status, the relevant calculated or approved amount, missing information
 and next action together. Detailed confidence deductions and developer JSON are secondary,
 collapsed disclosures; the score remains an information-completeness measure.
 
-Replacing a meaningful conversation through reset or sample loading requires confirmation.
+Resetting a meaningful conversation requires confirmation.
 Session-expiration errors instead disable stale mutations and offer an explicit new session.
 Starting it discards old customer/owner snapshots and quote identity/version, while retaining
 an unsent draft where possible. No message, acceptance or owner action is automatically replayed.
+
+When AI is unavailable, the interface retains the conversation and unsent draft, explains the
+limit, and allows review of existing information and deterministic quote actions where the
+server permits them. An empty conversation cannot collect move details without extraction.
+Resetting does not restore the shared allowance, and no automatic retry or provider call is
+introduced.
 
 Photo requests explain that upload is unavailable and offer the existing deterministic
 unavailable-photo reply. It preserves `NOT_AVAILABLE`; finalization still needs the owner's
@@ -154,7 +164,7 @@ Acceptance checks the current quote, active question, owner decision and commerc
 | `POST /api/demo/message` | Customer message; optional paired quote ID/version from the client |
 | `POST /api/demo/reset` | Clear only the current browser's in-memory session |
 | `GET /api/demo/owner` | Pricing, reviews, quote history, available actions and coordination summary |
-| `POST /api/demo/owner/sample` | Replace the session with a synthetic owner-review sample |
+| `POST /api/demo/owner/sample` | Synthetic owner-review sample for tests and guarded verification; no visitor-facing loading action |
 | `POST /api/demo/owner/pricing` | Prepare/recalculate a recommendation, without sending a quote |
 | `POST /api/demo/owner/action` | Approve, adjust, request information or take over |
 

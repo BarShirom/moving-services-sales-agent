@@ -185,10 +185,12 @@ test('failed reset preserves the current conversation and draft', async t => {
 });
 
 test('example populates an editable draft, blank drafts cannot send, and the keyboard shortcut submits', async t => {
-  let sends = 0;
-  const container = await mount(t, async url => {
-    if (url.endsWith('/message')) sends++;
-    return Response.json(snapshot());
+  const initial = snapshot();
+  const before = structuredClone(initial);
+  const requests: Array<{ url: string; body?: unknown }> = [];
+  const container = await mount(t, async (url, init) => {
+    requests.push({ url, ...(init?.body ? { body: JSON.parse(init.body as string) } : {}) });
+    return Response.json(initial);
   });
   assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, true);
   await draft(container, '  ');
@@ -197,11 +199,15 @@ test('example populates an editable draft, blank drafts cannot send, and the key
   const textarea = element<HTMLTextAreaElement>(container, 'textarea');
   assert.match(textarea.value, /מקרר/);
   assert.equal(document.activeElement, textarea);
-  assert.equal(sends, 0);
+  assert.deepEqual(requests, [{ url: '/api/demo' }], 'The editable example cannot load a structured lead or call an API');
+  assert.deepEqual(initial, before);
+  assert.equal(container.querySelector('.message'), null);
+  await draft(container, 'צריך להעביר שולחן קטן');
+  assert.deepEqual(requests, [{ url: '/api/demo' }], 'Editing the example still does not submit it');
   await act(async () => {
     textarea.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Enter', ctrlKey: true, bubbles: true }));
   });
-  assert.equal(sends, 1);
+  assert.deepEqual(requests, [{ url: '/api/demo' }, { url: '/api/demo/message', body: { message: 'צריך להעביר שולחן קטן' } }]);
   assert.equal(textarea.value, '');
 });
 
@@ -232,10 +238,6 @@ function ownerTransport(initial = sampleOwnerState()) {
       if (url === '/api/demo/owner') return Response.json(ownerSnapshot(current));
       if (url === '/api/demo') return Response.json(current.customer);
       if (url === '/api/demo/reset') { current = freshOwnerState(); return Response.json(current.customer); }
-      if (url === '/api/demo/owner/sample') {
-        assert.deepEqual(JSON.parse(init!.body as string), { leadId: current.customer.lead.id, revision: current.revision });
-        current = sampleOwnerState(); return Response.json(ownerSnapshot(current));
-      }
       if (url === '/api/demo/message') {
         const body = JSON.parse(init!.body as string);
         messages.push(body);
@@ -941,33 +943,29 @@ test('an expired owner mutation clears finalization and is never replayed after 
   assert.equal(fresh.reviews.length, 0);
 });
 
-test('fresh no-AI scenario loads through the existing token-checked endpoint without confirmation or message submission', async t => {
+test('the public entry flow starts with an empty customer conversation and offers no prepared-lead action in either role', async t => {
   const transport = ownerTransport(freshOwnerState());
-  const initial = ownerSnapshot(transport.current);
-  const calls: Array<{ url: string; method: string; body?: unknown }> = [];
+  const initial = structuredClone(transport.current);
+  const calls: Array<{ url: string; method: string }> = [];
   const container = await mount(t, async (url, init) => {
-    calls.push({ url, method: init?.method ?? 'GET', ...(init?.body ? { body: JSON.parse(init.body as string) } : {}) });
+    calls.push({ url, method: init?.method ?? 'GET' });
     return transport.fetch(url, init);
   });
-  assert.equal(calls.length, 1);
+  assert.equal(element(container, '.view-switch button[aria-pressed="true"]').textContent, 'לקוח');
+  assert.match(element(container, '.conversation-empty').textContent!, /מה צריך להעביר\?/);
+  assert.equal(container.querySelector('.demo-start'), null);
+  assert.equal(container.querySelector('.sample-button'), null);
+  assert.doesNotMatch(container.textContent!, /פנייה מוכנה|רוצים להכיר את התהליך בלי לכתוב הודעות/);
+  assert.equal(container.querySelector('.accept-quote-button'), null);
   await buttonNamed(container, 'בעל העסק');
+  assert.doesNotMatch(element(container, '.owner-toolbar').textContent!, /פנייה מוכנה|טעינת/);
   await buttonNamed(container, 'לקוח');
-  assert.equal(calls.filter(call => call.method === 'POST').length, 0);
-  await click(container, '.sample-button');
-  assert.equal(container.querySelector('[role="alertdialog"]'), null);
-  assert.deepEqual(calls.filter(call => call.method === 'POST'), [{ url: '/api/demo/owner/sample', method: 'POST',
-    body: { leadId: initial.customer.lead.id, revision: initial.revision } }]);
-  assert.equal(transport.messages.length, 0);
-  assert.equal(element(container, '.owner-notice').textContent, 'נטענה פנייה מוכנה לבדיקה. זו דוגמה סינתטית.');
-  assert.ok([...container.querySelectorAll('.owner-toolbar button')].some(button => button.textContent === 'טעינת פנייה מוכנה'));
-  assert.ok(container.querySelector('.owner-view'));
-  assert.notEqual(transport.current.customer.lead.id, initial.customer.lead.id);
-  await buttonNamed(container, 'לקוח');
-  await buttonNamed(container, 'בעל העסק');
-  assert.equal(calls.filter(call => call.method === 'POST').length, 1, 'View changes cannot trigger AI or reload the scenario');
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, '');
+  assert.deepEqual(transport.current, initial);
+  assert.ok(calls.every(call => call.method === 'GET'), 'Opening and switching roles cannot load a fixture or submit a message');
 });
 
-test('replacing a progressed conversation requires confirmation; cancellation preserves facts, quote and draft', async t => {
+test('resetting a progressed conversation requires confirmation; cancellation preserves facts, quote and draft', async t => {
   const sample = sampleOwnerState();
   const owner = ownerSnapshot(sample);
   const approved = applyOwnerAction(sample, { action: 'APPROVE', leadId: owner.customer.lead.id,
@@ -981,8 +979,10 @@ test('replacing a progressed conversation requires confirmation; cancellation pr
     return transport.fetch(url, init);
   });
   await draft(container, 'טיוטה שלא לאבד');
-  await click(container, '.sample-button');
+  await click(container, '.reset-button');
   assert.ok(container.querySelector('[role="alertdialog"]'));
+  assert.match(element(container, '.confirmation-panel').textContent!, /למחוק את השיחה הנוכחית.*הטיוטה תימחק.*שיחה ריקה/s);
+  assert.doesNotMatch(element(container, '.confirmation-panel').textContent!, /פנייה מוכנה/);
   assert.equal(posts.length, 0);
   await buttonNamed(container, 'ביטול והמשך השיחה');
   assert.equal(container.querySelector('[role="alertdialog"]'), null);
@@ -990,46 +990,90 @@ test('replacing a progressed conversation requires confirmation; cancellation pr
   assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה שלא לאבד');
   assert.deepEqual(transport.current, before);
   assert.match(element(container, '.message-area').textContent!, /900 ₪/);
-  await click(container, '.sample-button');
+  await click(container, '.reset-button');
   await click(container, '.confirm-replace');
-  assert.deepEqual(posts, [{ url: '/api/demo/owner/sample', body: { leadId: before.customer.lead.id, revision: before.revision } }]);
+  assert.deepEqual(posts, [{ url: '/api/demo/reset', body: undefined }]);
   assert.equal(transport.messages.length, 0);
   assert.notEqual(transport.current.customer.lead.id, before.customer.lead.id);
   assert.equal(transport.current.customer.quote, undefined);
 });
 
-test('exhausted shared AI budget offers a working no-AI scenario while preserving progress until confirmed', async t => {
+test('exhausted shared AI budget preserves progress and permits existing deterministic review and contextual approval', async t => {
   const transport = ownerTransport();
   const before = structuredClone(transport.current);
+  const posts: string[] = [];
   let messages = 0;
-  let samples = 0;
   const container = await mount(t, async (url, init) => {
-    if (url === '/api/demo/message') {
+    if (init?.method === 'POST') posts.push(url);
+    if (url === '/api/demo/message' && !transport.current.customer.quote) {
       messages++;
       return Response.json({ error: { code: 'AI_BUDGET_EXHAUSTED', message: 'not forwarded' } }, { status: 503, headers: { 'Retry-After': '86400' } });
     }
-    if (url === '/api/demo/owner/sample') samples++;
     return transport.fetch(url, init);
   });
   await draft(container, 'מידע שלא נשלח בהצלחה');
   await click(container, '.send-button');
   assert.equal(messages, 1);
   assert.match(element(container, '.error-banner').textContent!, /אינו מתחדש אוטומטית/);
-  assert.doesNotMatch(element(container, '.error-banner').textContent!, /מחר|86400|not forwarded/);
-  await buttonNamed(container, 'לטעינת פנייה מוכנה');
-  assert.ok(container.querySelector('[role="alertdialog"]'));
-  assert.equal(samples, 0);
-  await buttonNamed(container, 'ביטול והמשך השיחה');
+  assert.match(element(container, '.error-banner').textContent!, /איסוף פרטים מהודעות חדשות דורש עיבוד AI זמין/);
+  assert.match(element(container, '.error-banner').textContent!, /איפוס ההדגמה אינו מחדש את התקציב המשותף/);
+  assert.doesNotMatch(element(container, '.error-banner').textContent!, /מחר|86400|not forwarded|פנייה מוכנה/);
   assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'מידע שלא נשלח בהצלחה');
   assert.deepEqual(transport.current, before);
-  assert.equal(messages, 1);
-  await buttonNamed(container, 'לטעינת פנייה מוכנה');
-  await click(container, '.confirm-replace');
-  assert.equal(samples, 1);
-  assert.equal(messages, 1, 'Scenario loading cannot retry the failed AI message');
+  await buttonNamed(container, 'לבדיקת הפנייה הקיימת');
   assert.ok(container.querySelector('.owner-view'));
-  assert.equal(container.querySelector('.error-banner'), null);
+  assert.equal(messages, 1, 'Reviewing existing information cannot retry the failed message');
+  await buttonNamed(container, 'אשר ושלח הצעת מחיר');
+  await click(container, '#photo-confirmation-0');
+  await buttonNamed(container, 'אשר תנאים ושלח הצעת מחיר');
+  const quote = transport.current.customer.quote!;
+  await buttonNamed(container, 'לתצוגת הלקוח ואישור ההצעה');
+  await buttonNamed(container, 'אישור ההצעה');
+  assert.equal(transport.current.customer.lead.status, 'WON');
+  assert.equal(transport.current.customer.quote!.acceptance!.quoteId, quote.id);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'מידע שלא נשלח בהצלחה');
+  assert.deepEqual(transport.messages, [{ message: 'מאשר', quoteId: quote.id, quoteVersion: quote.version }]);
+  assert.deepEqual(posts, ['/api/demo/message', '/api/demo/owner/action', '/api/demo/message']);
 });
+
+for (const code of ['AI_NOT_CONFIGURED', 'AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED']) {
+  test(`an empty conversation with ${code} retains its draft without promising information collection or a prepared shortcut`, async t => {
+    const transport = ownerTransport(freshOwnerState());
+    const before = structuredClone(transport.current);
+    const calls: Array<{ url: string; method: string }> = [];
+    const container = await mount(t, async (url, init) => {
+      calls.push({ url, method: init?.method ?? 'GET' });
+      if (url === '/api/demo/message') return Response.json({ error: { code, message: 'private provider detail' } }, { status: 503 });
+      return transport.fetch(url, init);
+    });
+    await draft(container, 'טיוטה שנשמרת');
+    await click(container, '.send-button');
+    const assertNoCollectionPromise = () => {
+      assert.match(element(container, '.conversation-empty').textContent!, /אפשר לערוך טיוטה.*איסוף פרטים חדשים דורש עיבוד AI זמין/s);
+      assert.doesNotMatch(element(container, '.conversation-empty').textContent!, /הסוכן יאסוף את המידע/);
+    };
+    assertNoCollectionPromise();
+    assert.doesNotMatch(container.textContent!, /פנייה מוכנה|private provider detail/);
+    assert.ok(![...container.querySelectorAll('button')].some(button => button.textContent === 'לבדיקת הפנייה הקיימת'));
+    assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה שנשמרת');
+    assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').disabled, false);
+    assert.deepEqual(transport.current, before);
+    await draft(container, 'אפשר עדיין לערוך');
+    assert.equal(calls.filter(call => call.method === 'POST').length, 1, 'An unavailable response or draft edit cannot dispatch another provider request');
+    await buttonNamed(container, 'בעל העסק');
+    await buttonNamed(container, 'לקוח');
+    assertNoCollectionPromise();
+    assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'אפשר עדיין לערוך');
+    await click(container, '.reset-button');
+    assert.match(element(container, '.confirmation-panel').textContent!, /איפוס ההדגמה אינו מחדש את תקציב ה-AI המשותף/);
+    await click(container, '.confirm-replace');
+    assertNoCollectionPromise();
+    assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, '');
+    assert.deepEqual(calls.filter(call => call.method === 'POST'), [
+      { url: '/api/demo/message', method: 'POST' }, { url: '/api/demo/reset', method: 'POST' },
+    ], 'Switching roles and confirming reset cannot retry the failed message or restore known AI availability');
+  });
+}
 
 test('photo unavailability quick reply only fills an editable draft and never marks a photo received', async t => {
   const transport = await partialQuoteTransport();
@@ -1181,29 +1225,24 @@ test('a cookie-issuing view GET that replaces a session requires explicit recove
   assert.ok(requests.every(request => request.method === 'GET'), 'View replacement and recovery cannot replay any mutation');
 });
 
-test('scenario loading notices newly changed server progress and requires review before replacing its latest token', async t => {
+test('a draft-only conversation requires deliberate reset and Escape preserves the unsent example without mutation', async t => {
   const transport = ownerTransport(freshOwnerState());
-  const originalId = transport.current.customer.lead.id;
-  const posts: Array<{ url: string; body: unknown }> = [];
+  const initial = structuredClone(transport.current);
+  const requests: Array<{ url: string; method: string }> = [];
   const container = await mount(t, async (url, init) => {
-    if (init?.method === 'POST') posts.push({ url, body: init.body ? JSON.parse(init.body as string) : undefined });
+    requests.push({ url, method: init?.method ?? 'GET' });
     return transport.fetch(url, init);
   });
-  // Simulate progress made in another tab after this client's initial GET.
-  Object.assign(transport.current, sampleOwnerState());
-  const latest = structuredClone(transport.current);
-  assert.notEqual(latest.customer.lead.id, originalId);
-  await click(container, '.sample-button');
-  assert.ok(container.querySelector('[role="alertdialog"]'));
-  assert.match(container.textContent!, /הפנייה השתנתה מאז שהוצגה/);
-  assert.equal(posts.length, 0, 'Changed progress cannot be overwritten by a previously empty client snapshot');
-  await buttonNamed(container, 'ביטול והמשך השיחה');
-  assert.deepEqual(transport.current, latest);
-  assert.match(element(container, '.message-area').textContent!, /תרחיש הדגמה סינתטי/);
-  await click(container, '.sample-button');
-  await click(container, '.confirm-replace');
-  assert.deepEqual(posts, [{ url: '/api/demo/owner/sample', body: { leadId: latest.customer.lead.id, revision: latest.revision } }]);
-  assert.equal(transport.messages.length, 0);
+  await click(container, '.example-button');
+  const savedDraft = element<HTMLTextAreaElement>(container, '#customer-message').value;
+  await click(container, '.reset-button');
+  const panel = element<HTMLElement>(container, '[role="alertdialog"]');
+  assert.equal(document.activeElement, panel);
+  await act(async () => panel.dispatchEvent(new dom.window.KeyboardEvent('keydown', { key: 'Escape', bubbles: true })));
+  assert.equal(container.querySelector('[role="alertdialog"]'), null);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, savedDraft);
+  assert.deepEqual(transport.current, initial);
+  assert.ok(requests.every(request => request.method === 'GET'), 'Loading an editable draft and cancelling reset cannot change structured information');
 });
 
 test('responsibilities are visible once, synthetic guidance is contextual and metadata has no em dash', async t => {
@@ -1218,26 +1257,29 @@ test('responsibilities are visible once, synthetic guidance is contextual and me
     'בעל העסק בודק ומאשר את המחיר לפני שליחת ההצעה.',
   ]);
   assert.equal(container.querySelector('.how-it-works')!.closest('details'), null);
-  assert.equal(element(container, '.demo-start p').textContent, 'טענו פנייה מוכנה, אשרו מחיר כבעל העסק ואז אשרו את ההצעה כלקוח.');
-  assert.equal(element(container, '.sample-button').textContent, 'טעינת פנייה מוכנה');
+  assert.equal(container.querySelector('.demo-start'), null);
+  assert.equal(container.querySelector('.sample-button'), null);
+  assert.match(element(container, '.hero-copy').textContent!, /שיח/);
   assert.match(element(container, '.composer-guidance').textContent!, /סינתטיים בלבד.*מצטבר שאינו מתחדש/);
   const html = await readFile(new URL('../index.html', import.meta.url), 'utf8');
   const head = new JSDOM(html).window.document.head;
-  assert.equal(head.querySelector('meta[property="og:description"]')?.getAttribute('content'), 'נסו שיחת לקוח או טענו פנייה מוכנה. עברו על פרטי ההובלה, אשרו מחיר כבעל העסק ואז אשרו את ההצעה כלקוח, לקראת תיאום ידני.');
+  const sharingDescription = head.querySelector('meta[property="og:description"]')?.getAttribute('content') ?? '';
+  assert.match(sharingDescription, /שיחת לקוח.*אשרו מחיר.*אשרו את ההצעה.*תיאום ידני/);
+  assert.doesNotMatch(html + container.textContent, /פנייה מוכנה|רוצים להכיר את התהליך בלי לכתוב הודעות/);
   assert.equal(head.querySelector('link[rel="canonical"]')?.getAttribute('href'), 'https://sales.barshirom.com/');
   assert.doesNotMatch(html + container.textContent, /ללא AI|ללא שיחת AI|ללא שימוש ב-AI/u);
   assert.doesNotMatch(html + container.textContent, /\u2014/u);
 });
 
-test('prepared no-AI demonstration completes with a deliberate quote approval and preserves a separate draft', async t => {
-  const transport = ownerTransport(freshOwnerState());
+test('an injected collected lead completes review with deliberate customer quote approval and preserves a separate draft', async t => {
+  const transport = ownerTransport();
   const posts: Array<{ url: string; body: unknown }> = [];
   const container = await mount(t, async (url, init) => {
     if (init?.method === 'POST') posts.push({ url, body: init.body ? JSON.parse(init.body as string) : undefined });
     return transport.fetch(url, init);
   });
   assert.equal(container.querySelector('.accept-quote-button'), null, 'No approval exists before owner review');
-  await click(container, '.sample-button');
+  await buttonNamed(container, 'בעל העסק');
   assert.equal(transport.messages.length, 0);
   await buttonNamed(container, 'אשר ושלח הצעת מחיר');
   assert.equal(container.querySelector('.to-customer-button'), null, 'Missing-photo acknowledgement still blocks sending');
@@ -1261,7 +1303,7 @@ test('prepared no-AI demonstration completes with a deliberate quote approval an
   await buttonNamed(container, 'בעל העסק');
   await buttonNamed(container, 'לקוח');
   assert.equal(transport.messages.length, 1, 'Accepted state and repeated role switches do not replay acceptance');
-  assert.deepEqual(posts.map(post => post.url), ['/api/demo/owner/sample', '/api/demo/owner/action', '/api/demo/message']);
+  assert.deepEqual(posts.map(post => post.url), ['/api/demo/owner/action', '/api/demo/message']);
 });
 
 test('explicit approval uses the displayed current token and stale server rejection cannot become acceptance or retry', async t => {
@@ -1310,7 +1352,7 @@ test('expired explicit approval clears quote context and recovery never replays 
   assert.deepEqual(calls, [{ url: '/api/demo', method: 'GET' }, { url: '/api/demo/message', method: 'POST' }, { url: '/api/demo', method: 'GET' }]);
 });
 
-test('handoff explains temporary storage and replacement remains deliberate and cancellable', async t => {
+test('handoff explains temporary storage and reset remains deliberate and cancellable', async t => {
   const sample = sampleOwnerState();
   const initial = ownerSnapshot(sample);
   const stopped = applyOwnerAction(sample, { action: 'TAKE_OVER_CONVERSATION', leadId: initial.customer.lead.id, revision: initial.revision });
@@ -1318,19 +1360,20 @@ test('handoff explains temporary storage and replacement remains deliberate and 
   const before = structuredClone(transport.current);
   const container = await mount(t, transport.fetch);
   assert.match(element(container, '.handoff-help').textContent!, /האוטומציה נעצרה.*מחוץ להדגמה.*אין כאן תיבת נציג.*שיחת ההדגמה הזמנית/s);
-  await draft(container, 'טיוטה לפני החלפה');
-  await buttonNamed(container, 'לטעינת פנייה מוכנה');
+  await draft(container, 'טיוטה לפני איפוס');
+  assert.doesNotMatch(element(container, '.handoff-help').textContent!, /פנייה מוכנה/);
+  await buttonNamed(container, 'איפוס והתחלת שיחה חדשה');
   assert.ok(container.querySelector('[role="alertdialog"]'));
   await buttonNamed(container, 'ביטול והמשך השיחה');
   assert.deepEqual(transport.current, before);
-  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה לפני החלפה');
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה לפני איפוס');
   assert.equal(transport.messages.length, 0);
-  await buttonNamed(container, 'להדגמה חדשה');
+  await buttonNamed(container, 'איפוס והתחלת שיחה חדשה');
   await click(container, '.confirm-replace');
   assert.equal(transport.current.customer.lead.status, 'COLLECTING_INFORMATION');
 });
 
-test('session-creation Retry-After blocks reconnect and prepared scenario without automatic requests', async t => {
+test('session-creation Retry-After blocks reconnect without automatic requests or prepared shortcuts', async t => {
   let clock = Date.now();
   t.mock.method(Date, 'now', () => clock);
   let tick!: () => void;
@@ -1341,11 +1384,11 @@ test('session-creation Retry-After blocks reconnect and prepared scenario withou
     calls++;
     return calls === 1 ? Response.json({ error: { code: 'SESSION_RATE_LIMITED', message: 'legacy copy' } }, { status: 429, headers: { 'Retry-After': '5' } }) : Response.json(snapshot());
   });
-  assert.match(element(container, '.error-banner').textContent!, /מגבלת יצירת שיחות.*הפנייה המוכנה דורשת שיחה זמינה.*5 שניות/s);
-  assert.equal(element<HTMLButtonElement>(container, '.sample-button').disabled, true);
+  assert.match(element(container, '.error-banner').textContent!, /מגבלת יצירת שיחות.*5 שניות/s);
+  assert.doesNotMatch(element(container, '.error-banner').textContent!, /פנייה מוכנה/);
+  assert.equal(container.querySelector('.sample-button'), null);
   assert.equal(element<HTMLButtonElement>(container, '.error-banner button').disabled, true);
   assert.equal(container.querySelector('.error-actions'), null, 'No unavailable-session promise or AI fallback CTA');
-  await click(container, '.sample-button');
   await buttonNamed(container, 'ניסיון חיבור נוסף');
   assert.equal(calls, 1);
   clock += 6000;
@@ -1353,10 +1396,10 @@ test('session-creation Retry-After blocks reconnect and prepared scenario withou
   assert.equal(calls, 1, 'Expiry changes availability only; it cannot create an automatic request');
   await buttonNamed(container, 'ניסיון חיבור נוסף');
   assert.equal(calls, 2);
-  assert.equal(element<HTMLButtonElement>(container, '.sample-button').disabled, false);
+  assert.equal(container.querySelector('.sample-button'), null);
 });
 
-test('AI Retry-After prevents another message dispatch while preserving the no-AI prepared path', async t => {
+test('AI Retry-After preserves the draft and prevents another dispatch or automatic retry', async t => {
   let clock = Date.now();
   t.mock.method(Date, 'now', () => clock);
   let tick!: () => void;
@@ -1372,7 +1415,9 @@ test('AI Retry-After prevents another message dispatch while preserving the no-A
   await click(container, '.send-button');
   assert.equal(messages, 1);
   assert.equal(element<HTMLButtonElement>(container, '.send-button').disabled, true);
-  assert.equal(element<HTMLButtonElement>(container, '.sample-button').disabled, false);
+  assert.equal(container.querySelector('.sample-button'), null);
+  assert.equal(element<HTMLTextAreaElement>(container, '#customer-message').value, 'טיוטה');
+  assert.doesNotMatch(container.textContent!, /פנייה מוכנה/);
   await click(container, '.send-button');
   assert.equal(messages, 1);
   clock += 6000;

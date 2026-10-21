@@ -4,7 +4,7 @@ import { Icon } from './Icon';
 import { useEffect, useLayoutEffect, useRef, useState } from 'react';
 import { AgentState, statusLabel } from './AgentState';
 import { CustomerQuoteOverview } from './QuoteOverview';
-import { DemoApiError, demoRequest, ownerRequest, ownerSample, type OwnerSnapshot, type DemoSnapshot } from './api';
+import { DemoApiError, demoRequest, ownerRequest, type OwnerSnapshot, type DemoSnapshot } from './api';
 
 const example = 'צריך להעביר מקרר גדול מרמת גן לתל אביב.\nהאיסוף מביאליק 20, קומה 2 בלי מעלית.\nיש גם בערך 15 ארגזים.';
 const stages = ['שיחה ואיסוף פרטים', 'בדיקת בעל העסק ואישור מחיר', 'אישור הלקוח', 'ממתינים לתיאום ידני'];
@@ -33,14 +33,15 @@ export default function App() {
   const [text, setText] = useState('');
   const [error, setError] = useState('');
   const [errorCode, setErrorCode] = useState('');
+  const [knownAiUnavailable, setKnownAiUnavailable] = useState(false);
   const [notice, setNotice] = useState('');
   const [expired, setExpired] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [pending, setPending] = useState<'send' | 'accept' | 'reset' | 'sample' | null>(null);
+  const [pending, setPending] = useState<'send' | 'accept' | 'reset' | null>(null);
   const [retryUntil, setRetryUntil] = useState(0);
   const [aiRetryUntil, setAiRetryUntil] = useState(0);
   const [now, setNow] = useState(Date.now);
-  const [confirmation, setConfirmation] = useState<'reset' | 'sample' | null>(null);
+  const [confirmation, setConfirmation] = useState(false);
   const messageArea = useRef<HTMLDivElement>(null);
   const input = useRef<HTMLTextAreaElement>(null);
   const confirmPanel = useRef<HTMLElement>(null);
@@ -51,15 +52,17 @@ export default function App() {
   const retrySeconds = Math.max(0, Math.ceil((retryUntil - now) / 1000));
   const aiRetrySeconds = Math.max(0, Math.ceil((aiRetryUntil - now) / 1000));
   const messageCooldown = aiRetrySeconds > 0 && state?.lead.status !== 'HUMAN_HANDOFF';
-  const blocked = busy || expired || confirmation !== null || retrySeconds > 0;
+  const blocked = busy || expired || confirmation || retrySeconds > 0;
   const stage = currentStage(state);
-  const aiUnavailable = ['AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED', 'AI_NOT_CONFIGURED', 'AI_BUSY', 'AI_RATE_LIMITED', 'EXTRACTION_FAILED', 'AI_INPUT_LIMIT'].includes(errorCode);
+  const aiUnavailableError = ['AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED', 'AI_NOT_CONFIGURED', 'AI_BUSY', 'AI_RATE_LIMITED', 'EXTRACTION_FAILED', 'AI_INPUT_LIMIT'].includes(errorCode);
+  const aiUnavailable = knownAiUnavailable || aiUnavailableError;
   const photoRequested = state?.nextQuestion?.requirements.some(requirement => requirement.id === 'item.photo');
 
   function clearError() { setError(''); setErrorCode(''); }
   function handleError(error: unknown) {
     const code = error instanceof DemoApiError ? error.code : '';
     setErrorCode(code);
+    if (['AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED', 'AI_NOT_CONFIGURED'].includes(code)) setKnownAiUnavailable(true);
     setError(error instanceof Error ? error.message : 'לא ניתן להשלים את הפעולה כרגע.');
     if (error instanceof DemoApiError && error.retryAfterSeconds && ['SESSION_RATE_LIMITED', 'SESSION_CAPACITY', 'RATE_LIMITED', 'PROTECTION_CAPACITY'].includes(code)) {
       const receivedAt = Date.now();
@@ -71,7 +74,7 @@ export default function App() {
     }
     if (code === 'SESSION_EXPIRED') {
       // Clear every stale quote/review binding, retaining only the unsent draft.
-      setState(null); setOwner(null); setView('customer'); setConfirmation(null); setExpired(true); setNotice('');
+      setState(null); setOwner(null); setView('customer'); setConfirmation(false); setExpired(true); setNotice('');
     }
   }
   useEffect(() => {
@@ -118,6 +121,8 @@ export default function App() {
     try {
       const displayedQuote = state.quote && ['SENT', 'ACCEPTED'].includes(state.quote.status) ? state.quote : undefined;
       setState(await demoRequest('/message', text, displayedQuote)); setText('');
+      // Quote replies and handoff messages can succeed without any AI processing.
+      if (!displayedQuote && state.lead.status !== 'HUMAN_HANDOFF') setKnownAiUnavailable(false);
     } catch (error) { handleError(error); }
     finally { setPending(null); }
   }
@@ -135,7 +140,7 @@ export default function App() {
   }
   async function reset() {
     if (busy || expired || !state || retrySeconds > 0) return;
-    setConfirmation(null); clearError(); setPending('reset');
+    setConfirmation(false); clearError(); setPending('reset');
     try {
       setState(await demoRequest('/reset')); setOwner(null); setView('customer'); setText('');
       setNotice('התחלנו הדגמה חדשה. השיחה וההצעה הקודמות הוסרו.');
@@ -145,39 +150,20 @@ export default function App() {
   async function reconnect() {
     if (busy || retrySeconds > 0) return;
     // GET only. Never replay a customer message, quote acceptance or owner action.
-    setLoading(true); clearError(); setState(null); setOwner(null); setView('customer'); setConfirmation(null);
+    setLoading(true); clearError(); setState(null); setOwner(null); setView('customer'); setConfirmation(false);
     try {
       setState(await demoRequest()); setExpired(false); focusRecoveredDraft.current = true;
       setNotice('ההדגמה פתוחה. אם נשמרה טיוטה, בדקו אותה ולחצו על שלח כשתרצו. שום הודעה לא נשלחה שוב.');
     } catch (error) { handleError(error); }
     finally { setLoading(false); }
   }
-  function requestReplacement(kind: 'reset' | 'sample') {
+  function requestReset() {
     if (blocked || !state) return;
     trigger.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    if (hasProgress(state, owner) || text.trim()) setConfirmation(kind);
-    else if (kind === 'sample') void loadSample();
+    if (hasProgress(state, owner) || text.trim()) setConfirmation(true);
     else void reset();
   }
-  function cancelReplacement() { setConfirmation(null); }
-  async function loadSample() {
-    if (busy || expired || !state || retrySeconds > 0) return;
-    setConfirmation(null); clearError(); setPending('sample');
-    try {
-      const latest = await ownerRequest();
-      // Review a changed server/tab snapshot before replacing its progress.
-      if ((latest.customer.lead.id !== state.lead.id || latest.customer.lead.updatedAt !== state.lead.updatedAt)
-        && hasProgress(latest.customer, latest)) {
-        setState(latest.customer); setOwner(latest); setConfirmation('sample');
-        setNotice('הפנייה השתנתה מאז שהוצגה. בדקו אותה לפני אישור ההחלפה.');
-        return;
-      }
-      const result = await ownerSample({ leadId: latest.customer.lead.id, revision: latest.revision });
-      setOwner(result); setState(result.customer); setText(''); setView('owner');
-      setNotice('נטענה פנייה מוכנה לבדיקה. זו דוגמה סינתטית.');
-    } catch (error) { handleError(error); }
-    finally { setPending(null); }
-  }
+  function cancelReset() { setConfirmation(false); }
   async function switchView(next: 'customer' | 'owner') {
     if (blocked || view === next) return;
     setLoading(true); clearError();
@@ -199,10 +185,10 @@ export default function App() {
     <strong>לא הצלחנו להשלים את הפעולה</strong><p>{error}</p>
     {!state && <button type="button" onClick={() => void reconnect()} disabled={busy || retrySeconds > 0}>ניסיון חיבור נוסף</button>}
     {retrySeconds > 0 && <p className="retry-wait">יש להמתין עוד {retrySeconds} שניות לפני ניסיון נוסף. לא ננסה שוב אוטומטית.</p>}
-    {state && aiUnavailable && <div className="error-actions">
-      <button type="button" disabled={blocked} onClick={() => requestReplacement('sample')}>לטעינת פנייה מוכנה</button>
-      {view === 'customer' && <button type="button" disabled={blocked} onClick={() => void switchView('owner')}>לבדיקת הפנייה הקיימת</button>}
-    </div>}
+    {state && aiUnavailableError && <>
+      <p>השיחה והטיוטה נשמרו. איסוף פרטים מהודעות חדשות דורש עיבוד AI זמין. אפשר לבדוק מידע קיים ולאשר הצעה רק כשמצב הפנייה מאפשר זאת. איפוס ההדגמה אינו מחדש את התקציב המשותף.</p>
+      {view === 'customer' && hasProgress(state, owner) && <div className="error-actions"><button type="button" disabled={blocked} onClick={() => void switchView('owner')}>לבדיקת הפנייה הקיימת</button></div>}
+    </>}
   </div>;
 
   return <div className="app-shell" dir="rtl">
@@ -210,13 +196,8 @@ export default function App() {
     <header className="page-header">
       <p className="hero-kicker">סוכן מכירות לשירותי הובלה</p>
       <h1>מפניית לקוח להצעת מחיר באישור בעל העסק</h1>
-      <p className="hero-copy">נסו את שני צדי התהליך: פרטי ההובלה בשיחת הלקוח, בדיקת מחיר ואישור בעל העסק.</p>
+      <p className="hero-copy">מתחילים בשיחת הלקוח, ממשיכים לבדיקת בעל העסק ומאשרים הצעת מחיר.</p>
     </header>
-    <section className="demo-start" aria-labelledby="demo-start-heading">
-      <div><h2 id="demo-start-heading">רוצים להכיר את התהליך בלי לכתוב הודעות?</h2>
-        <p>טענו פנייה מוכנה, אשרו מחיר כבעל העסק ואז אשרו את ההצעה כלקוח.</p></div>
-      <button type="button" className="primary-button sample-button" disabled={blocked || !state} onClick={() => requestReplacement('sample')}>{pending === 'sample' ? 'טוענים פנייה…' : 'טעינת פנייה מוכנה'}</button>
-    </section>
     <section className="how-it-works" aria-labelledby="how-heading">
       <h2 id="how-heading">איך זה עובד?</h2>
       <ul><li>ה-AI מחלץ את פרטי ההובלה מהשיחה.</li><li>מנוע התמחור מחשב המלצת מחיר לפי כללים מוגדרים.</li><li>בעל העסק בודק ומאשר את המחיר לפני שליחת ההצעה.</li></ul>
@@ -234,6 +215,7 @@ export default function App() {
         <button type="button" aria-pressed={view === 'owner'} disabled={blocked} onClick={() => void switchView('owner')}>בעל העסק</button>
       </nav>
       {notice && <p className="owner-notice" role="status">{notice}</p>}
+      {state && knownAiUnavailable && !aiUnavailableError && <p className="error-banner" role="status">עיבוד הודעות בעזרת AI אינו זמין כרגע. אפשר לערוך טיוטה ולבדוק מידע קיים. אישור הצעה אפשרי רק כשמצב הפנייה מאפשר זאת. איפוס ההדגמה אינו מחדש את התקציב המשותף.</p>}
       {expired && <section className="session-recovery" role="alert" aria-labelledby="session-heading">
         <h2 id="session-heading">תוקף ההדגמה הסתיים</h2>
         <p>השיחה וההצעה הקודמות אינן פעילות. התחילו הדגמה חדשה כדי להמשיך. הטיוטה שלא נשלחה נשמרה; שום הודעה או אישור לא יישלחו שוב אוטומטית.</p>
@@ -241,36 +223,35 @@ export default function App() {
         {retrySeconds > 0 && <p>יש להמתין עוד {retrySeconds} שניות לפני ניסיון נוסף. לא ננסה שוב אוטומטית.</p>}
         {errorCode !== 'SESSION_EXPIRED' && error && <p>{error}</p>}
       </section>}
-      {confirmation && <section className="confirmation-panel" role="alertdialog" aria-labelledby="replace-heading" aria-describedby="replace-description" tabIndex={-1} ref={confirmPanel} onKeyDown={event => { if (event.key === 'Escape') cancelReplacement(); }}>
-        <h2 id="replace-heading">{confirmation === 'sample' ? 'להחליף את השיחה בפנייה המוכנה?' : 'להתחיל מחדש ולמחוק את השיחה הנוכחית?'}</h2>
-        <p id="replace-description">הפרטים, ההחלטות וההצעה הנוכחיים יוחלפו, וגם הטיוטה תימחק. {confirmation === 'sample' ? 'תיטען פנייה מוכנה לבדיקה עם פרטים סינתטיים.' : 'תיפתח שיחה ריקה.'}</p>
-        <button type="button" className="confirm-replace" disabled={busy || retrySeconds > 0} onClick={() => void (confirmation === 'sample' ? loadSample() : reset())}>{confirmation === 'sample' ? 'אישור החלפה וטעינת הפנייה' : 'אישור איפוס ההדגמה'}</button>
-        <button type="button" disabled={busy} onClick={cancelReplacement}>ביטול והמשך השיחה</button>
+      {confirmation && <section className="confirmation-panel" role="alertdialog" aria-labelledby="replace-heading" aria-describedby="replace-description" tabIndex={-1} ref={confirmPanel} onKeyDown={event => { if (event.key === 'Escape') cancelReset(); }}>
+        <h2 id="replace-heading">להתחיל מחדש ולמחוק את השיחה הנוכחית?</h2>
+        <p id="replace-description">הפרטים, ההחלטות וההצעה הנוכחיים יוסרו, וגם הטיוטה תימחק. תיפתח שיחה ריקה. איפוס ההדגמה אינו מחדש את תקציב ה-AI המשותף.</p>
+        <button type="button" className="confirm-replace" disabled={busy || retrySeconds > 0} onClick={() => void reset()}>אישור איפוס ההדגמה</button>
+        <button type="button" disabled={busy} onClick={cancelReset}>ביטול והמשך השיחה</button>
       </section>}
       {view === 'owner' && owner ? <>
         {errorPanel}
         <OwnerView disabled={blocked} owner={owner} onChange={value => { setOwner(value); setState(value.customer); }} onBusy={setOwnerBusy}
-          onError={handleError} onSample={() => requestReplacement('sample')} onReset={async () => requestReplacement('reset')} onCustomer={() => void switchView('customer')} />
+          onError={handleError} onReset={async () => requestReset()} onCustomer={() => void switchView('customer')} />
       </> : <>
         <div className="customer-layout">
           <section className="conversation-card" aria-labelledby="conversation-heading">
             <div className="conversation-header">
               <div><h2 id="conversation-heading">השיחה שלכם</h2><span className="status-label" role="status">{loading ? 'מתחברים לשיחה…' : expired ? 'נדרשת הדגמה חדשה' : state ? statusLabel(state) : 'אין חיבור לשרת'}</span></div>
-              <button type="button" className="reset-button" onClick={() => requestReplacement('reset')} disabled={blocked || !state}><Icon name="reset" />{pending === 'reset' ? 'מאפסים…' : 'איפוס הדגמה'}</button>
+              <button type="button" className="reset-button" onClick={requestReset} disabled={blocked || !state}><Icon name="reset" />{pending === 'reset' ? 'מאפסים…' : 'איפוס הדגמה'}</button>
             </div>
             {state && <CustomerQuoteOverview state={state} disabled={blocked} accepting={pending === 'accept'} onAccept={() => void acceptQuote()} />}
             {state?.lead.status === 'HUMAN_HANDOFF' && <section className="handoff-help" aria-labelledby="handoff-heading">
               <h3 id="handoff-heading">האוטומציה נעצרה</h3>
               <p>המשך הטיפול מתבצע מחוץ להדגמה. אין כאן תיבת נציג או חזרה אוטומטית לשיחה. הודעות נוספות נשמרות רק בשיחת ההדגמה הזמנית.</p>
-              <button type="button" disabled={blocked} onClick={() => requestReplacement('sample')}>לטעינת פנייה מוכנה</button>
-              <button type="button" disabled={blocked} onClick={() => requestReplacement('reset')}>להדגמה חדשה</button>
+              <button type="button" disabled={blocked} onClick={requestReset}>איפוס והתחלת שיחה חדשה</button>
             </section>}
             <div ref={messageArea} className="message-area" role="log" aria-label="הודעות השיחה" aria-live="polite" aria-busy={busy}>
               {loading ? <div className="conversation-empty"><Icon name="chat" /><p>טוענים את השיחה…</p></div> :
                 !state ? <div className="conversation-empty"><Icon name="chat" /><p>{expired ? 'השיחה הקודמת הסתיימה. התחילו הדגמה חדשה כדי להמשיך.' : 'השיחה תופיע כאן לאחר החיבור לשרת.'}</p></div> :
                 !state.lead.messages.length && pending !== 'send' && <div className="conversation-empty">
                   <span className="welcome-symbol"><Icon name="chat" /></span>
-                  <h3>מה צריך להעביר?</h3><p>כתבו הודעה עם פרטי ההובלה.<br />הסוכן יאסוף את המידע החסר לפני בדיקת בעל העסק.</p>
+                  <h3>מה צריך להעביר?</h3><p>{aiUnavailable ? 'אפשר לערוך טיוטה. איסוף פרטים חדשים דורש עיבוד AI זמין.' : <>כתבו הודעה עם פרטי ההובלה.<br />הסוכן יאסוף את המידע החסר לפני בדיקת בעל העסק.</>}</p>
                   <button type="button" className="example-button" disabled={blocked} onClick={() => { setText(example); input.current?.focus(); }}>טעינת הודעה לדוגמה</button>
                   <small>ההודעה תיכנס לטיוטה. עיבוד AI יתחיל רק לאחר לחיצה על שלח.</small>
                 </div>}
@@ -285,7 +266,7 @@ export default function App() {
               </div>}
               <label className="visually-hidden" htmlFor="customer-message">הודעת הלקוח</label>
               <p className="composer-guidance">פרטים סינתטיים בלבד. עיבוד AI כפוף לתקציב משותף ומצטבר שאינו מתחדש אוטומטית.</p>
-              {messageCooldown && <p className="composer-guidance" role="status">עיבוד הודעות AI זמין לניסיון נוסף בעוד {aiRetrySeconds} שניות. אפשר להמשיך בפנייה המוכנה או באישור הצעה קיימת.</p>}
+              {messageCooldown && <p className="composer-guidance" role="status">אפשר לנסות לשלוח שוב בעוד {aiRetrySeconds} שניות. לא ננסה שוב אוטומטית. אפשר לבדוק מידע קיים ולאשר הצעה כשמצב הפנייה מאפשר זאת.</p>}
               <div className="composer-row">
                 <textarea ref={input} id="customer-message" value={text} onChange={event => setText(event.target.value)} maxLength={4000} disabled={blocked || !state} rows={1} placeholder="כתבו הודעה…" onKeyDown={event => {
                   if ((event.ctrlKey || event.metaKey) && event.key === 'Enter') { event.preventDefault(); void send(); }

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 import { AgentState, statusLabel } from './AgentState';
-import { DemoApiError, ownerAction, ownerPricing, ownerRequest, ownerSample, type OwnerSnapshot, type OwnerAction } from './api';
+import { DemoApiError, ownerAction, ownerPricing, ownerRequest, type OwnerSnapshot, type OwnerAction } from './api';
 import type { ReviewReason, PricingComponent, OmittedComponent } from '../../server/src/domain/pricing/types';
 import { highBoxVolumeLabel, itemLabel, itemPricingReviewLabel, presentRequirements } from './leadPresentation';
 import { QuoteOverview } from './QuoteOverview';
@@ -94,8 +94,8 @@ function componentLabel(component: PricingComponent, owner: OwnerSnapshot): stri
   if (component.code !== 'FLOORS') return ({ WASHING_MACHINE: 'מכונת כביסה', BOXES: 'נפח ארגזים', DISTANCE: 'מרחק המסלול', ASSEMBLY_DISASSEMBLY: 'פירוק / הרכבה', EXTRA_STOP: 'נקודות נוספות', WAITING: 'המתנה', DISCOUNT: 'הנחת סטודנט' } as Record<string, string>)[component.code] ?? component.label;
   return 'קומות ללא מעלית ' + (component.label.startsWith('pickup') ? 'באיסוף' : 'בפריקה');
 }
-export function OwnerView({ owner, onChange, onBusy, onReset, onSample, onError, onCustomer, disabled = false }: {
-  onSample?: () => void; onError?: (error: unknown) => void; onCustomer?: () => void;
+export function OwnerView({ owner, onChange, onBusy, onReset, onError, onCustomer, disabled = false }: {
+  onError?: (error: unknown) => void; onCustomer?: () => void;
   disabled?: boolean; owner: OwnerSnapshot; onChange: (value: OwnerSnapshot) => void; onBusy: (value: boolean) => void; onReset: () => Promise<void>;
 }) {
   const [working, setPending] = useState(false);
@@ -108,7 +108,6 @@ export function OwnerView({ owner, onChange, onBusy, onReset, onSample, onError,
   const [question, setQuestion] = useState('');
   const [scopeConfirmed, setScopeConfirmed] = useState(false);
   const [reviewedPhotos, setReviewedPhotos] = useState<number[]>([]);
-  const [showSampleConfirmation, setShowSampleConfirmation] = useState(false);
   const handoffButton = useRef<HTMLButtonElement>(null);
   const handoffCancel = useRef<HTMLButtonElement>(null);
   useEffect(() => { if (form === 'handoff') handoffCancel.current?.focus(); }, [form]);
@@ -190,10 +189,8 @@ export function OwnerView({ owner, onChange, onBusy, onReset, onSample, onError,
       </div>
       <div className="owner-toolbar">
         <button type="button" disabled={pending} onClick={() => void refresh()}>רענון הפנייה</button>
-        <button type="button" disabled={pending} onClick={() => onSample ? onSample() : setShowSampleConfirmation(!showSampleConfirmation)}>טעינת פנייה מוכנה</button>
         <button type="button" disabled={pending} onClick={() => void onReset()}>איפוס הדגמה</button>
       </div>
-      {!onSample && showSampleConfirmation && <div className="sample-confirmation"><p>טעינת פנייה מוכנה עם פרטי הובלת מקרר סינתטיים תחליף את השיחה הנוכחית.</p><button type="button" disabled={pending} onClick={() => { setShowSampleConfirmation(false); void run(() => ownerSample(token), 'נטענה פנייה מוכנה לבדיקה. זו דוגמה סינתטית.'); }}>טעינת פנייה מוכנה והחלפת השיחה</button><button type="button" disabled={pending} onClick={() => setShowSampleConfirmation(false)}>ביטול</button></div>}
       {error && <p className="error-banner" role="alert">{error}</p>}
       {notice && <p className="owner-notice" role="status">{notice}</p>}
     </section>

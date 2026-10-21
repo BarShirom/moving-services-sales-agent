@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import { test } from 'node:test';
-import { DemoApiError, demoRequest, ownerRequest, ownerAction, ownerPricing, ownerSample } from '../src/api';
+import { DemoApiError, demoRequest, ownerRequest, ownerAction, ownerPricing } from '../src/api';
 
 test('every demo request sends credentials and the CSRF header, including bodyless reset', async t => {
   const calls: RequestInit[] = [];
@@ -12,9 +12,8 @@ test('every demo request sends credentials and the CSRF header, including bodyle
   await demoRequest('/message', 'שלום');
   await ownerRequest();
   await ownerPricing({ leadId: 'lead', revision: 0 });
-  await ownerSample({ leadId: 'lead', revision: 0 });
   await ownerAction({ action: 'TAKE_OVER_CONVERSATION', leadId: 'lead', revision: 0 });
-  assert.equal(calls.length, 7);
+  assert.equal(calls.length, 6);
   for (const init of calls) {
     assert.equal(init.credentials, 'include');
     assert.equal(new Headers(init.headers).get('X-Demo-Request'), '1');
@@ -55,7 +54,8 @@ test('unavailable AI offers a visitor-safe explanation and unknown error identit
   await assert.rejects(demoRequest('/message', 'דוגמה'), error => {
     assert.ok(error instanceof DemoApiError);
     assert.equal(error.code, 'AI_NOT_CONFIGURED');
-    assert.equal(error.message, 'עיבוד הודעות בעזרת AI אינו זמין כרגע. אפשר לטעון פנייה מוכנה.');
+    assert.equal(error.message, 'עיבוד הודעות בעזרת AI אינו זמין כרגע.');
+    assert.doesNotMatch(error.message, /פנייה מוכנה/);
     assert.doesNotMatch(error.message, /configuration|\.env|מפתח/);
     return true;
   });
@@ -91,7 +91,7 @@ test('cumulative beta budget closure never promises tomorrow or uses Retry-After
       assert.ok(error instanceof Error);
       assert.match(error.message, /עיבוד ה-AI בהדגמה זו סגור/);
       assert.match(error.message, /משותף ומצטבר ואינו מתחדש אוטומטית/);
-      assert.match(error.message, /המידע הקיים נשמר/);
+      assert.doesNotMatch(error.message, /פנייה מוכנה/);
       assert.doesNotMatch(error.message, /מחר|86400|שניות|נסו שוב/);
       return true;
     });
@@ -108,8 +108,8 @@ test('session creation limits explain the actual blocked action, expose bounded 
       assert.ok(error instanceof DemoApiError);
       assert.equal(error.code, code);
       assert.equal(error.retryAfterSeconds, 60);
-      assert.match(error.message, /(?:מגבלת יצירת שיחות|אין מקום לשיחה נוספת).*הפנייה המוכנה דורשת שיחה זמינה.*60 שניות/);
-      assert.doesNotMatch(error.message, /AI|opaque/);
+      assert.match(error.message, /(?:מגבלת יצירת שיחות|אין מקום לשיחה נוספת).*60 שניות/);
+      assert.doesNotMatch(error.message, /AI|opaque|פנייה מוכנה/);
       return true;
     });
     assert.equal(fetchMock.mock.callCount(), 1);

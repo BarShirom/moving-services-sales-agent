@@ -26,9 +26,9 @@ async function request<T>(path: string, method: 'GET' | 'POST', body?: unknown):
   if (!response.ok) {
     const body = await response.json().catch(() => null);
     if (['AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED'].includes(body?.error?.code)) {
-      throw new DemoApiError(body.error.code, 'עיבוד ה-AI בהדגמה זו סגור. תקציב הבטא משותף ומצטבר ואינו מתחדש אוטומטית. המידע הקיים נשמר ואפשר להמשיך בבדיקה ידנית.');
+      throw new DemoApiError(body.error.code, 'עיבוד ה-AI בהדגמה זו סגור. תקציב הבטא משותף ומצטבר ואינו מתחדש אוטומטית.');
     }
-    if (body?.error?.code === 'AI_NOT_CONFIGURED') throw new DemoApiError('AI_NOT_CONFIGURED', 'עיבוד הודעות בעזרת AI אינו זמין כרגע. אפשר לטעון פנייה מוכנה.');
+    if (body?.error?.code === 'AI_NOT_CONFIGURED') throw new DemoApiError('AI_NOT_CONFIGURED', 'עיבוד הודעות בעזרת AI אינו זמין כרגע.');
     // Render only the demo API's curated errors, never proxy/provider error bodies.
     const knownCodes = ['BUSY', 'INVALID_MESSAGE', 'AI_NOT_CONFIGURED', 'EXTRACTION_FAILED', 'INVALID_REQUEST', 'INVALID_OWNER_ACTION', 'STALE_REVIEW', 'ACTION_UNAVAILABLE', 'SESSION_EXPIRED', 'SESSION_CAPACITY', 'SESSION_FULL', 'REQUEST_FORBIDDEN', 'RATE_LIMITED', 'SESSION_RATE_LIMITED', 'AI_RATE_LIMITED', 'AI_BUSY', 'AI_BUDGET_EXHAUSTED', 'AI_WINDOW_CLOSED', 'AI_INPUT_LIMIT', 'PROTECTION_CAPACITY'];
     const retryHeader = response.headers.get('Retry-After');
@@ -38,7 +38,7 @@ async function request<T>(path: string, method: 'GET' | 'POST', body?: unknown):
     const retryHint = retryAfter ? ` אפשר לנסות שוב בעוד ${retryAfter} שניות.` : '';
     const known = knownCodes.includes(body?.error?.code);
     if (['SESSION_RATE_LIMITED', 'SESSION_CAPACITY'].includes(body?.error?.code)) {
-      throw new DemoApiError(body.error.code, (body.error.code === 'SESSION_CAPACITY' ? 'לא ניתן לפתוח הדגמה חדשה כרגע כי אין מקום לשיחה נוספת.' : 'לא ניתן לפתוח הדגמה חדשה כרגע בגלל מגבלת יצירת שיחות.') + ' גם הפנייה המוכנה דורשת שיחה זמינה.' + retryHint, retryAfter);
+      throw new DemoApiError(body.error.code, (body.error.code === 'SESSION_CAPACITY' ? 'לא ניתן לפתוח הדגמה חדשה כרגע כי אין מקום לשיחה נוספת.' : 'לא ניתן לפתוח הדגמה חדשה כרגע בגלל מגבלת יצירת שיחות.') + retryHint, retryAfter);
     }
     throw new DemoApiError(known ? body.error.code : 'UNKNOWN', known && typeof body.error.message === 'string'
       ? body.error.message + retryHint : 'השרת אינו זמין כרגע. נסו שוב בעוד רגע.', known ? retryAfter : undefined);
@@ -61,4 +61,3 @@ export function demoRequest(path = '', message?: string, quote?: { id: string; v
 export function ownerRequest(): Promise<OwnerSnapshot> { return request('/owner', 'GET'); }
 export function ownerAction(action: OwnerAction): Promise<OwnerSnapshot> { return request('/owner/action', 'POST', action); }
 export function ownerPricing(token: ReviewToken): Promise<OwnerSnapshot> { return request('/owner/pricing', 'POST', token); }
-export function ownerSample(token: ReviewToken): Promise<OwnerSnapshot> { return request('/owner/sample', 'POST', token); }
